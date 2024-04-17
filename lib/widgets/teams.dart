@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/screens/team.dart';
-
+import 'package:smart_collab/screens/team_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
+import 'package:smart_collab/widgets/confirm_dialog.dart';
+import 'package:smart_collab/widgets/cover_image.dart';
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
 
@@ -17,22 +20,53 @@ class _TeamsState extends ConsumerState<Teams> {
   void initState() {
     super.initState();
     Future.delayed(
-        Duration.zero, () => ref.read(teamsProvider.notifier).fetchTeams());
+      Duration.zero,
+      () {
+        ref.read(teamsProvider.notifier).fetchTeams();
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(teamsProvider.select((value) => value.apiStatus), (prev, next) {
+      final action =
+          ref.watch(teamsProvider.select((value) => value.performedAction));
+      if (next == ApiStatus.success) {
+        // a switch statement to show different snackbar messages
+        String message = '';
+        switch (action) {
+          case PerformedAction.add:
+            message = 'Team added successfully';
+            break;
+          case PerformedAction.update:
+            message = 'Team updated successfully';
+            break;
+          case PerformedAction.delete:
+            message = 'Team deleted successfully';
+            break;
+          case PerformedAction.fetch:
+            message = 'Teams fetched successfully';
+            break;
+          default:
+            message = '';
+        }
+        if (message.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+            ),
+          );
+        }
+      }
+    });
     final teams = ref.watch(teamsProvider.select(
       (value) => value.teams,
     ));
     final isLoading = ref.watch(teamsProvider.select(
       (value) => value.apiStatus == ApiStatus.loading,
     ));
-    if (isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
+
     if (teams.isEmpty) {
       return const Center(
         child: Column(
@@ -43,116 +77,131 @@ class _TeamsState extends ConsumerState<Teams> {
         ),
       );
     }
-    return RefreshIndicator(
-      onRefresh: () async =>
-          await ref.read(teamsProvider.notifier).fetchTeams(),
-      child: ListView.builder(
-        itemCount: teams.length,
-        itemBuilder: (context, index) {
-          return InkWell(
-            // long press to show bottom menu option
-            onLongPress: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (context) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.edit),
-                        title: const Text('Edit'),
-                        onTap: () {
-                          // go to team screen
-                          //Navigator.pushNamed(context, '/team', arguments: teams[index]);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TeamScreen(
-                                team: teams[index],
-                              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (isLoading) const CircularProgressIndicator(),
+        // header
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Text('My Teams', style: Theme.of(context).textTheme.headlineLarge),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async =>
+                await ref.read(teamsProvider.notifier).fetchTeams(),
+            child: ListView.builder(
+              itemCount: teams.length,
+              itemBuilder: (context, index) {
+                return InkWell(
+                  onTap: () {
+                    // go to team screen
+                    //Navigator.pushNamed(context, '/team', arguments: teams[index]);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return TeamScreen(
+                            team: teams[index],
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  // long press to show bottom menu option
+                  onLongPress: () {
+                    showModalBottomSheet(
+                      context: context,
+                      builder: (context) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.edit),
+                              title: const Text('Edit'),
+                              onTap: () {
+                                // show bottom sheet
+                                showModalBottomSheet(
+                                  isScrollControlled: true,
+                                  // show handle
+                                  enableDrag: true,
+                                  showDragHandle: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return Padding(
+                                      padding: MediaQuery.of(context)
+                                          .viewInsets
+                                          .copyWith(left: 16, right: 16),
+                                      child: AddTeamSheet(
+                                          addOrEdit: AddorEdit.update,
+                                          team: teams[index]),
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                          );
-                        },
-                      ),
-                      ListTile(
-                        leading: const Icon(Icons.delete),
-                        title: const Text('Delete'),
-                        onTap: () {
-                          //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: const Text('Delete Team'),
-                                content: const Text(
-                                    'Are you sure you want to delete this team?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      ref.read(teamsProvider.notifier)
-                                          .deleteTeam(teams[index].id!);
-                                      Navigator.pop(context);
-                                    },
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              width: MediaQuery.of(context).size.width * 0.6,
-              child: Column(
-                children: [
-                  // large image
-                  if (teams[index].imageUrl?.isNotEmpty == true)
-                    ClipPath(
-                      clipper: ShapeBorderClipper(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                            ListTile(
+                              leading: const Icon(Icons.delete),
+                              title: const Text('Delete'),
+                              onTap: () {
+                                //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return ConfirmDialog(
+                                      title: 'Delete Team',
+                                      content:
+                                          'Are you sure you want to delete this team?',
+                                      onConfirm: () {
+                                        ref
+                                            .read(teamsProvider.notifier)
+                                            .deleteTeam(teams[index].id!);
+                                        Navigator.pop(context);
+                                      },
+                                      confirmText: 'Delete',
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      children: [
+                        // large image
+                        if (teams[index].imageUrl?.isNotEmpty == true)
+                          CoverImage(
+                            imageUrl: teams[index].imageUrl!,
+                          )
+                        else
+                          Container(
+                            height: 128,
+                            width: double.infinity,
+                            // border radius
+                            decoration: BoxDecoration(
+                              color: Colors.grey,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(Icons.image),
+                          ),
+                        ListTile(
+                          title: Text(teams[index].name ?? ''),
+                          subtitle: Text(teams[index].description ?? ''),
                         ),
-                      ),
-                      child: Image.network(
-                        teams[index].imageUrl!,
-                        height: 128,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  else
-                    Container(
-                      height: 128,
-                      width: double.infinity,
-                      // border radius
-                      decoration: BoxDecoration(
-                        color: Colors.grey,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.image),
+                      ],
                     ),
-                  ListTile(
-                    title: Text(teams[index].name ?? ''),
-                    subtitle: Text(teams[index].description ?? ''),
                   ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
+          ),
+        ),
+      ],
     );
   }
 }

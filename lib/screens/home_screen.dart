@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
+import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/profile.dart';
 import 'package:smart_collab/widgets/teams.dart';
 
@@ -19,24 +20,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                ref.read(authControllerProvider.notifier).signOut();
-                Navigator.pop(context);
-              },
-              child: const Text('Logout'),
-            ),
-          ],
+        return ConfirmDialog(
+          title: 'Logout',
+          content: 'Are you sure you want to logout?',
+          onConfirm: () {
+            ref.read(authControllerProvider.notifier).signOut();
+          },
+          confirmText: 'Logout',
         );
       },
     );
@@ -51,7 +41,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // logout button
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => _logout(),
+            onPressed: _logout,
           ),
         ],
       ),
@@ -62,8 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(height: 20),
           Profile(),
           Expanded(child: Teams()),
-                      AddTeamButton(),
-
+          AddTeamButton(),
         ],
       ),
     );

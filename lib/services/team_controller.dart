@@ -5,6 +5,13 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 
+enum PerformedAction {
+  fetch,
+  add,
+  update,
+  delete,
+}
+
 class Team {
   final String? id;
   final String? name;
@@ -63,12 +70,14 @@ class TeamsState {
   final ApiStatus apiStatus;
   final List<Team> teams;
   final String? errorMessage;
+  final PerformedAction performedAction;
   // ctor
   TeamsState({
     required this.userId,
     required this.apiStatus,
     required this.teams,
     this.errorMessage,
+    this.performedAction = PerformedAction.fetch,
   });
   // copyWith
   TeamsState copyWith({
@@ -76,23 +85,25 @@ class TeamsState {
     ApiStatus? apiStatus,
     List<Team>? teams,
     String? errorMessage,
+    PerformedAction? performedAction,
   }) {
     return TeamsState(
       userId: userId ?? this.userId,
       apiStatus: apiStatus ?? this.apiStatus,
       teams: teams ?? this.teams,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage,
+      performedAction: performedAction ?? this.performedAction,
     );
   }
 
   // initial
   static TeamsState initial() {
     return TeamsState(
-      userId: '',
-      apiStatus: ApiStatus.idle,
-      teams: [],
-      errorMessage: null,
-    );
+        userId: '',
+        apiStatus: ApiStatus.idle,
+        teams: [],
+        errorMessage: '',
+        performedAction: PerformedAction.fetch);
   }
 }
 
@@ -103,10 +114,117 @@ class TeamsController extends Notifier<TeamsState> {
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return TeamsState.initial().copyWith(userId: userId);
   }
+  void clearErrorMessage() {
+    state = state.copyWith(errorMessage: null);
+  }
+  Future<void> removeFromTeam({required String uid, required String teamId}) async {
+    // set loading
+    state = state.copyWith(
+      apiStatus: ApiStatus.loading,
+      performedAction: PerformedAction.update,
+    );
+    try {
+      // update the roles in the team
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .update({'roles.$uid': FieldValue.delete()});
+      // update the roles in the state
+      final updatedTeams = state.teams.map((team) {
+        if (team.id == teamId) {
+          final updatedRoles = team.roles;
+          updatedRoles.remove(uid);
+          return team.copyWith(roles: updatedRoles);
+        }
+        return team;
+      }).toList();
+      state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
+    } catch (e) {
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+    }
+  }
+  Future<void> setAsMemeber({required String email, required String teamId}) async {
+    // set loading
+    state = state.copyWith(
+      apiStatus: ApiStatus.loading,
+      performedAction: PerformedAction.update,
+    );
+    try {
+      // get the user id from the email
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+      // get the user id, note that the user might not exist in the users collection
+      final userId = snapshot.docs.isNotEmpty ? snapshot.docs.first.id : '';
+      if (userId.isEmpty) {
+        state = state.copyWith(
+          apiStatus: ApiStatus.error,
+          errorMessage: 'User not found',
+        );
+        return;
+      }
+      // update the roles in the team
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .update({'roles.$userId': 'member'});
+      // update the roles in the state
+      final updatedTeams = state.teams.map((team) {
+        if (team.id == teamId) {
+          return team.copyWith(roles: {...team.roles, userId: 'member'});
+        }
+        return team;
+      }).toList();
+      state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
+    } catch (e) {
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+    }
+  }
+  
+  Future<void> setAsAdmin({required String email, required String teamId}) async {
+    // set loading
+    state = state.copyWith(
+      apiStatus: ApiStatus.loading,
+      performedAction: PerformedAction.update,
+    );
+    try {
+      // get the user id from the email
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
+      // get the user id, note that the user might not exist in the users collection
+      final userId = snapshot.docs.isNotEmpty ? snapshot.docs.first.id : '';
+      if (userId.isEmpty) {
+        state = state.copyWith(
+          apiStatus: ApiStatus.error,
+          errorMessage: 'User not found',
+        );
+        return;
+      }
+      // update the roles in the team
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .update({'roles.$userId': 'admin'});
+      // update the roles in the state
+      final updatedTeams = state.teams.map((team) {
+        if (team.id == teamId) {
+          return team.copyWith(roles: {...team.roles, userId: 'admin'});
+        }
+        return team;
+      }).toList();
+      state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
+    } catch (e) {
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+    }
+  }
 
   Future<List<Team>> fetchTeams() async {
     try {
-      state = state.copyWith(apiStatus: ApiStatus.loading);
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
       // get teams from firestore collection but only where the user is a member or owner
       /*
         { name: “...”, description: “....”, roles: { user1: “owner”, user2: “admin”, user3: “member”}, … }
@@ -115,8 +233,11 @@ class TeamsController extends Notifier<TeamsState> {
           .collection('teams')
           .where('roles.${state.userId}',
               whereIn: ['owner', 'admin', 'member']).get();
-      final teams =
-          snapshot.docs.map((doc) => Team.fromJson(doc.data())).toList();
+      final teams = snapshot.docs
+          .map((doc) => Team.fromJson(doc.data()).copyWith(
+                id: doc.id,
+              ))
+          .toList();
       state = state.copyWith(apiStatus: ApiStatus.success, teams: teams);
       return teams;
     } catch (e) {
@@ -124,23 +245,51 @@ class TeamsController extends Notifier<TeamsState> {
       return [];
     }
   }
-  Future<void> addTeam(Team team, File? image) async {
+
+  Future<void> editTeam(Team team, File? image) async {
     try {
-      state = state.copyWith(apiStatus: ApiStatus.loading);
-      // save the team cover image to firebase storage and get the image url and save the image url to firestore
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading,
+          performedAction: PerformedAction.update);
       if (image != null) {
-        final ref = FirebaseStorage.instance
-            .ref('teams/${team.name}-${DateTime.now().millisecondsSinceEpoch}');
+        // store the new image in Firebase Storage
+        final ref = FirebaseStorage.instance.ref('teams/${team.id}');
         await ref.putFile(image);
         team = team.copyWith(imageUrl: await ref.getDownloadURL());
       }
+      // update the team in firestore
+      await FirebaseFirestore.instance.collection('teams').doc(team.id).update({
+        'name': team.name,
+        'description': team.description,
+        'imageUrl': team.imageUrl,
+      });
+      state = state.copyWith(
+        apiStatus: ApiStatus.success,
+        teams: state.teams.map((t) => t.id == team.id ? team : t).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+    }
+  }
+
+  Future<void> addTeam(Team team, File? image) async {
+    try {
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
       // save the team to firestore
       final docRef = await FirebaseFirestore.instance.collection('teams').add({
         'name': team.name,
         'description': team.description,
-        'imageUrl': team.imageUrl,
         'roles': {state.userId: 'owner'},
       });
+      // store the image in Firebase Storage and use the document id as the image name
+      if (image != null) {
+        final ref = FirebaseStorage.instance.ref('teams/${docRef.id}');
+        await ref.putFile(image);
+        team = team.copyWith(imageUrl: await ref.getDownloadURL());
+      }
+      // save the team with the imageUrl
+      await docRef.update({'imageUrl': team.imageUrl});
       final newTeam = team.copyWith(id: docRef.id);
       state = state.copyWith(
         apiStatus: ApiStatus.success,
@@ -150,9 +299,17 @@ class TeamsController extends Notifier<TeamsState> {
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
+
   Future<void> deleteTeam(String teamId) async {
     try {
-      state = state.copyWith(apiStatus: ApiStatus.loading);
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading,
+          performedAction: PerformedAction.delete);
+      // delete the image from Firebase Storage
+      final team = state.teams.firstWhere((team) => team.id == teamId);
+      if (team.imageUrl != null) {
+        await FirebaseStorage.instance.refFromURL(team.imageUrl!).delete();
+      }
       // delete the team from firestore
       await FirebaseFirestore.instance.collection('teams').doc(teamId).delete();
       state = state.copyWith(

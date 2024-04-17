@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:smart_collab/widgets/add_team_sheet.dart';
+import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 
 class AddTeamButton extends StatelessWidget {
   const AddTeamButton({
@@ -21,7 +21,7 @@ class AddTeamButton extends StatelessWidget {
             padding: MediaQuery.of(context)
                 .viewInsets
                 .copyWith(left: 16, right: 16),
-            child: const AddTeamSheet(),
+            child:  const AddTeamSheet(addOrEdit: AddorEdit.add,),
           ),
         );
       },

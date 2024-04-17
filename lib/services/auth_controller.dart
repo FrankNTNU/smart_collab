@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -92,6 +93,14 @@ class AuthController extends Notifier<AuthState> {
           apiStatus: ApiStatus.success,
         );
         print('User: ${userCred.user}');
+        // save this user to firestore users collection
+        await FirebaseFirestore.instance.collection('users').doc(userCred.user?.uid).set({
+          'uid': userCred.user?.uid,
+          'email': userCred.user?.email,
+          'displayName': userCred.user?.displayName,
+          'photoURL': userCred.user?.photoURL,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       } else {
         state = state.copyWith(
           apiStatus: ApiStatus.error,
@@ -115,13 +124,13 @@ class AuthController extends Notifier<AuthState> {
         await googleUser?.authentication;
 
     // Create a new credential
-    final credential = GoogleAuthProvider.credential(
+    final userCred = GoogleAuthProvider.credential(
       accessToken: googleAuth?.accessToken,
       idToken: googleAuth?.idToken,
     );
 
     // Once signed in, return the UserCredential
-    return await FirebaseAuth.instance.signInWithCredential(credential);
+    return await FirebaseAuth.instance.signInWithCredential(userCred);
   }
 
   // sign out

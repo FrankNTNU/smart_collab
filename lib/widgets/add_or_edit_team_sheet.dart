@@ -6,10 +6,19 @@ import 'package:smart_collab/services/team_controller.dart';
 
 import 'team_image_picker.dart';
 
+enum AddorEdit {
+  add,
+  update,
+}
+
 class AddTeamSheet extends ConsumerStatefulWidget {
+  final AddorEdit addOrEdit;
+  final Team? team;
   // image on select
   const AddTeamSheet({
     super.key,
+    required this.addOrEdit,
+    this.team,
   });
 
   @override
@@ -22,6 +31,19 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
   File? _pickedImage;
   String _enteredName = '';
   String _enteredDescription = '';
+  @override
+  void initState() {
+    super.initState();
+    if (widget.addOrEdit == AddorEdit.update) {
+      setState(() {
+        _enteredName = widget.team!.name!;
+        _enteredDescription = widget.team!.description!;
+        if (widget.team!.imageUrl?.isNotEmpty == true) {
+          _pickedImage = File(widget.team!.imageUrl!);
+        }
+      });
+    }
+  }
 
   void _imageOnSelect(File selectedImage) async {
     setState(() {
@@ -37,14 +59,27 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
     }
     // save form
     _formKey.currentState!.save();
-    // add team
-    ref.read(teamsProvider.notifier).addTeam(
-          Team(
-            name: _enteredName,
-            description: _enteredDescription,
-          ),
-          _pickedImage,
-        );
+    if (widget.addOrEdit == AddorEdit.add) {
+      // add team
+      ref.read(teamsProvider.notifier).addTeam(
+            Team(
+              name: _enteredName,
+              description: _enteredDescription,
+            ),
+            _pickedImage,
+          );
+    } else {
+      // update team
+      ref.read(teamsProvider.notifier).editTeam(
+            Team(
+              name: _enteredName,
+              description: _enteredDescription,
+              id: widget.team!.id,
+              imageUrl: widget.team!.imageUrl,
+            ),
+            _pickedImage,
+          );
+    }
     // close bottom sheet
     Navigator.pop(context);
   }
@@ -61,10 +96,13 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Padding(
-                  padding: EdgeInsets.all(16),
+                 Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Add Team',
+                    widget.addOrEdit == AddorEdit.add
+                        ? 'Add Team'
+                        : 'Update Team',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                 ),
                 IconButton(
@@ -76,8 +114,12 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
               ],
             ),
             // team image circular avatar
-            TeamImagePicker(imageOnSelect: _imageOnSelect),
+            TeamImagePicker(
+              imageOnSelect: _imageOnSelect,
+              defaultImageUrl: widget.team?.imageUrl,
+            ),
             TextFormField(
+              initialValue: _enteredName,
               decoration: const InputDecoration(
                 labelText: 'Name',
               ),
@@ -91,6 +133,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
             ),
             const SizedBox(height: 20),
             TextFormField(
+              initialValue: _enteredDescription,
               decoration: const InputDecoration(
                 labelText: 'Description',
               ),
@@ -105,7 +148,8 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submit,
-              child: const Text('Add Team'),
+              child:  Text(
+                widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',),
             ),
           ],
         ),
