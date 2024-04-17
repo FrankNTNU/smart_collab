@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 
+import '../services/auth_controller.dart';
+import '../services/team_controller.dart';
+
 class Issues extends ConsumerStatefulWidget {
   final String teamId;
   const Issues({super.key, required this.teamId});
@@ -26,6 +29,7 @@ class _IssuesState extends ConsumerState<Issues> {
     );
   }
 
+  
   @override
   Widget build(BuildContext context) {
     final issues =
@@ -36,46 +40,52 @@ class _IssuesState extends ConsumerState<Issues> {
       );
     }
     return ListView.builder(
+      // never scroll
+      shrinkWrap: true,
       itemCount: issues.length,
       itemBuilder: (context, index) {
-        return ListTile(
-          onTap: () {
-            // open bottom sheet
-            showModalBottomSheet(
-              isScrollControlled: true,
-              enableDrag: true,
-              showDragHandle: true,
-              context: context,
-              builder: (context) => Padding(
-                padding: MediaQuery.of(context)
-                    .viewInsets
-                    .copyWith(left: 16, right: 16),
-                child: IssueScreen(
-                  issue: issues[index],
-                ),
-              ),
-            );
-          },
-          
-          title: Text(issues[index].title),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                issues[index].description,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Wrap(
-                spacing: 8,
+        return Column(
+          children: [
+            ListTile(
+              onTap: () {
+                // open bottom sheet
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  enableDrag: true,
+                  showDragHandle: true,
+                  context: context,
+                  builder: (context) => Padding(
+                    padding: MediaQuery.of(context)
+                        .viewInsets
+                        .copyWith(left: 16, right: 16),
+                    child: IssueScreen(
+                      issue: issues[index],
+                    ),
+                  ),
+                );
+              },
+              title: Text(issues[index].title),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ...issues[index].tags.map((tag) => Chip(
-                        label: Text(tag),
-                      ))
+                  Text(
+                    issues[index].description,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      ...issues[index].tags.map((tag) => Chip(
+                            label: Text(tag),
+                          ))
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            
+          ],
         );
       },
     );

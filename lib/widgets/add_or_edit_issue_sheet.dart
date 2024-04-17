@@ -248,6 +248,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               child: Text(
                   '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update'} Issue'),
             ),
+            const SizedBox(height: 32),
           ],
         ),
       ),

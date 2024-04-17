@@ -151,6 +151,8 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                 widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
               ),
             ),
+                        const SizedBox(height: 32),
+
           ],
         ),
       ),

@@ -6,7 +6,6 @@ import 'package:smart_collab/widgets/profile.dart';
 import 'package:smart_collab/widgets/teams.dart';
 
 import '../widgets/add_or_edit_team_sheet.dart';
-import '../widgets/add_team_button.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});

@@ -86,6 +86,9 @@ class IssuesState {
   final String? errorMessage;
   final PerformedAction performedAction;
   final String userId;
+  // for pagination
+  // last document Ref
+  final DocumentSnapshot? lastDoc;
   // ctor
   IssuesState({
     required this.issues,
@@ -93,6 +96,7 @@ class IssuesState {
     this.errorMessage,
     this.performedAction = PerformedAction.fetch,
     this.userId = '',
+    this.lastDoc,
   });
   // copyWith
   IssuesState copyWith({
@@ -101,6 +105,7 @@ class IssuesState {
     String? errorMessage,
     PerformedAction? performedAction,
     String? userId,
+    DocumentSnapshot? lastDoc,
   }) {
     return IssuesState(
       issues: issues ?? this.issues,
@@ -108,6 +113,7 @@ class IssuesState {
       errorMessage: errorMessage ?? this.errorMessage,
       performedAction: performedAction ?? this.performedAction,
       userId: userId ?? this.userId,
+      lastDoc: lastDoc ?? this.lastDoc,
     );
   }
 
@@ -130,18 +136,40 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
 
   // fetchIssues
   Future<void> fetchIssues(String teamId) async {
+    const limit = 5;
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
     try {
-      // fetch issues from firestore the issues collection (only fetch issues where teamId is the current teamId, which is arg)
-      final snapShot = await FirebaseFirestore.instance
-          .collection('issues')
-          .where('teamId', isEqualTo: teamId)
-          .get();
-      final issues = snapShot.docs
-          .map((doc) => Issue.fromJson(doc.data()).copyWith(id: doc.id))
-          .toList();
-      state = state.copyWith(issues: issues, apiStatus: ApiStatus.success);
+      // fetch issues from firestore the issues collection (only fetch issues where teamId is the current teamId, which is arg) and imeplement pagination to only fetch 3 issues at a time
+      final snapShot = state.lastDoc != null
+          ? await FirebaseFirestore.instance
+              .collection('issues')
+              .where('teamId', isEqualTo: teamId)
+              .startAfterDocument(state.lastDoc!)
+              .limit(limit)
+              .get()
+          : await FirebaseFirestore.instance
+              .collection('issues')
+              .where('teamId', isEqualTo: teamId)
+              .limit(limit)
+              .get();
+      // last document
+      final lastDoc = snapShot.docs.isNotEmpty ? snapShot.docs.last : null;
+      state = state.copyWith(lastDoc: lastDoc);
+      final issues = snapShot.docs.map((doc) {
+        return Issue.fromJson(doc.data()).copyWith(id: doc.id);
+      }).toList();
+      state = state.copyWith(
+          issues: // merge the original issues in the state with the fetched issues based on id as the key
+              [...state.issues, ...issues], apiStatus: ApiStatus.success);
+      // final snapShot = await FirebaseFirestore.instance
+      //     .collection('issues')
+      //     .where('teamId', isEqualTo: teamId)
+      //     .get();
+      // final issues = snapShot.docs
+      //     .map((doc) => Issue.fromJson(doc.data()).copyWith(id: doc.id))
+      //     .toList();
+      // state = state.copyWith(issues: issues, apiStatus: ApiStatus.success);
     } catch (e, stackTrace) {
       print('Error occured in the fetchIssues method: $e, $stackTrace');
       state = state.copyWith(

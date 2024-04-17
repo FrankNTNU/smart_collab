@@ -7,6 +7,7 @@ import 'package:smart_collab/widgets/cover_image.dart';
 import 'package:smart_collab/widgets/invite_to_team.dart';
 import 'package:smart_collab/widgets/team_members.dart';
 
+import '../services/issue_controller.dart';
 import '../services/team_controller.dart';
 import '../widgets/issues.dart';
 
@@ -19,6 +20,29 @@ class TeamScreen extends ConsumerStatefulWidget {
 }
 
 class _TeamScreenState extends ConsumerState<TeamScreen> {
+  // scroll controller
+  final _scrollController = ScrollController();
+  @override
+  void initState() {
+    super.initState();
+    // listen to scroll event
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent) {
+        print('User reached end of list');
+        ref
+            .read(issueProvider(widget.team.id!).notifier)
+            .fetchIssues(widget.team.id!);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final teamData = ref.watch(teamsProvider.select((value) =>
@@ -27,6 +51,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
         teamData.roles[ref.read(authControllerProvider).user!.uid] == 'owner' ||
             teamData.roles[ref.read(authControllerProvider).user!.uid] ==
                 'admin';
+
+    final isFetching = ref.watch(issueProvider(widget.team.id!).select(
+        (value) =>
+            value.apiStatus == ApiStatus.loading &&
+            value.performedAction == PerformedAction.fetch));
     return Scaffold(
       appBar: AppBar(
         title: Text(teamData.name ?? ''),
@@ -74,7 +103,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: Column(
+      body: ListView(
+        controller: _scrollController,
         children: [
           // show cover image
           if (teamData.imageUrl != null)
@@ -112,7 +142,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           TeamMembers(
             teamId: teamData.id!,
           ),
-          Expanded(child: Issues(teamId: teamData.id!)),
+          Issues(teamId: teamData.id!),
+          if (isFetching) const CircularProgressIndicator(),
         ],
       ),
     );
