@@ -114,10 +114,13 @@ class TeamsController extends Notifier<TeamsState> {
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return TeamsState.initial().copyWith(userId: userId);
   }
+
   void clearErrorMessage() {
     state = state.copyWith(errorMessage: null);
   }
-  Future<void> removeFromTeam({required String uid, required String teamId}) async {
+
+  Future<void> removeFromTeam(
+      {required String uid, required String teamId}) async {
     // set loading
     state = state.copyWith(
       apiStatus: ApiStatus.loading,
@@ -140,10 +143,13 @@ class TeamsController extends Notifier<TeamsState> {
       }).toList();
       state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
     } catch (e) {
+      print('Error occured in the removeFromTeam method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
-  Future<void> setAsMemeber({required String email, required String teamId}) async {
+
+  Future<void> setAsMemeber(
+      {required String email, required String teamId}) async {
     // set loading
     state = state.copyWith(
       apiStatus: ApiStatus.loading,
@@ -158,6 +164,7 @@ class TeamsController extends Notifier<TeamsState> {
       // get the user id, note that the user might not exist in the users collection
       final userId = snapshot.docs.isNotEmpty ? snapshot.docs.first.id : '';
       if (userId.isEmpty) {
+        print('User not found');
         state = state.copyWith(
           apiStatus: ApiStatus.error,
           errorMessage: 'User not found',
@@ -178,11 +185,13 @@ class TeamsController extends Notifier<TeamsState> {
       }).toList();
       state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
     } catch (e) {
+      print('Error occured in the setAsMemeber method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
-  
-  Future<void> setAsAdmin({required String email, required String teamId}) async {
+
+  Future<void> setAsAdmin(
+      {required String email, required String teamId}) async {
     // set loading
     state = state.copyWith(
       apiStatus: ApiStatus.loading,
@@ -217,6 +226,7 @@ class TeamsController extends Notifier<TeamsState> {
       }).toList();
       state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
     } catch (e) {
+      print('Error occured in the setAsAdmin method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
@@ -241,6 +251,7 @@ class TeamsController extends Notifier<TeamsState> {
       state = state.copyWith(apiStatus: ApiStatus.success, teams: teams);
       return teams;
     } catch (e) {
+      print('Error occured in the fetchTeams method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
       return [];
     }
@@ -259,15 +270,25 @@ class TeamsController extends Notifier<TeamsState> {
       }
       // update the team in firestore
       await FirebaseFirestore.instance.collection('teams').doc(team.id).update({
-        'name': team.name,
-        'description': team.description,
-        'imageUrl': team.imageUrl,
-      });
+            'name': team.name,
+            'description': team.description,
+          }..addAll(team.imageUrl != null ? {'imageUrl': team.imageUrl} : {}));
       state = state.copyWith(
         apiStatus: ApiStatus.success,
-        teams: state.teams.map((t) => t.id == team.id ? team : t).toList(),
+        teams: state.teams.map((t) {
+          if (t.id == team.id) {
+            // only update properties that could have been updated, otherwise other properties will be null, including roles
+            return t.copyWith(
+              name: team.name,
+              description: team.description,
+              imageUrl: team.imageUrl,
+            );
+          }
+          return t;
+        }).toList(),
       );
     } catch (e) {
+      print('Error occured in the editTeam method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
@@ -296,6 +317,7 @@ class TeamsController extends Notifier<TeamsState> {
         teams: [...state.teams, newTeam],
       );
     } catch (e) {
+      print('Error occured in the addTeam method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
@@ -317,6 +339,7 @@ class TeamsController extends Notifier<TeamsState> {
         teams: state.teams.where((team) => team.id != teamId).toList(),
       );
     } catch (e) {
+      print('Error occured in the deleteTeam method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }

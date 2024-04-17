@@ -38,9 +38,6 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
       setState(() {
         _enteredName = widget.team!.name!;
         _enteredDescription = widget.team!.description!;
-        if (widget.team!.imageUrl?.isNotEmpty == true) {
-          _pickedImage = File(widget.team!.imageUrl!);
-        }
       });
     }
   }
@@ -55,13 +52,14 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
     // check form validation
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {
+      print('invalid form in add team sheet');
       return;
     }
     // save form
     _formKey.currentState!.save();
     if (widget.addOrEdit == AddorEdit.add) {
       // add team
-      ref.read(teamsProvider.notifier).addTeam(
+      await ref.read(teamsProvider.notifier).addTeam(
             Team(
               name: _enteredName,
               description: _enteredDescription,
@@ -70,12 +68,11 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
           );
     } else {
       // update team
-      ref.read(teamsProvider.notifier).editTeam(
+      await ref.read(teamsProvider.notifier).editTeam(
             Team(
               name: _enteredName,
               description: _enteredDescription,
               id: widget.team!.id,
-              imageUrl: widget.team!.imageUrl,
             ),
             _pickedImage,
           );
@@ -96,7 +93,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                 Padding(
+                Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
                     widget.addOrEdit == AddorEdit.add
@@ -133,6 +130,8 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
             ),
             const SizedBox(height: 20),
             TextFormField(
+              minLines: 8,
+              maxLines: 16,
               initialValue: _enteredDescription,
               decoration: const InputDecoration(
                 labelText: 'Description',
@@ -148,8 +147,9 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submit,
-              child:  Text(
-                widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',),
+              child: Text(
+                widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
+              ),
             ),
           ],
         ),

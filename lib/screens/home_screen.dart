@@ -5,6 +5,7 @@ import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/profile.dart';
 import 'package:smart_collab/widgets/teams.dart';
 
+import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/add_team_button.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -45,6 +46,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            isScrollControlled: true,
+            // show handle
+            enableDrag: true,
+            showDragHandle: true,
+            context: context,
+            builder: (context) => Padding(
+              padding: MediaQuery.of(context)
+                  .viewInsets
+                  .copyWith(left: 16, right: 16),
+              child: const AddTeamSheet(
+                addOrEdit: AddorEdit.add,
+              ),
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
       body: const Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -52,7 +73,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SizedBox(height: 20),
           Profile(),
           Expanded(child: Teams()),
-          AddTeamButton(),
         ],
       ),
     );
