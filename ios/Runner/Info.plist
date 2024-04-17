@@ -45,5 +45,31 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>GIDClientID</key>
+	<!-- TODO Replace this value: -->
+	<!-- Copied from GoogleService-Info.plist key CLIENT_ID -->
+	<string>914148944165-uchlq6cl22sg5hj0atlhib5qg7nko4nj.apps.googleusercontent.com</string>
+	<!-- Put me in the [my_project]/ios/Runner/Info.plist file -->
+	<!-- Google Sign-in Section -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- TODO Replace this value: -->
+				<!-- Copied from GoogleService-Info.plist key REVERSED_CLIENT_ID -->
+				<string>com.googleusercontent.apps.914148944165-uchlq6cl22sg5hj0atlhib5qg7nko4nj</string>
+			</array>
+		</dict>
+	</array>
+	<!-- End of the Google Sign-in Section -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Photo Library permission is required for uploading images.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Camera permission is required for scanning QR codes.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone permission is required for voice chat.</string>
 </dict>
 </plist>
