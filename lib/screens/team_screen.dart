@@ -117,7 +117,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             ),
           // description about team
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: Text(teamData.description ?? ''),
           ),
           if (isOwnerOrAdmin)
@@ -149,14 +149,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             teamId: teamData.id!,
           ),
           const Divider(),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Issues',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          ),
+         
 
           Issues(teamId: teamData.id!),
-          if (isFetching) const CircularProgressIndicator(),
+          if (isFetching) const Center(child: CircularProgressIndicator()),
         ],
       ),
     );

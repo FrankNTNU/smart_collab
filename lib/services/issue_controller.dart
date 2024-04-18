@@ -95,6 +95,7 @@ class IssuesState {
   // for pagination
   // last document Ref
   final DocumentSnapshot? lastDoc;
+  final String teamId;
   // ctor
   IssuesState({
     required this.issues,
@@ -103,6 +104,8 @@ class IssuesState {
     this.performedAction = PerformedAction.fetch,
     this.userId = '',
     this.lastDoc,
+    required this.teamId,
+
   });
   // copyWith
   IssuesState copyWith({
@@ -112,6 +115,7 @@ class IssuesState {
     PerformedAction? performedAction,
     String? userId,
     DocumentSnapshot? lastDoc,
+    String? teamId,
   }) {
     return IssuesState(
       issues: issues ?? this.issues,
@@ -120,6 +124,7 @@ class IssuesState {
       performedAction: performedAction ?? this.performedAction,
       userId: userId ?? this.userId,
       lastDoc: lastDoc ?? this.lastDoc,
+      teamId: teamId ?? this.teamId,
     );
   }
 
@@ -128,6 +133,9 @@ class IssuesState {
     return IssuesState(
       issues: [],
       apiStatus: ApiStatus.idle,
+      errorMessage: '',
+      performedAction: PerformedAction.fetch,
+      teamId: ''
     );
   }
 }
@@ -137,7 +145,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   IssuesState build(String arg) {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
-    return IssuesState.initial().copyWith(userId: userId);
+    return IssuesState.initial().copyWith(userId: userId, teamId: arg);
   }
 
   // remove a collaborator
@@ -148,6 +156,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     try {
       // update issue in firestore
       await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('issues')
           .doc(issueId)
           .update({
@@ -185,6 +195,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     try {
       // update issue in firestore
       await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('issues')
           .doc(issueId)
           .update({
@@ -223,14 +235,20 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       // fetch issues from firestore the issues collection (only fetch issues where teamId is the current teamId, which is arg) and imeplement pagination to only fetch 3 issues at a time
       final snapShot = state.lastDoc != null
           ? await FirebaseFirestore.instance
+              .collection('teams')
+              .doc(state.teamId)
               .collection('issues')
               .where('teamId', isEqualTo: teamId)
+              .orderBy('updatedAt', descending: true)
               .startAfterDocument(state.lastDoc!)
               .limit(limit)
               .get()
           : await FirebaseFirestore.instance
+              .collection('teams')
+              .doc(state.teamId)
               .collection('issues')
               .where('teamId', isEqualTo: teamId)
+              .orderBy('updatedAt', descending: true)
               .limit(limit)
               .get();
       // last document
@@ -266,6 +284,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     try {
       // remove issue from firestore
       await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('issues')
           .doc(issueId)
           .delete();
@@ -294,6 +314,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     try {
       // update issue in firestore
       await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('issues')
           .doc(issueId)
           .update({
@@ -338,13 +360,16 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
     try {
       // add issue to firestore
-      final issueRef =
-          await FirebaseFirestore.instance.collection('issues').add({
+      final issueRef = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .add({
         'title': title,
         'description': description,
         'createdAt': DateTime.now().toIso8601String(),
         'updatedAt': DateTime.now().toIso8601String(),
-        'teamId': arg,
+        'teamId': state.teamId,
         'roles': {state.userId: 'owner'},
         'tags': tags,
       });
@@ -358,7 +383,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         roles: {state.userId: 'owner'},
         deadline: DateTime.now(),
         tags: tags,
-        teamId: arg,
+        teamId: state.teamId,
       );
       state = state.copyWith(apiStatus: ApiStatus.success, issues: [
         ...state.issues,

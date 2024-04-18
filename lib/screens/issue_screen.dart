@@ -26,7 +26,12 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   Widget build(BuildContext context) {
     final issueData = ref.watch(issueProvider(widget.issue.teamId).select(
         (value) =>
-            value.issues.where((issue) => issue.id == widget.issue.id).first));
+            value.issues.where((issue) => issue.id == widget.issue.id).firstOrNull));
+    if (issueData == null) {
+      return const Center(
+        child: Text('Issue not found'),
+      );
+    }
     final areYouTheOnwerOrAdmin = issueData
                 .roles[ref.read(authControllerProvider).user!.uid] ==
             'owner' ||
@@ -122,7 +127,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   const Text('Comments',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  Comments(issueId: issueData.id),
+                  Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   const Divider(),
                   if (areYouTheOnwerOrAdmin)
                     // delete button
@@ -164,6 +169,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
             alignment: Alignment.bottomCenter,
             child: CommentField(
               issueId: issueData.id,
+              teamId: widget.issue.teamId,
             ),
           ),
         ],

@@ -7,7 +7,8 @@ import 'confirm_dialog.dart';
 
 class Comments extends ConsumerStatefulWidget {
   final String issueId;
-  const Comments({super.key, required this.issueId});
+  final String teamId;
+  const Comments({super.key, required this.issueId, required this.teamId});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _CommentsState();
@@ -21,7 +22,8 @@ class _CommentsState extends ConsumerState<Comments> {
       Duration.zero,
       () {
         ref
-            .read(commentProvider(widget.issueId).notifier)
+            .read(commentProvider(
+                (issueId: widget.issueId, teamId: widget.teamId)).notifier)
             .fetchComments(widget.issueId);
       },
     );
@@ -30,7 +32,8 @@ class _CommentsState extends ConsumerState<Comments> {
   @override
   Widget build(BuildContext context) {
     final comments = ref.watch(
-        commentProvider(widget.issueId).select((value) => value.comments));
+        commentProvider((issueId: widget.issueId, teamId: widget.teamId))
+            .select((value) => value.comments));
     if (comments.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(8.0),
@@ -69,9 +72,12 @@ class _CommentsState extends ConsumerState<Comments> {
                                     'Are you sure you want to delete this comment?',
                                 onConfirm: () {
                                   ref
-                                      .read(commentProvider(widget.issueId)
-                                          .notifier)
-                                      .deleteComment(comments[index].id, widget.issueId);
+                                      .read(commentProvider((
+                                        issueId: widget.issueId,
+                                        teamId: widget.teamId
+                                      )).notifier)
+                                      .deleteComment(
+                                          comments[index].id, widget.issueId);
                                   Navigator.pop(context);
                                 },
                                 confirmText: 'Delete',

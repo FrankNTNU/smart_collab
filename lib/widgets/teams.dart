@@ -195,7 +195,7 @@ class _TeamsState extends ConsumerState<Teams> {
                         ),
                       ListTile(
                         title: Text(teams[index].name ?? ''),
-                        subtitle: Text(teams[index].description ?? ''),
+                        subtitle: Text(teams[index].description ?? '', maxLines: 3, overflow: TextOverflow.ellipsis),
                       ),
                     ],
                   ),

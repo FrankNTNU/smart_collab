@@ -6,11 +6,12 @@ import '../services/profile_controller.dart';
 
 class LastUpdatedAtInfo extends ConsumerWidget {
   final Issue issueData;
-  const LastUpdatedAtInfo({super.key, required this.issueData});
+  final bool isConcise;
+  const LastUpdatedAtInfo({super.key, required this.issueData, this.isConcise = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (issueData.lastUpdatedBy == null) {
+    if (issueData.lastUpdatedBy == null || isConcise) {
       return Text(
         'Last updated at ${issueData.updatedAt.toString().substring(0, 16)}',
         style: const TextStyle(

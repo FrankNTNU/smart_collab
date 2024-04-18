@@ -31,6 +31,8 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
   File? _pickedImage;
   String _enteredName = '';
   String _enteredDescription = '';
+  // description text editing controller
+  final _descriptionController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -38,8 +40,10 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
       setState(() {
         _enteredName = widget.team!.name!;
         _enteredDescription = widget.team!.description!;
+        _descriptionController.text = widget.team!.description!;
       });
     }
+
   }
 
   void _imageOnSelect(File selectedImage) async {
@@ -134,15 +138,23 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
               TextFormField(
                 minLines: 4,
                 maxLines: 8,
-                initialValue: _enteredDescription,
-                decoration: const InputDecoration(
+                controller: _descriptionController,
+                decoration:  InputDecoration(
                   labelText: 'Description',
+                  suffix: // clear text button
+                      IconButton(
+                    icon: const Icon(Icons.clear),
+                    onPressed: () {
+                      _descriptionController.clear();
+                    },
+                  ),
                 ),
                 onSaved: (newValue) {
                   setState(() {
                     _enteredDescription = newValue!;
                   });
                 },
+
                 validator: (value) =>
                     value!.isEmpty ? 'Please enter a description' : null,
               ),

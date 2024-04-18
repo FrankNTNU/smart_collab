@@ -10,6 +10,7 @@ class Comment {
   final String userId;
   final String content;
   final DateTime createdAt;
+  final Map<String, String>? roles;
 
   Comment({
     required this.id,
@@ -17,15 +18,35 @@ class Comment {
     required this.userId,
     required this.content,
     required this.createdAt,
+    this.roles,
   });
 
   factory Comment.fromJson(Map<String, dynamic> json) {
     return Comment(
-      id: json['id'],
+      id: json['id'] ?? '',
       issueId: json['issueId'],
       userId: json['userId'],
       content: json['content'],
       createdAt: DateTime.parse(json['createdAt']),
+      roles: Map<String, String>.from(json['roles']),
+    );
+  }
+  // copyWith
+  Comment copyWith({
+    String? id,
+    String? issueId,
+    String? userId,
+    String? content,
+    DateTime? createdAt,
+    Map<String, String>? roles,
+  }) {
+    return Comment(
+      id: id ?? this.id,
+      issueId: issueId ?? this.issueId,
+      userId: userId ?? this.userId,
+      content: content ?? this.content,
+      createdAt: createdAt ?? this.createdAt,
+      roles: roles ?? this.roles,
     );
   }
 }
@@ -37,6 +58,9 @@ class CommentsState {
   final PerformedAction performedAction;
   final String? errorMessage;
   final DocumentSnapshot? lastDocRef;
+  // args
+  final String issuesId;
+  final String teamId;
   // ctor
   CommentsState({
     required this.comments,
@@ -45,6 +69,8 @@ class CommentsState {
     required this.performedAction,
     this.errorMessage,
     required this.lastDocRef,
+    required this.issuesId,
+    required this.teamId,
   });
   // copyWith
   CommentsState copyWith({
@@ -54,6 +80,8 @@ class CommentsState {
     PerformedAction? performedAction,
     String? errorMessage,
     DocumentSnapshot? lastDocRef,
+    String? issuesId,
+    String? teamId,
   }) {
     return CommentsState(
       comments: comments ?? this.comments,
@@ -62,6 +90,8 @@ class CommentsState {
       performedAction: performedAction ?? this.performedAction,
       errorMessage: errorMessage,
       lastDocRef: lastDocRef ?? this.lastDocRef,
+      issuesId: issuesId ?? this.issuesId,
+      teamId: teamId ?? this.teamId,
     );
   }
 
@@ -74,26 +104,31 @@ class CommentsState {
       performedAction: PerformedAction.fetch,
       lastDocRef: null,
       errorMessage: '',
+      issuesId: '',
+      teamId: '',
     );
   }
 }
-
+typedef CommentProviderParam = ({String teamId, String issueId});
 class CommentController
-    extends AutoDisposeFamilyNotifier<CommentsState, String> {
+    extends AutoDisposeFamilyNotifier<CommentsState, CommentProviderParam> {
   @override
-  CommentsState build(String arg) {
+  CommentsState build(CommentProviderParam arg) {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
-    return CommentsState.initial().copyWith(userId: userId);
+    return CommentsState.initial().copyWith(userId: userId, teamId: arg.teamId, issuesId: arg.issueId);
   }
-
+  // clearErrorMessage
+  void clearErrorMessage() {
+    state = state.copyWith(errorMessage: '');
+  }
   Future<void> deleteComment(String commentId, String issueId) async {
     // delete the comment from issues/{issueId}/comments/{commentId}
     // set loading
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.delete);
     try {
-      await FirebaseFirestore.instance
+      await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
           .collection('issues')
           .doc(issueId)
           .collection('comments')
@@ -121,33 +156,30 @@ class CommentController
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
     try {
-      final docRef = await FirebaseFirestore.instance
+      final docRef = await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
           .collection('issues')
-          .doc(arg)
+          .doc(state.issuesId)
           .collection('comments')
           .add({
         'userId': state.userId,
         'content': content,
-        'issueId': arg,
+        'issueId': state.issuesId,
         'createdAt': DateTime.now().toIso8601String(),
+        'roles': {
+          state.userId: 'owner',
+        }
       });
       // add the comment to the state
       // get the newly added comment
       final snapShot = await docRef.get();
       final data = snapShot.data()!;
-      final newComment = Comment(
-        id: snapShot.id,
-        issueId: arg,
-        userId: data['userId'],
-        content: data['content'],
-        createdAt: DateTime.parse(data['createdAt']),
-      );
+      final newComment = Comment.fromJson(data).copyWith(id: snapShot.id);
       state = state.copyWith(
         comments: [...state.comments, newComment],
         apiStatus: ApiStatus.success,
       );
-    } catch (e) {
-      print('Error adding comment: $e');
+    } catch (e, stackTrace) {
+      print('Error adding comment: $e, $stackTrace');
       state = state.copyWith(
         apiStatus: ApiStatus.error,
         errorMessage: e.toString(),
@@ -163,14 +195,14 @@ class CommentController
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
     try {
       final snapShot = state.lastDocRef != null
-          ? await FirebaseFirestore.instance
+          ? await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
               .collection('issues')
               .doc(issueId)
               .collection('comments')
               .startAfterDocument(state.lastDocRef!)
               .limit(limit)
               .get()
-          : await FirebaseFirestore.instance
+          : await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
               .collection('issues')
               .doc(issueId)
               .collection('comments')
@@ -181,13 +213,7 @@ class CommentController
       state = state.copyWith(lastDocRef: lastDocRef);
       final comments = snapShot.docs.map((doc) {
         final data = doc.data();
-        return Comment(
-          id: doc.id,
-          issueId: issueId,
-          userId: data['userId'],
-          content: data['content'],
-          createdAt: DateTime.parse(data['createdAt']),
-        );
+        return Comment.fromJson(data).copyWith(id: doc.id);
       }).toList();
       state = state.copyWith(
         comments: comments,
@@ -204,6 +230,6 @@ class CommentController
 }
 
 final commentProvider = NotifierProvider.autoDispose
-    .family<CommentController, CommentsState, String>(
+    .family<CommentController, CommentsState, CommentProviderParam>(
   () => CommentController(),
 );

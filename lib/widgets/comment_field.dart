@@ -7,9 +7,11 @@ import '../services/team_controller.dart';
 
 class CommentField extends ConsumerStatefulWidget {
   final String issueId;
+  final String teamId;
   const CommentField({
     super.key,
     required this.issueId,
+    required this.teamId,
   });
 
   @override
@@ -21,11 +23,30 @@ class _CommentFieldState extends ConsumerState<CommentField> {
   // text controller
   final _textController = TextEditingController();
   @override
+  void initState() {
+    super.initState();
+    Future.delayed(
+      Duration.zero,
+      () {
+        // reset comment
+        ref
+            .read(commentProvider(
+              (issueId: widget.issueId, teamId: widget.teamId)
+            ).notifier)
+            .clearErrorMessage();
+      },
+    );
+  }
+  @override
   Widget build(BuildContext context) {
     final errorMessage = ref.watch(
-        commentProvider(widget.issueId).select((value) => value.errorMessage));
+        commentProvider(
+          (issueId: widget.issueId, teamId: widget.teamId)
+        ).select((value) => value.errorMessage));
     ref.listen(
-        commentProvider(widget.issueId).select((value) => value.apiStatus),
+        commentProvider(
+          (issueId: widget.issueId, teamId: widget.teamId)
+        ).select((value) => value.apiStatus),
         (prev, next) {
       if (next == ApiStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +56,9 @@ class _CommentFieldState extends ConsumerState<CommentField> {
         );
       }
     });
-    final isLoading = ref.watch(commentProvider(widget.issueId).select(
+    final isLoading = ref.watch(commentProvider(
+      (issueId: widget.issueId, teamId: widget.teamId)
+    ).select(
         (value) =>
             value.apiStatus == ApiStatus.loading &&
             value.performedAction == PerformedAction.add));
@@ -72,7 +95,9 @@ class _CommentFieldState extends ConsumerState<CommentField> {
                     : () async {
                         // add comment
                         await ref
-                            .read(commentProvider(widget.issueId).notifier)
+                            .read(commentProvider(
+                              (issueId: widget.issueId, teamId: widget.teamId)
+                            ).notifier)
                             .addComment(_enteredComment);
                         // unfocus
                         FocusScope.of(context).unfocus();
