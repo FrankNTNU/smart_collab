@@ -7,11 +7,9 @@ import 'package:smart_collab/widgets/comments.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
-import '../services/profile_controller.dart';
 import '../widgets/add_or_edit_issue_sheet.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/confirm_dialog.dart';
-import '../widgets/user_avatar.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
   const IssueScreen({super.key, required this.issue});
@@ -25,20 +23,23 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   @override
   Widget build(BuildContext context) {
     final issueData = ref.watch(issueProvider(widget.issue.teamId).select(
-        (value) =>
-            value.issues.where((issue) => issue.id == widget.issue.id).firstOrNull));
+        (value) => value.issues
+            .where((issue) => issue.id == widget.issue.id)
+            .firstOrNull));
     if (issueData == null) {
       return const Center(
         child: Text('Issue not found'),
       );
     }
     final areYouTheOnwerOrAdmin = issueData
-                .roles[ref.read(authControllerProvider).user!.uid] ==
+                .roles[ref.watch(authControllerProvider).user!.uid] ==
             'owner' ||
-        issueData.roles[ref.read(authControllerProvider).user!.uid] == 'admin';
-    final isAuthorOrColloborator = issueData
-            .roles[ref.read(authControllerProvider).user!.uid] ==
-        'owner' || issueData.roles[ref.read(authControllerProvider).user!.uid] == 'collaborator';
+        issueData.roles[ref.watch(authControllerProvider).user!.uid] == 'admin';
+    final isAuthorOrColloborator =
+        issueData.roles[ref.watch(authControllerProvider).user!.uid] ==
+                'owner' ||
+            issueData.roles[ref.watch(authControllerProvider).user!.uid] ==
+                'collaborator';
     return SizedBox(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.85,
@@ -63,28 +64,28 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       // spacer and close button
                       const Spacer(),
                       if (isAuthorOrColloborator)
-                      // edit button
-                      IconButton(
-                          onPressed: () {
-                            // open bottom sheet
-                            showModalBottomSheet(
-                              isScrollControlled: true,
-                              enableDrag: true,
-                              showDragHandle: true,
-                              context: context,
-                              builder: (context) => Padding(
-                                padding: MediaQuery.of(context)
-                                    .viewInsets
-                                    .copyWith(left: 16, right: 16),
-                                child: AddOrEditIssueSheet(
-                                  teamId: widget.issue.teamId,
-                                  addOrEdit: AddorEdit.update,
-                                  issue: issueData,
+                        // edit button
+                        IconButton(
+                            onPressed: () {
+                              // open bottom sheet
+                              showModalBottomSheet(
+                                isScrollControlled: true,
+                                enableDrag: true,
+                                showDragHandle: true,
+                                context: context,
+                                builder: (context) => Padding(
+                                  padding: MediaQuery.of(context)
+                                      .viewInsets
+                                      .copyWith(left: 16, right: 16),
+                                  child: AddOrEditIssueSheet(
+                                    teamId: widget.issue.teamId,
+                                    addOrEdit: AddorEdit.update,
+                                    issue: issueData,
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.edit)),
+                              );
+                            },
+                            icon: const Icon(Icons.edit)),
                       const CloseButton(),
                     ],
                   ),

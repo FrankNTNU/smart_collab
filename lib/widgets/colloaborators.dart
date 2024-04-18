@@ -38,7 +38,7 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
     final ownerUid =
         issue?.roles.entries.firstWhere((role) => role.value == 'owner').key;
     // isOwnerOrAdmin
-    final isOwner = ref.read(authControllerProvider).user!.uid == ownerUid;
+    final isOwner = ref.watch(authControllerProvider).user!.uid == ownerUid;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(

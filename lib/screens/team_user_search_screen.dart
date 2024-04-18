@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
 import '../services/profile_controller.dart';
@@ -11,7 +10,10 @@ class TeamUserSearchScreen extends ConsumerStatefulWidget {
   // onSelected
   final Function(String) onSelected;
   const TeamUserSearchScreen(
-      {super.key, required this.teamId, required this.onSelected, this.excludedMembers = const []});
+      {super.key,
+      required this.teamId,
+      required this.onSelected,
+      this.excludedMembers = const []});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>

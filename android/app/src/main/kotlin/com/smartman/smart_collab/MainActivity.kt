@@ -1,4 +1,4 @@
-package com.example.smart_collab
+package com.smartman.smart_collab
 
 import io.flutter.embedding.android.FlutterActivity
 

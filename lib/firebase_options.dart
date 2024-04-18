@@ -24,10 +24,7 @@ class DefaultFirebaseOptions {
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
@@ -54,10 +51,20 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyA1Y6OMs8gOWlvWG1_i5xb0KaNcO5ZJdHM',
-    appId: '1:914148944165:ios:3535d03fb10a0d07a612cc',
+    appId: '1:914148944165:ios:5fb0b60ed18a61eca612cc',
     messagingSenderId: '914148944165',
     projectId: 'smart-collab-fd262',
     storageBucket: 'smart-collab-fd262.appspot.com',
-    iosBundleId: 'com.smartman.smartCollab',
+    iosClientId: '914148944165-obov15q0kukv3ibd2p0p3k8io8j6ppp6.apps.googleusercontent.com',
+    iosBundleId: 'com.example.smartCollab',
   );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBHux68tWrPIA7Om1KZK3qfDSXTxtMdqY8',
+    appId: '1:914148944165:android:6be81860f69561caa612cc',
+    messagingSenderId: '914148944165',
+    projectId: 'smart-collab-fd262',
+    storageBucket: 'smart-collab-fd262.appspot.com',
+  );
+
 }

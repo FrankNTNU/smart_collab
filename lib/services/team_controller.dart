@@ -118,6 +118,7 @@ class TeamsController extends Notifier<TeamsState> {
   void clearErrorMessage() {
     state = state.copyWith(errorMessage: null);
   }
+
   // get all members of a team
   Future<List<String>> fetchTeamMembers(String teamId) async {
     try {
@@ -136,6 +137,7 @@ class TeamsController extends Notifier<TeamsState> {
       return [];
     }
   }
+
   Future<void> removeFromTeam(
       {required String uid, required String teamId}) async {
     // set loading
@@ -328,7 +330,8 @@ class TeamsController extends Notifier<TeamsState> {
       }
       // save the team with the imageUrl
       await docRef.update({'imageUrl': team.imageUrl});
-      final newTeam = team.copyWith(id: docRef.id);
+      final newTeam =
+          team.copyWith(id: docRef.id, roles: {state.userId: 'owner'});
       state = state.copyWith(
         apiStatus: ApiStatus.success,
         teams: [...state.teams, newTeam],
@@ -347,7 +350,16 @@ class TeamsController extends Notifier<TeamsState> {
       // delete the image from Firebase Storage
       final team = state.teams.firstWhere((team) => team.id == teamId);
       if (team.imageUrl != null) {
-        await FirebaseStorage.instance.refFromURL(team.imageUrl!).delete();
+        // check if such image exists on Firebase Storage given the imageUrl
+        final isExist = await FirebaseStorage.instance
+            .refFromURL(team.imageUrl!)
+            .listAll()
+            .then((value) => true)
+            .catchError((e) => false);
+        if (!isExist) {
+          // delete the image from Firebase Storage if such image exists
+          await FirebaseStorage.instance.refFromURL(team.imageUrl!).delete();
+        }
       }
       // delete the team from firestore
       await FirebaseFirestore.instance.collection('teams').doc(teamId).delete();

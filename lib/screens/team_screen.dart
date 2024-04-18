@@ -47,10 +47,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   Widget build(BuildContext context) {
     final teamData = ref.watch(teamsProvider.select((value) =>
         value.teams.where((team) => team.id == widget.team.id).first));
-    final isOwnerOrAdmin =
-        teamData.roles[ref.read(authControllerProvider).user!.uid] == 'owner' ||
-            teamData.roles[ref.read(authControllerProvider).user!.uid] ==
-                'admin';
+    print('All roles: ${teamData.roles}');
+    final isOwnerOrAdmin = teamData
+                .roles[ref.watch(authControllerProvider).user!.uid] ==
+            'owner' ||
+        teamData.roles[ref.watch(authControllerProvider).user!.uid] == 'admin';
 
     final isFetching = ref.watch(issueProvider(widget.team.id!).select(
         (value) =>
@@ -149,7 +150,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             teamId: teamData.id!,
           ),
           const Divider(),
-         
 
           Issues(teamId: teamData.id!),
           if (isFetching) const Center(child: CircularProgressIndicator()),

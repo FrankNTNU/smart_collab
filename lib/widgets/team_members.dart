@@ -25,14 +25,14 @@ class TeamMembers extends ConsumerWidget {
             return asyncProfilePicProvider.when(
               data: (profileData) {
                 final isThisMemberYourself =
-                    role.key == ref.read(authControllerProvider).user!.uid;
+                    role.key == ref.watch(authControllerProvider).user!.uid;
                 final isThisMemberTheOwner =
                     teamData.roles[role.key] == 'owner';
                 final isYourselfTheOnwer = teamData
-                        .roles[ref.read(authControllerProvider).user!.uid] ==
+                        .roles[ref.watch(authControllerProvider).user!.uid] ==
                     'owner';
                 final isYourselfAnAdmin = teamData
-                        .roles[ref.read(authControllerProvider).user!.uid] ==
+                        .roles[ref.watch(authControllerProvider).user!.uid] ==
                     'admin';
                 final canOpenMenu = isYourselfTheOnwer ||
                     (isYourselfAnAdmin && !isThisMemberYourself) &&

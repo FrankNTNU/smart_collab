@@ -94,7 +94,10 @@ class AuthController extends Notifier<AuthState> {
         );
         print('User: ${userCred.user}');
         // save this user to firestore users collection
-        await FirebaseFirestore.instance.collection('users').doc(userCred.user?.uid).set({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCred.user?.uid)
+            .set({
           'uid': userCred.user?.uid,
           'email': userCred.user?.email,
           'displayName': userCred.user?.displayName,
@@ -108,6 +111,7 @@ class AuthController extends Notifier<AuthState> {
         );
       }
     } catch (e) {
+      print('Error occured in loginWithGoogle: $e');
       state = state.copyWith(
         apiStatus: ApiStatus.error,
         errorMessage: e.toString(),

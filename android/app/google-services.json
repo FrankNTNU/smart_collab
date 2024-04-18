@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "914148944165",
+    "project_id": "smart-collab-fd262",
+    "storage_bucket": "smart-collab-fd262.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:914148944165:android:6be81860f69561caa612cc",
+        "android_client_info": {
+          "package_name": "com.smartman.smart_collab"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "914148944165-qhac8bc85jcduoktfiq57qftt027vokh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.smartman.smart_collab",
+            "certificate_hash": "5657164771f29e226a74058d0cf490e11c50931d"
+          }
+        },
+        {
+          "client_id": "914148944165-ss3iva3ib6uma6obbjsiolc2fmkf89ac.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHux68tWrPIA7Om1KZK3qfDSXTxtMdqY8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "914148944165-ss3iva3ib6uma6obbjsiolc2fmkf89ac.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "914148944165-obov15q0kukv3ibd2p0p3k8io8j6ppp6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.smartCollab"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
