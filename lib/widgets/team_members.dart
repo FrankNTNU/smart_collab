@@ -34,9 +34,9 @@ class TeamMembers extends ConsumerWidget {
                 final isYourselfAnAdmin = teamData
                         .roles[ref.watch(authControllerProvider).user!.uid] ==
                     'admin';
-                final canOpenMenu = isYourselfTheOnwer ||
-                    (isYourselfAnAdmin && !isThisMemberYourself) &&
-                        !isThisMemberTheOwner;
+                final canOpenMenu = (isYourselfTheOnwer ||
+                        (isYourselfAnAdmin && !isThisMemberYourself)) &&
+                    !isThisMemberTheOwner;
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
@@ -83,6 +83,7 @@ class TeamMembers extends ConsumerWidget {
                                         Navigator.pop(context);
                                       },
                                     ),
+
                                   // remove from team
                                   ListTile(
                                     leading: const Icon(Icons.delete),

@@ -84,7 +84,8 @@ class _TeamsState extends ConsumerState<Teams> {
         // header
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          child: Text('My Teams', style: Theme.of(context).textTheme.headlineLarge),
+          child: Text('My Teams',
+              style: Theme.of(context).textTheme.headlineLarge),
         ),
         RefreshIndicator(
           onRefresh: () async =>
@@ -109,70 +110,6 @@ class _TeamsState extends ConsumerState<Teams> {
                     ),
                   );
                 },
-                // long press to show bottom menu option
-                onLongPress: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.edit),
-                              title: const Text('Edit'),
-                              onTap: () {
-                                // show bottom sheet
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  // show handle
-                                  enableDrag: true,
-                                  showDragHandle: true,
-                                  context: context,
-                                  builder: (context) {
-                                    return Padding(
-                                      padding: MediaQuery.of(context)
-                                          .viewInsets
-                                          .copyWith(left: 16, right: 16),
-                                      child: AddTeamSheet(
-                                          addOrEdit: AddorEdit.update,
-                                          team: teams[index]),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.delete),
-                              title: const Text('Delete'),
-                              onTap: () {
-                                //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return ConfirmDialog(
-                                      title: 'Delete Team',
-                                      content:
-                                          'Are you sure you want to delete this team?',
-                                      onConfirm: () {
-                                        ref
-                                            .read(teamsProvider.notifier)
-                                            .deleteTeam(teams[index].id!);
-                                        Navigator.pop(context);
-                                      },
-                                      confirmText: 'Delete',
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   child: Column(
@@ -195,7 +132,8 @@ class _TeamsState extends ConsumerState<Teams> {
                         ),
                       ListTile(
                         title: Text(teams[index].name ?? ''),
-                        subtitle: Text(teams[index].description ?? '', maxLines: 3, overflow: TextOverflow.ellipsis),
+                        subtitle: Text(teams[index].description ?? '',
+                            maxLines: 3, overflow: TextOverflow.ellipsis),
                       ),
                     ],
                   ),

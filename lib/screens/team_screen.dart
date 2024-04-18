@@ -9,6 +9,7 @@ import 'package:smart_collab/widgets/team_members.dart';
 
 import '../services/issue_controller.dart';
 import '../services/team_controller.dart';
+import '../widgets/confirm_dialog.dart';
 import '../widgets/issues.dart';
 
 class TeamScreen extends ConsumerStatefulWidget {
@@ -65,23 +66,68 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             IconButton(
                 onPressed: () {
                   showModalBottomSheet(
-                    isScrollControlled: true,
-                    // show handle
-                    enableDrag: true,
-                    showDragHandle: true,
                     context: context,
                     builder: (context) {
                       return Padding(
-                        padding: MediaQuery.of(context)
-                            .viewInsets
-                            .copyWith(left: 16, right: 16),
-                        child: AddTeamSheet(
-                            addOrEdit: AddorEdit.update, team: teamData),
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.edit),
+                              title: const Text('Edit'),
+                              onTap: () {
+                                // show bottom sheet
+                                showModalBottomSheet(
+                                  isScrollControlled: true,
+                                  // show handle
+                                  enableDrag: true,
+                                  showDragHandle: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return Padding(
+                                      padding: MediaQuery.of(context)
+                                          .viewInsets
+                                          .copyWith(left: 16, right: 16),
+                                      child: AddTeamSheet(
+                                          addOrEdit: AddorEdit.update,
+                                          team: teamData),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                            ListTile(
+                              leading: const Icon(Icons.delete),
+                              title: const Text('Delete'),
+                              onTap: () {
+                                //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
+                                showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return ConfirmDialog(
+                                      title: 'Delete Team',
+                                      content:
+                                          'Are you sure you want to delete this team?',
+                                      onConfirm: () {
+                                        ref
+                                            .read(teamsProvider.notifier)
+                                            .deleteTeam(teamData.id!);
+                                        Navigator.pop(context);
+                                      },
+                                      confirmText: 'Delete',
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        ),
                       );
                     },
                   );
                 },
-                icon: const Icon(Icons.edit))
+                icon: const Icon(Icons.more_horiz))
         ],
       ),
       floatingActionButton: // add button
