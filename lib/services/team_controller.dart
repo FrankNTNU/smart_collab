@@ -118,7 +118,24 @@ class TeamsController extends Notifier<TeamsState> {
   void clearErrorMessage() {
     state = state.copyWith(errorMessage: null);
   }
-
+  // get all members of a team
+  Future<List<String>> fetchTeamMembers(String teamId) async {
+    try {
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
+      final snapshot = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .get();
+      final team = Team.fromJson(snapshot.data()!);
+      state = state.copyWith(apiStatus: ApiStatus.success);
+      return team.roles.keys.toList();
+    } catch (e) {
+      print('Error occured in the fetchTeamMembers method: $e');
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+      return [];
+    }
+  }
   Future<void> removeFromTeam(
       {required String uid, required String teamId}) async {
     // set loading

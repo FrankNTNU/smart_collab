@@ -144,7 +144,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             child: Text('Members',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
-
           // show a list of admins horizontally
           TeamMembers(
             teamId: teamData.id!,

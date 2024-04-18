@@ -22,6 +22,8 @@ class Issue {
   final List<String> tags;
   // teamId
   final String teamId;
+  // last updated by
+  final String? lastUpdatedBy;
   // ctor
   Issue({
     required this.title,
@@ -34,6 +36,7 @@ class Issue {
     required this.deadline,
     required this.tags,
     required this.teamId,
+    this.lastUpdatedBy,
   });
   // copyWith
   Issue copyWith({
@@ -47,6 +50,7 @@ class Issue {
     DateTime? deadline,
     List<String>? tags,
     String? teamId,
+    String? lastUpdatedBy,
   }) {
     return Issue(
       title: title ?? this.title,
@@ -59,6 +63,7 @@ class Issue {
       deadline: deadline ?? this.deadline,
       tags: tags ?? this.tags,
       teamId: teamId ?? this.teamId,
+      lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
     );
   }
 
@@ -76,6 +81,7 @@ class Issue {
           DateTime.parse(json['deadline'] ?? DateTime.now().toIso8601String()),
       tags: List<String>.from(json['tags'] ?? []),
       teamId: json['teamId'],
+      lastUpdatedBy: json['lastUpdatedBy'],
     );
   }
 }
@@ -132,6 +138,80 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId);
+  }
+
+  // remove a collaborator
+  Future<void> removeCollaborator(
+      {required String issueId, required String uid}) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'roles.$uid': FieldValue.delete(),
+      });
+      final updatedIssue =
+          state.issues.firstWhere((issue) => issue.id == issueId);
+      final updatedIssues = state.issues.map((issue) {
+        if (issue.id == issueId) {
+          // remove the collaborator from the roles map
+          final updatedRoles = updatedIssue.roles;
+          updatedRoles.remove(uid);
+          return updatedIssue.copyWith(
+            roles: updatedRoles,
+          );
+        }
+        return issue;
+      }).toList();
+      state =
+          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+    } catch (e) {
+      print('Error occured in the removeCollaborators method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  // add collaborator
+  Future<void> addCollaborator(
+      {required String issueId, required String uid}) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'roles.$uid': 'collaborator',
+      });
+      final updatedIssue =
+          state.issues.firstWhere((issue) => issue.id == issueId);
+      final updatedIssues = state.issues.map((issue) {
+        if (issue.id == issueId) {
+          return updatedIssue.copyWith(
+            roles: {
+              ...updatedIssue.roles,
+              uid: 'collaborator',
+            },
+          );
+        }
+        return issue;
+      }).toList();
+      state =
+          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+    } catch (e) {
+      print('Error occured in the addCollaborators method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   // fetchIssues
@@ -221,6 +301,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         'description': description,
         'updatedAt': DateTime.now().toIso8601String(),
         'tags': tags,
+        'lastUpdatedBy': state.userId,
       });
       final updatedIssue =
           state.issues.firstWhere((issue) => issue.id == issueId);
@@ -230,6 +311,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
             title: title,
             description: description,
             tags: tags,
+            updatedAt: DateTime.now(),
+            lastUpdatedBy: state.userId,
           );
         }
         return issue;

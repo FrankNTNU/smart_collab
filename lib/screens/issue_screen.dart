@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/widgets/colloaborators.dart';
 import 'package:smart_collab/widgets/comment_field.dart';
 import 'package:smart_collab/widgets/comments.dart';
+import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
 import '../services/profile_controller.dart';
@@ -29,6 +31,9 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                 .roles[ref.read(authControllerProvider).user!.uid] ==
             'owner' ||
         issueData.roles[ref.read(authControllerProvider).user!.uid] == 'admin';
+    final isAuthorOrColloborator = issueData
+            .roles[ref.read(authControllerProvider).user!.uid] ==
+        'owner' || issueData.roles[ref.read(authControllerProvider).user!.uid] == 'collaborator';
     return SizedBox(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.85,
@@ -52,6 +57,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       ),
                       // spacer and close button
                       const Spacer(),
+                      if (isAuthorOrColloborator)
                       // edit button
                       IconButton(
                           onPressed: () {
@@ -77,72 +83,45 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       const CloseButton(),
                     ],
                   ),
-                  
-                  
-                  // creator information
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    child: Row(
-                      children: [
-                        Consumer(
-                          builder: (context, ref, child) {
-                            final ownerId = widget.issue.roles.entries
-                                .firstWhere(
-                                    (element) => element.value == 'owner')
-                                .key;
-                            final asyncProfilePicProvider =
-                                ref.watch(profileDataProvider(ownerId));
-                            return asyncProfilePicProvider.when(
-                              data: (profileData) {
-                                return Row(
-                                  children: [
-                                    UserAvatar(
-                                      uid: ownerId,
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(profileData.displayName ?? ''),
-                                        // build time
-                                        Text(
-                                          'Created at ${issueData.createdAt}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                );
-                              },
-                              loading: () => const CircularProgressIndicator(),
-                              error: (error, _) => Text('Error: $error'),
-                            );
-                          },
-                        )
-                      ],
-                    ),
-                  ),
-                 
+                  // last updated at information
+                  LastUpdatedAtInfo(issueData: issueData),
                   Text(
                     issueData.description,
                     style: const TextStyle(
                       fontSize: 16,
                     ),
                   ),
-                   Wrap(
+                  Wrap(
                     spacing: 8,
                     children: [
                       ...issueData.tags.map((tag) => Chip(
-                        padding: const EdgeInsets.all(0),
+                            padding: const EdgeInsets.all(0),
                             label: Text(tag),
                           ))
                     ],
                   ),
                   const Divider(),
-                  const Text('Comments', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Collaborators',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  // grey description
+                  const Text(
+                    'People who can edit this issue',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  Collaborators(
+                      issueId: issueData.id, teamId: widget.issue.teamId),
+
+                  // show a list of admins horizontally
+
+                  const Divider(),
+                  const Text('Comments',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   Comments(issueId: issueData.id),
                   const Divider(),
                   if (areYouTheOnwerOrAdmin)
