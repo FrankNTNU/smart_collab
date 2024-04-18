@@ -60,26 +60,27 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       appBar: AppBar(
         title: Text(teamData.name ?? ''),
         actions: [
-          IconButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  isScrollControlled: true,
-                  // show handle
-                  enableDrag: true,
-                  showDragHandle: true,
-                  context: context,
-                  builder: (context) {
-                    return Padding(
-                      padding: MediaQuery.of(context)
-                          .viewInsets
-                          .copyWith(left: 16, right: 16),
-                      child: AddTeamSheet(
-                          addOrEdit: AddorEdit.update, team: teamData),
-                    );
-                  },
-                );
-              },
-              icon: const Icon(Icons.edit))
+          if (isOwnerOrAdmin)
+            IconButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    isScrollControlled: true,
+                    // show handle
+                    enableDrag: true,
+                    showDragHandle: true,
+                    context: context,
+                    builder: (context) {
+                      return Padding(
+                        padding: MediaQuery.of(context)
+                            .viewInsets
+                            .copyWith(left: 16, right: 16),
+                        child: AddTeamSheet(
+                            addOrEdit: AddorEdit.update, team: teamData),
+                      );
+                    },
+                  );
+                },
+                icon: const Icon(Icons.edit))
         ],
       ),
       floatingActionButton: // add button
@@ -138,10 +139,23 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               },
               child: const Text('Invite user to team'),
             ),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('Members',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+
           // show a list of admins horizontally
           TeamMembers(
             teamId: teamData.id!,
           ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text('Issues',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+
           Issues(teamId: teamData.id!),
           if (isFetching) const CircularProgressIndicator(),
         ],

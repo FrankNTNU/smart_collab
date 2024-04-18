@@ -7,7 +7,7 @@ import 'package:textfield_tags/textfield_tags.dart';
 import '../services/auth_controller.dart';
 
 class AddOrEditIssueSheet extends ConsumerStatefulWidget {
-  const AddOrEditIssueSheet(
+  const   AddOrEditIssueSheet(
       {super.key, required this.teamId, required this.addOrEdit, this.issue});
   final String teamId;
   final AddorEdit addOrEdit;
@@ -31,6 +31,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   final List<String> _enteredTags = [];
   late double _distanceToField;
   late StringTagController _stringTagController;
+  // initial tags
+   List<String> _initialTags = ['bug'];
 
   @override
   void didChangeDependencies() {
@@ -47,6 +49,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
         _enteredTitle = widget.issue!.title;
         _enteredDescription = widget.issue!.description;
         _enteredTags.addAll(widget.issue!.tags);
+        // set initial tags
+        _initialTags = widget.issue!.tags;
       });
     }
   }
@@ -87,10 +91,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
         Navigator.of(context).pop();
       }
     });
-    return SingleChildScrollView(
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.8,
       child: Form(
         key: _formKey,
-        child: Column(
+        child: ListView(
+          shrinkWrap: true,
           children: [
             // header
             Row(
@@ -138,7 +144,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
             // tags
             TextFieldTags<String>(
               textfieldTagsController: _stringTagController,
-              initialTags: const ['bug'],
+              initialTags: _initialTags,
               textSeparators: const [' ', ','],
               letterCase: LetterCase.normal,
               validator: (String tag) {

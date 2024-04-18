@@ -65,13 +65,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body: const Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
+      body:  ListView(
+        children: const [
           // show profile information
           SizedBox(height: 20),
           Profile(),
-          Expanded(child: Teams()),
+          Divider(),
+          Teams(),
         ],
       ),
     );

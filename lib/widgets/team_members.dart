@@ -22,14 +22,21 @@ class TeamMembers extends ConsumerWidget {
           ...teamData.roles.entries.map((role) {
             final asyncProfilePicProvider =
                 ref.watch(profileDataProvider(role.key));
-
             return asyncProfilePicProvider.when(
               data: (profileData) {
-                final notYourself =
-                    role.key != ref.read(authControllerProvider).user!.uid;
-                final isOwner = teamData.roles[role.key] == 'owner';
-                final isAdmin = teamData.roles[role.key] == 'admin';
-                final canOpenMenu = isOwner || isAdmin && notYourself;
+                final isThisMemberYourself =
+                    role.key == ref.read(authControllerProvider).user!.uid;
+                final isThisMemberTheOwner =
+                    teamData.roles[role.key] == 'owner';
+                final isYourselfTheOnwer = teamData
+                        .roles[ref.read(authControllerProvider).user!.uid] ==
+                    'owner';
+                final isYourselfAnAdmin = teamData
+                        .roles[ref.read(authControllerProvider).user!.uid] ==
+                    'admin';
+                final canOpenMenu = isYourselfTheOnwer ||
+                    (isYourselfAnAdmin && !isThisMemberYourself) &&
+                        !isThisMemberTheOwner;
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Column(
@@ -37,9 +44,7 @@ class TeamMembers extends ConsumerWidget {
                       InkWell(
                         onLongPress: () {
                           if (!canOpenMenu) {
-                            return;
-                          }
-                          if (isOwner) {
+                            print('Cannot open menu');
                             return;
                           }
                           // show bottom menu sheet
@@ -110,7 +115,7 @@ class TeamMembers extends ConsumerWidget {
                   ),
                 );
               },
-              loading: () => const CircularProgressIndicator(),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stackTrace) =>
                   const Text('Error loading profile picture'),
             );

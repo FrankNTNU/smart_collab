@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 
-import '../services/auth_controller.dart';
-import '../services/team_controller.dart';
-
 class Issues extends ConsumerStatefulWidget {
   final String teamId;
   const Issues({super.key, required this.teamId});
@@ -29,7 +26,6 @@ class _IssuesState extends ConsumerState<Issues> {
     );
   }
 
-  
   @override
   Widget build(BuildContext context) {
     final issues =
@@ -42,7 +38,7 @@ class _IssuesState extends ConsumerState<Issues> {
     return ListView.builder(
       // never scroll
       shrinkWrap: true,
-      itemCount: issues.length,
+      physics: const ClampingScrollPhysics(), itemCount: issues.length,
       itemBuilder: (context, index) {
         return Column(
           children: [
@@ -56,8 +52,7 @@ class _IssuesState extends ConsumerState<Issues> {
                   context: context,
                   builder: (context) => Padding(
                     padding: MediaQuery.of(context)
-                        .viewInsets
-                        .copyWith(left: 16, right: 16),
+                        .viewInsets,
                     child: IssueScreen(
                       issue: issues[index],
                     ),
@@ -77,6 +72,7 @@ class _IssuesState extends ConsumerState<Issues> {
                     spacing: 8,
                     children: [
                       ...issues[index].tags.map((tag) => Chip(
+                        padding: const EdgeInsets.all(0),
                             label: Text(tag),
                           ))
                     ],
@@ -84,7 +80,6 @@ class _IssuesState extends ConsumerState<Issues> {
                 ],
               ),
             ),
-            
           ],
         );
       },

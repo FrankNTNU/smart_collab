@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/team_screen.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
+
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
 
@@ -86,34 +86,37 @@ class _TeamsState extends ConsumerState<Teams> {
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           child: Text('My Teams', style: Theme.of(context).textTheme.headlineLarge),
         ),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: () async =>
-                await ref.read(teamsProvider.notifier).fetchTeams(),
-            child: ListView.builder(
-              itemCount: teams.length,
-              itemBuilder: (context, index) {
-                return InkWell(
-                  onTap: () {
-                    // go to team screen
-                    //Navigator.pushNamed(context, '/team', arguments: teams[index]);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return TeamScreen(
-                            team: teams[index],
-                          );
-                        },
-                      ),
-                    );
-                  },
-                  // long press to show bottom menu option
-                  onLongPress: () {
-                    showModalBottomSheet(
-                      context: context,
+        RefreshIndicator(
+          onRefresh: () async =>
+              await ref.read(teamsProvider.notifier).fetchTeams(),
+          child: ListView.builder(
+            shrinkWrap: true,
+            physics: const ClampingScrollPhysics(),
+            itemCount: teams.length,
+            itemBuilder: (context, index) {
+              return InkWell(
+                onTap: () {
+                  // go to team screen
+                  //Navigator.pushNamed(context, '/team', arguments: teams[index]);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
                       builder: (context) {
-                        return Column(
+                        return TeamScreen(
+                          team: teams[index],
+                        );
+                      },
+                    ),
+                  );
+                },
+                // long press to show bottom menu option
+                onLongPress: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             ListTile(
@@ -165,40 +168,40 @@ class _TeamsState extends ConsumerState<Teams> {
                               },
                             ),
                           ],
-                        );
-                      },
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      children: [
-                        // large image
-                        if (teams[index].imageUrl?.isNotEmpty == true)
-                          CoverImage(
-                            imageUrl: teams[index].imageUrl!,
-                          )
-                        else
-                          Container(
-                            height: 128,
-                            width: double.infinity,
-                            // border radius
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(Icons.image),
-                          ),
-                        ListTile(
-                          title: Text(teams[index].name ?? ''),
-                          subtitle: Text(teams[index].description ?? ''),
                         ),
-                      ],
-                    ),
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      // large image
+                      if (teams[index].imageUrl?.isNotEmpty == true)
+                        CoverImage(
+                          imageUrl: teams[index].imageUrl!,
+                        )
+                      else
+                        Container(
+                          height: 128,
+                          width: double.infinity,
+                          // border radius
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.image),
+                        ),
+                      ListTile(
+                        title: Text(teams[index].name ?? ''),
+                        subtitle: Text(teams[index].description ?? ''),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
         ),
       ],
