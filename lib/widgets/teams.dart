@@ -80,10 +80,10 @@ class _TeamsState extends ConsumerState<Teams> {
       children: [
         if (isLoading) const CircularProgressIndicator(),
         // header
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           child: Text('My Teams',
-              style: Theme.of(context).textTheme.headlineLarge),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         RefreshIndicator(
           onRefresh: () async =>

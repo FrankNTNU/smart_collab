@@ -97,26 +97,28 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   ),
                   // show tags
                   InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return TagSelectorScreen(
-                                teamId: issueData.teamId,
-                                issueId: widget.issue.id,
-                                initialTags: widget.issue.tags,
+                      onTap: !isAuthorOrColloborator
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return TagSelectorScreen(
+                                      teamId: issueData.teamId,
+                                      issueId: widget.issue.id,
+                                      initialTags: widget.issue.tags,
+                                    );
+                                  },
+                                ),
                               );
                             },
-                          ),
-                        );
-                      },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: IssueTags(
                           tags: issueData.tags,
                           teamId: widget.issue.teamId,
-                          isEditable: true,
+                          isEditable: isAuthorOrColloborator,
                         ),
                       )),
                   const Divider(),

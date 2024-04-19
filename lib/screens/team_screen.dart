@@ -26,15 +26,18 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   // cover image height
   final double _coverImageHeight = 128;
   // isCloseToBottom
-  bool isNotAtTop = false;
+  bool _isNotAtTop = false;
   @override
   void initState() {
     super.initState();
     // listen to scroll event
     _scrollController.addListener(() {
-      setState(() {
-        isNotAtTop = _scrollController.position.pixels > 0;
-      });
+      bool isNotAtTop = _scrollController.position.pixels > 0;
+      if (_isNotAtTop != isNotAtTop) {
+        setState(() {
+          _isNotAtTop = isNotAtTop;
+        });
+      }
       final isCloseToBottom = _scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent;
       if (isCloseToBottom) {
@@ -84,7 +87,61 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           NotificationBell(
             teamId: teamData.id!,
           ),
-          if (isOwnerOrAdmin)
+           ],
+      ),
+      // scroll tp top button
+      floatingActionButton: _isNotAtTop && // when the keybaord is not open
+              MediaQuery.of(context).viewInsets.bottom == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: const Icon(Icons.arrow_upward),
+            )
+          : null,
+      // floatingActionButton: // add button
+      //     FloatingActionButton(
+      //   onPressed: () {
+      //     showModalBottomSheet(
+      //       isScrollControlled: true,
+      //       enableDrag: true,
+      //       showDragHandle: true,
+      //       context: context,
+      //       builder: (context) => AddOrEditIssueSheet(
+      //         teamId: teamData.id!,
+      //         addOrEdit: AddorEdit.add,
+      //       ),
+      //     );
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
+
+      body: ListView(
+        controller: _scrollController,
+        children: [
+          // show cover image
+          if (teamData.imageUrl != null)
+            // network image
+            CoverImage(
+              imageUrl: teamData.imageUrl!,
+              isRoundedBorder: false,
+              height: _coverImageHeight,
+            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text('${teamData.name}',
+                    style:
+                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        
+              ),
+               if (isOwnerOrAdmin)
             IconButton(
                 onPressed: () {
                   showModalBottomSheet(
@@ -97,7 +154,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                           children: [
                             ListTile(
                               leading: const Icon(Icons.edit),
-                              title: const Text('Edit'),
+                              title: const Text('Edit Team'),
                               onTap: () {
                                 // show bottom sheet
                                 showModalBottomSheet(
@@ -153,55 +210,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                   );
                 },
                 icon: const Icon(Icons.more_horiz))
-        ],
-      ),
-      // scroll tp top button
-      floatingActionButton: isNotAtTop && // when the keybaord is not open 
-          MediaQuery.of(context).viewInsets.bottom == 0
-          ? FloatingActionButton(
-              onPressed: () {
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                );
-              },
-              child: const Icon(Icons.arrow_upward),
-            )
-          : null,
-      // floatingActionButton: // add button
-      //     FloatingActionButton(
-      //   onPressed: () {
-      //     showModalBottomSheet(
-      //       isScrollControlled: true,
-      //       enableDrag: true,
-      //       showDragHandle: true,
-      //       context: context,
-      //       builder: (context) => AddOrEditIssueSheet(
-      //         teamId: teamData.id!,
-      //         addOrEdit: AddorEdit.add,
-      //       ),
-      //     );
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
-
-      body: ListView(
-        controller: _scrollController,
-        children: [
-          // show cover image
-          if (teamData.imageUrl != null)
-            // network image
-            CoverImage(
-              imageUrl: teamData.imageUrl!,
-              isRoundedBorder: false,
-              height: _coverImageHeight,
-            ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('${teamData.name}',
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+      
+            ],
           ),
           // description about team
           Padding(

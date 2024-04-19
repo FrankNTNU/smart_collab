@@ -34,6 +34,12 @@ class _IssuesState extends ConsumerState<Issues> {
             .fetchIssues(widget.teamId);
       },
     );
+    // listen to search controller changes
+    _searchController.addListener(() {
+      setState(() {
+        _searchTerm = _searchController.text;
+      });
+    });
   }
 
   @override
@@ -47,7 +53,7 @@ class _IssuesState extends ConsumerState<Issues> {
               .contains(_searchTerm.toLowerCase()) || // tags include names
           issue.tags.any(
               (tag) => tag.toLowerCase().contains(_searchTerm.toLowerCase()));
-    }).toList();
+    }).toList()..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -172,7 +172,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         return issue;
       }).toList();
       state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+          state.copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
     } catch (e) {
       print('Error occured in the addTagToIssue method: $e');
       state = state.copyWith(
@@ -207,7 +207,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         return issue;
       }).toList();
       state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+          state.copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
     } catch (e) {
       print('Error occured in the removeTagFromIssue method: $e');
       state = state.copyWith(
@@ -295,7 +295,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   }
 
   // fetchIssues
-  Future<void> fetchIssues(String teamId) async {
+  Future<void> fetchIssues(String teamId, {String? searchTerm}) async {
     const limit = 5;
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
