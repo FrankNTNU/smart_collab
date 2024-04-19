@@ -4,10 +4,11 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:textfield_tags/textfield_tags.dart';
 
+import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
 
 class AddOrEditIssueSheet extends ConsumerStatefulWidget {
-  const   AddOrEditIssueSheet(
+  const AddOrEditIssueSheet(
       {super.key, required this.teamId, required this.addOrEdit, this.issue});
   final String teamId;
   final AddorEdit addOrEdit;
@@ -32,7 +33,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   late double _distanceToField;
   late StringTagController _stringTagController;
   // initial tags
-   List<String> _initialTags = ['bug'];
+  List<String> _initialTags = ['bug'];
 
   @override
   void didChangeDependencies() {
@@ -62,18 +63,38 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
     }
     // save form
     _formKey.currentState!.save();
+    // get curent username
+    final username = ref.watch(authControllerProvider
+        .select((value) => value.user?.displayName ?? ''));
     if (widget.addOrEdit == AddorEdit.update) {
       await ref.read(issueProvider(widget.teamId).notifier).updateIssue(
           title: _enteredTitle,
           description: _enteredDescription,
           tags: _stringTagController.getTags ?? [],
           issueId: widget.issue!.id);
-      return;
+      // add to activity
+      await ref.read(activityProvider(widget.teamId).notifier).addActivity(
+            recipientUid: username,
+            message: '$username updated an issue $_enteredTitle',
+            activityType: ActivityyType.updateIssue,
+            teamId: widget.teamId,
+            issueId: widget.issue!.id,
+          );
     } else {
-      await ref.read(issueProvider(widget.teamId).notifier).addIssue(
-          title: _enteredTitle,
-          description: _enteredDescription,
-          tags: _stringTagController.getTags ?? []);
+      final issueId = await ref
+          .read(issueProvider(widget.teamId).notifier)
+          .addIssue(
+              title: _enteredTitle,
+              description: _enteredDescription,
+              tags: _stringTagController.getTags ?? []);
+      // add to activity
+      await ref.read(activityProvider(widget.teamId).notifier).addActivity(
+            recipientUid: username,
+            message: '$username added an issue $_enteredTitle',
+            activityType: ActivityyType.createIssue,
+            teamId: widget.teamId,
+            issueId: issueId,
+          );
     }
   }
 

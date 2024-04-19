@@ -17,4 +17,22 @@ final profileDataProvider =
     displayName: data['displayName'],
     photoURL: data['photoURL'],
   );
+
+});
+
+// get profile from email
+final profileFromEmailProvider =
+    FutureProvider.autoDispose.family<SmartCollabUser, String>((ref, email) async {
+  // fetch the profile image url from Firestore the users collecions
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
+  QuerySnapshot<Map<String, dynamic>> snapshot =
+      await firestore.collection('users').where('email', isEqualTo: email).get();
+  final data = snapshot.docs.first.data();
+  return SmartCollabUser(
+    uid: data['uid'],
+    email: data['email'],
+    displayName: data['displayName'],
+    photoURL: data['photoURL'],
+  );
+
 });

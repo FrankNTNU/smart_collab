@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/activity_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
+import '../services/auth_controller.dart';
 import 'team_image_picker.dart';
 
 enum AddorEdit {
@@ -43,7 +45,6 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
         _descriptionController.text = widget.team!.description!;
       });
     }
-
   }
 
   void _imageOnSelect(File selectedImage) async {
@@ -61,14 +62,24 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
     }
     // save form
     _formKey.currentState!.save();
+
+    // usernmae
+    final username = ref.read(authControllerProvider).user!.displayName;
     if (widget.addOrEdit == AddorEdit.add) {
       // add team
-      await ref.read(teamsProvider.notifier).addTeam(
+      final teamId = await ref.read(teamsProvider.notifier).addTeam(
             Team(
               name: _enteredName,
               description: _enteredDescription,
             ),
             _pickedImage,
+          );
+      // add activity
+      await ref.read(activityProvider(teamId).notifier).addActivity(
+            message: '$username created a new team $_enteredName',
+            activityType: ActivityyType.addTeam,
+            teamId: teamId,
+            recipientUid: ref.watch(authControllerProvider).user!.uid ?? '',
           );
     } else {
       // update team
@@ -79,6 +90,13 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
               id: widget.team!.id,
             ),
             _pickedImage,
+          );
+      // add activity
+      await ref.read(activityProvider(widget.team!.id!).notifier).addActivity(
+            message: '$username updated team ${widget.team!.name}',
+            activityType: ActivityyType.updateTeam,
+            teamId: widget.team!.id,
+            recipientUid: ref.watch(authControllerProvider).user!.uid ?? '',
           );
     }
     // close bottom sheet
@@ -139,7 +157,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                 minLines: 4,
                 maxLines: 8,
                 controller: _descriptionController,
-                decoration:  InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Description',
                   suffix: // clear text button
                       IconButton(
@@ -154,7 +172,6 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                     _enteredDescription = newValue!;
                   });
                 },
-
                 validator: (value) =>
                     value!.isEmpty ? 'Please enter a description' : null,
               ),
@@ -165,8 +182,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                   widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
                 ),
               ),
-                          const SizedBox(height: 32),
-      
+              const SizedBox(height: 32),
             ],
           ),
         ),

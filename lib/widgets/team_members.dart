@@ -4,17 +4,59 @@ import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/services/profile_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
-class TeamMembers extends ConsumerWidget {
+import '../services/activity_controller.dart';
+
+class TeamMembers extends ConsumerStatefulWidget {
   const TeamMembers({
     super.key,
     required this.teamId,
   });
   final String teamId;
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final teamData = ref.watch(teamsProvider.select(
-        (value) => value.teams.where((team) => team.id == teamId).first));
 
+  @override
+  ConsumerState<TeamMembers> createState() => _TeamMembersState();
+}
+
+class _TeamMembersState extends ConsumerState<TeamMembers> {
+  Future<void> _setAsMember(String email) async {
+    await ref
+        .read(teamsProvider.notifier)
+        .setAsMemeber(email: email, teamId: widget.teamId);
+    Navigator.pop(context);
+  }
+
+  Future<void> _setAdAdmin(String email) async {
+    await ref
+        .read(teamsProvider.notifier)
+        .setAsAdmin(email: email, teamId: widget.teamId);
+    final profile = await ref.read(profileFromEmailProvider(email).future);
+    // add to activity
+    ref.read(activityProvider(widget.teamId).notifier).addActivity(
+          recipientUid: profile.uid!,
+          message:
+              '${profile.displayName} have been promoted to admin in a team',
+          activityType: ActivityyType.setAsAdmin,
+          teamId: widget.teamId,
+        );
+    Navigator.pop(context);
+  }
+
+  Future<void> _removeFromTeam(String uid) async {
+    ref
+        .read(teamsProvider.notifier)
+        .removeFromTeam(uid: uid, teamId: widget.teamId);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final teamData = ref.watch(teamsProvider.select((value) =>
+        value.teams.where((team) => team.id == widget.teamId).firstOrNull));
+    if (teamData == null) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -60,12 +102,9 @@ class TeamMembers extends ConsumerWidget {
                                       leading: const Icon(Icons.person),
                                       title: const Text('Set as member'),
                                       onTap: () {
-                                        ref
-                                            .read(teamsProvider.notifier)
-                                            .setAsMemeber(
-                                                email: profileData.email!,
-                                                teamId: teamId);
-                                        Navigator.pop(context);
+                                        _setAsMember(
+                                          profileData.email!,
+                                        );
                                       },
                                     ),
                                   // set ad admin
@@ -75,12 +114,7 @@ class TeamMembers extends ConsumerWidget {
                                           Icons.admin_panel_settings),
                                       title: const Text('Set as admin'),
                                       onTap: () {
-                                        ref
-                                            .read(teamsProvider.notifier)
-                                            .setAsAdmin(
-                                                email: profileData.email!,
-                                                teamId: teamId);
-                                        Navigator.pop(context);
+                                        _setAdAdmin(profileData.email!);
                                       },
                                     ),
 
@@ -89,12 +123,7 @@ class TeamMembers extends ConsumerWidget {
                                     leading: const Icon(Icons.delete),
                                     title: const Text('Remove from team'),
                                     onTap: () {
-                                      ref
-                                          .read(teamsProvider.notifier)
-                                          .removeFromTeam(
-                                              uid: profileData.uid!,
-                                              teamId: teamId);
-                                      Navigator.pop(context);
+                                      _removeFromTeam(profileData.uid!);
                                     },
                                   ),
                                 ],

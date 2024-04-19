@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/activity_controller.dart';
+import 'package:smart_collab/services/profile_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
 import '../services/auth_controller.dart';
@@ -36,9 +38,21 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
     // save form
     _formKey.currentState!.save();
     // call set admin
-    ref
+    await ref
         .read(teamsProvider.notifier)
         .setAsMemeber(email: _enteredAdminEmail, teamId: widget.teamId);
+    // get profile from email
+    final profile =
+        await ref.read(profileFromEmailProvider(_enteredAdminEmail).future);
+    final currentUsername = ref.watch(authControllerProvider).user!.displayName;
+    final message = '$currentUsername added ${profile.displayName} to a team';
+    // log this acitivty
+    ref.read(activityProvider(widget.teamId).notifier).addActivity(
+          message: message,
+          recipientUid: profile.uid!,
+          activityType: ActivityyType.addToTeam,
+          teamId: widget.teamId,
+        );
   }
 
   @override
@@ -82,7 +96,6 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
             decoration: InputDecoration(
               labelText: 'Enter User\'s Email',
               errorText: errorMessage,
-              
             ),
             onChanged: (value) {
               setState(() {
@@ -103,8 +116,7 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
           onPressed: _submit,
           child: const Text('Invite user'),
         ),
-                    const SizedBox(height: 32),
-
+        const SizedBox(height: 32),
       ],
     );
   }

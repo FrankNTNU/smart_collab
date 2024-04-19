@@ -312,7 +312,7 @@ class TeamsController extends Notifier<TeamsState> {
     }
   }
 
-  Future<void> addTeam(Team team, File? image) async {
+  Future<String> addTeam(Team team, File? image) async {
     try {
       state = state.copyWith(
           apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
@@ -336,9 +336,11 @@ class TeamsController extends Notifier<TeamsState> {
         apiStatus: ApiStatus.success,
         teams: [...state.teams, newTeam],
       );
+      return docRef.id;
     } catch (e) {
       print('Error occured in the addTeam method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+      return '';
     }
   }
 

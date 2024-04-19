@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/services/profile_controller.dart';
 
+import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
 import '../services/comment_controller.dart';
 import '../services/team_controller.dart';
@@ -31,23 +34,49 @@ class _CommentFieldState extends ConsumerState<CommentField> {
         // reset comment
         ref
             .read(commentProvider(
-              (issueId: widget.issueId, teamId: widget.teamId)
-            ).notifier)
+                (issueId: widget.issueId, teamId: widget.teamId)).notifier)
             .clearErrorMessage();
       },
     );
   }
+
+  Future<void> _addComment() async {
+    await ref
+        .read(commentProvider((issueId: widget.issueId, teamId: widget.teamId))
+            .notifier)
+        .addComment(_enteredComment);
+    final profile = await ref.read(profileFromEmailProvider(
+        ref.read(authControllerProvider).user!.email!).future);
+    // get issue data by issue id
+    final issueData = ref.watch(issueProvider(widget.teamId).select(
+        (value) => value.issues
+            .where((issue) => issue.id == widget.issueId)
+            .firstOrNull));
+    // add to activity
+    ref.read(activityProvider(widget.teamId).notifier).addActivity(
+          recipientUid: profile.uid!,
+          message: '${profile.displayName} commented on an issue ${issueData?.title ?? ''}',
+          activityType: ActivityyType.addComment,
+          teamId: widget.teamId,
+          issueId: widget.issueId,
+        );
+    // unfocus
+    FocusScope.of(context).unfocus();
+    // clear the text field
+    setState(() {
+      _enteredComment = '';
+    });
+    _textController.clear();
+  }
+
   @override
   Widget build(BuildContext context) {
     final errorMessage = ref.watch(
-        commentProvider(
-          (issueId: widget.issueId, teamId: widget.teamId)
-        ).select((value) => value.errorMessage));
+        commentProvider((issueId: widget.issueId, teamId: widget.teamId))
+            .select((value) => value.errorMessage));
     ref.listen(
-        commentProvider(
-          (issueId: widget.issueId, teamId: widget.teamId)
-        ).select((value) => value.apiStatus),
-        (prev, next) {
+        commentProvider((issueId: widget.issueId, teamId: widget.teamId))
+            .select((value) => value.apiStatus), (prev, next) {
       if (next == ApiStatus.error) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -56,12 +85,11 @@ class _CommentFieldState extends ConsumerState<CommentField> {
         );
       }
     });
-    final isLoading = ref.watch(commentProvider(
-      (issueId: widget.issueId, teamId: widget.teamId)
-    ).select(
-        (value) =>
-            value.apiStatus == ApiStatus.loading &&
-            value.performedAction == PerformedAction.add));
+    final isLoading = ref.watch(
+        commentProvider((issueId: widget.issueId, teamId: widget.teamId))
+            .select((value) =>
+                value.apiStatus == ApiStatus.loading &&
+                value.performedAction == PerformedAction.add));
 
     return Container(
       color: Colors.white.withOpacity(0.9),
@@ -94,18 +122,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
                     ? null
                     : () async {
                         // add comment
-                        await ref
-                            .read(commentProvider(
-                              (issueId: widget.issueId, teamId: widget.teamId)
-                            ).notifier)
-                            .addComment(_enteredComment);
-                        // unfocus
-                        FocusScope.of(context).unfocus();
-                        // clear the text field
-                        setState(() {
-                          _enteredComment = '';
-                        });
-                        _textController.clear();
+                        _addComment();
                       },
                 icon: const Icon(Icons.send),
               ),

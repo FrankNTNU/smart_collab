@@ -351,7 +351,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   }
 
   // add issue
-  Future<void> addIssue({
+  Future<String> addIssue({
     required String title,
     required String description,
     required List<String> tags,
@@ -389,12 +389,14 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         ...state.issues,
         issue,
       ]);
+      return issueRef.id;
     } catch (e) {
       print('Error occured in the addIssue method: $e');
       state = state.copyWith(
         apiStatus: ApiStatus.error,
         errorMessage: e.toString(),
       );
+      return '';
     }
   }
 }

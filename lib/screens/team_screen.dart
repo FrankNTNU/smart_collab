@@ -5,6 +5,7 @@ import 'package:smart_collab/widgets/add_or_edit_issue_sheet.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
 import 'package:smart_collab/widgets/invite_to_team.dart';
+import 'package:smart_collab/widgets/notification_bell.dart';
 import 'package:smart_collab/widgets/team_members.dart';
 
 import '../services/issue_controller.dart';
@@ -47,12 +48,20 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   @override
   Widget build(BuildContext context) {
     final teamData = ref.watch(teamsProvider.select((value) =>
-        value.teams.where((team) => team.id == widget.team.id).first));
+        value.teams.where((team) => team.id == widget.team.id).firstOrNull));
+    if (teamData == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
     print('All roles: ${teamData.roles}');
+    final uid = ref.watch(authControllerProvider.select((value) => value.user!.uid));
     final isOwnerOrAdmin = teamData
-                .roles[ref.watch(authControllerProvider).user!.uid] ==
+                .roles[uid] ==
             'owner' ||
-        teamData.roles[ref.watch(authControllerProvider).user!.uid] == 'admin';
+        teamData.roles[uid] == 'admin';
 
     final isFetching = ref.watch(issueProvider(widget.team.id!).select(
         (value) =>
@@ -60,8 +69,13 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             value.performedAction == PerformedAction.fetch));
     return Scaffold(
       appBar: AppBar(
-        title: Text(teamData.name ?? ''),
+        title: Tooltip(message: 'teamId: ${teamData.id}',child: Text(teamData.name ?? ''),),
         actions: [
+          // notification icon button
+          NotificationBell(
+            teamId: teamData.id!,
+          ),
+
           if (isOwnerOrAdmin)
             IconButton(
                 onPressed: () {
@@ -113,6 +127,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                                         ref
                                             .read(teamsProvider.notifier)
                                             .deleteTeam(teamData.id!);
+                                        Navigator.pop(context);
+                                        // pop again
                                         Navigator.pop(context);
                                       },
                                       confirmText: 'Delete',

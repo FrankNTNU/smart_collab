@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/team_screen.dart';
-import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
 
 import '../services/auth_controller.dart';

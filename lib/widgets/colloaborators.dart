@@ -4,6 +4,8 @@ import 'package:smart_collab/screens/team_user_search_screen.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 
+import '../services/activity_controller.dart';
+import '../services/profile_controller.dart';
 import 'confirm_dialog.dart';
 import 'user_avatar.dart';
 
@@ -17,10 +19,24 @@ class Collaborators extends ConsumerStatefulWidget {
 }
 
 class _CollaboratorsState extends ConsumerState<Collaborators> {
-  void _onSelected(String uid) {
-    ref
+  void _onSelected(String uid) async {
+    await ref
         .read(issueProvider(widget.teamId).notifier)
         .addCollaborator(issueId: widget.issueId, uid: uid);
+    final profile = await ref.read(profileDataProvider(uid).future);
+    final issueData = ref
+        .watch(issueProvider(widget.teamId).select((value) => value.issues
+            .where((issue) => issue.id == widget.issueId)
+            .firstOrNull));
+    // add to activity
+    await ref.read(activityProvider(widget.teamId).notifier).addActivity(
+          recipientUid: profile.uid!,
+          message:
+              '${profile.displayName} have been added as collaborator in an issue ${issueData?.title ?? ''}',
+          activityType: ActivityyType.setAsCollaborator,
+          teamId: widget.teamId,
+          issueId: widget.issueId,
+        );
   }
 
   @override
