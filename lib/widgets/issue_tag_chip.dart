@@ -38,7 +38,7 @@ class _IssueTagChipState extends ConsumerState<IssueTagChip> {
                 .where((tag) => tag.name == widget.tagName)
                 .firstOrNull
                 ?.color)) ??
-        Colors.blue.shade100.value.toRadixString(16);
+        Colors.grey.shade300.value.toRadixString(16);
     return Container(
       padding: widget.isLoose
           ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4)

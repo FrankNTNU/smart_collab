@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/home_screen.dart';
 import 'package:smart_collab/screens/login_screen.dart';
@@ -12,6 +13,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  // only portrait mode
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const ProviderScope(child: MainApp()));
 }
 
@@ -21,12 +27,12 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isAuthenicated = ref.watch(authControllerProvider.select(
-          (value) => value.isAuthenicated,
-        ));
-    return  MaterialApp(
-      // remove debug label
-      debugShowCheckedModeBanner: false,
-      home: !isAuthenicated ? const LoginScreen() : const HomeScreen()
-    );
+      (value) => value.isAuthenicated,
+    ));
+    return MaterialApp(
+
+        // remove debug label
+        debugShowCheckedModeBanner: false,
+        home: !isAuthenicated ? const LoginScreen() : const HomeScreen());
   }
 }

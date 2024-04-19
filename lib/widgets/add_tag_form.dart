@@ -12,10 +12,44 @@ class AddTagForm extends ConsumerStatefulWidget {
 }
 
 class _AddTagFormState extends ConsumerState<AddTagForm> {
+  // formkey
+  final _formKey = GlobalKey<FormState>();
   // selected hex color
   String? _selectedHexColor;
   // entered tag name
   String? _enteredTagName;
+  // error message
+  String? _errorMessage;
+  @override
+  void initState() {
+    super.initState();
+    _selectedHexColor = null;
+    _enteredTagName = null;
+    _errorMessage = null;
+  }
+
+  void _submit() {
+    final isValid = _formKey.currentState!.validate();
+    if (!isValid) return;
+    if (_enteredTagName == null || _enteredTagName!.isEmpty) {
+      setState(() {
+        _errorMessage = 'Tag name is required';
+      });
+      return;
+    }
+    if (_selectedHexColor == null) {
+      setState(() {
+        _errorMessage = 'Color is required';
+      });
+      return;
+    }
+    ref.read(tagProvider(widget.teamId).notifier).addTag(
+          name: _enteredTagName!,
+          color: _selectedHexColor!,
+        );
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -35,15 +69,21 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
         const SizedBox(
           height: 16,
         ),
-        TextField(
-          decoration: const InputDecoration(
-            hintText: 'Tag name',
+        Form(
+          key: _formKey,
+          child: TextFormField(
+            decoration: const InputDecoration(
+              hintText: 'Tag name',
+            ),
+            onChanged: (value) {
+              setState(() {
+                _enteredTagName = value;
+                _formKey.currentState!.validate();
+              });
+            },
+            validator: (value) =>
+                value!.isEmpty ? 'Tag name is required' : null,
           ),
-          onChanged: (value) {
-            setState(() {
-              _enteredTagName = value;
-            });
-          },
         ),
         const SizedBox(
           height: 8,
@@ -56,14 +96,12 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
             });
           },
         ),
+        if (_errorMessage != null)
+          Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
         // submit button
         ElevatedButton(
           onPressed: () {
-            ref.read(tagProvider(widget.teamId).notifier).addTag(
-                  name: _enteredTagName!,
-                  color: _selectedHexColor!,
-                );
-            Navigator.pop(context);
+            _submit();
           },
           child: const Text('Add'),
         )

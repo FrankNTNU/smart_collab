@@ -105,7 +105,6 @@ class IssuesState {
     this.userId = '',
     this.lastDoc,
     required this.teamId,
-
   });
   // copyWith
   IssuesState copyWith({
@@ -131,12 +130,11 @@ class IssuesState {
   // initial
   static IssuesState initial() {
     return IssuesState(
-      issues: [],
-      apiStatus: ApiStatus.idle,
-      errorMessage: '',
-      performedAction: PerformedAction.fetch,
-      teamId: ''
-    );
+        issues: [],
+        apiStatus: ApiStatus.idle,
+        errorMessage: '',
+        performedAction: PerformedAction.fetch,
+        teamId: '');
   }
 }
 
@@ -147,8 +145,10 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
   }
+
   // add tag to an issue
-  Future<void> addTagToIssue({required String issueId, required String tag}) async {
+  Future<void> addTagToIssue(
+      {required String issueId, required String tag}) async {
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
     try {
@@ -171,8 +171,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         }
         return issue;
       }).toList();
-      state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
+      state = state
+          .copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
     } catch (e) {
       print('Error occured in the addTagToIssue method: $e');
       state = state.copyWith(
@@ -181,6 +181,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       );
     }
   }
+
   // remove a tag from an issue
   Future<void> removeTagFromIssue(
       {required String issueId, required String tag}) async {
@@ -206,8 +207,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         }
         return issue;
       }).toList();
-      state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
+      state = state
+          .copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
     } catch (e) {
       print('Error occured in the removeTagFromIssue method: $e');
       state = state.copyWith(
@@ -216,6 +217,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       );
     }
   }
+
   // remove a collaborator
   Future<void> removeCollaborator(
       {required String issueId, required String uid}) async {
@@ -295,49 +297,40 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   }
 
   // fetchIssues
-  Future<void> fetchIssues(String teamId, {String? searchTerm}) async {
+  Future<void> fetchIssues(String teamId, {List<String>? includedTags}) async {
     const limit = 5;
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
     try {
-      // fetch issues from firestore the issues collection (only fetch issues where teamId is the current teamId, which is arg) and imeplement pagination to only fetch 3 issues at a time
-      final snapShot = state.lastDoc != null
-          ? await FirebaseFirestore.instance
-              .collection('teams')
-              .doc(state.teamId)
-              .collection('issues')
-              .where('teamId', isEqualTo: teamId)
-              .orderBy('updatedAt', descending: true)
-              .startAfterDocument(state.lastDoc!)
-              .limit(limit)
-              .get()
-          : await FirebaseFirestore.instance
-              .collection('teams')
-              .doc(state.teamId)
-              .collection('issues')
-              .where('teamId', isEqualTo: teamId)
-              .orderBy('updatedAt', descending: true)
-              .limit(limit)
-              .get();
-      // last document
+      Query query = FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .where('teamId', isEqualTo: teamId)
+          .orderBy('updatedAt', descending: true);
+
+      if (includedTags != null && includedTags.isNotEmpty) {
+        query = query.where('tags', arrayContainsAny: includedTags);
+      }
+
+      if (state.lastDoc != null) {
+        query = query.startAfterDocument(state.lastDoc!);
+      }
+
+      final snapShot = await query.limit(limit).get();
+
       final lastDoc = snapShot.docs.isNotEmpty ? snapShot.docs.last : null;
       state = state.copyWith(lastDoc: lastDoc);
+
       final issues = snapShot.docs.map((doc) {
-        return Issue.fromJson(doc.data()).copyWith(id: doc.id);
+        return Issue.fromJson(doc.data() as Map<String, dynamic>)
+            .copyWith(id: doc.id);
       }).toList();
+
       state = state.copyWith(
-          issues: // merge the original issues in the state with the fetched issues based on id as the key
-              [...state.issues, ...issues], apiStatus: ApiStatus.success);
-      // final snapShot = await FirebaseFirestore.instance
-      //     .collection('issues')
-      //     .where('teamId', isEqualTo: teamId)
-      //     .get();
-      // final issues = snapShot.docs
-      //     .map((doc) => Issue.fromJson(doc.data()).copyWith(id: doc.id))
-      //     .toList();
-      // state = state.copyWith(issues: issues, apiStatus: ApiStatus.success);
+          issues: [...state.issues, ...issues], apiStatus: ApiStatus.success);
     } catch (e, stackTrace) {
-      print('Error occured in the fetchIssues method: $e, $stackTrace');
+      print('Error occurred in the fetchIssues method: $e, $stackTrace');
       state = state.copyWith(
         apiStatus: ApiStatus.error,
         errorMessage: e.toString(),
