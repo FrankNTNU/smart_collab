@@ -78,6 +78,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
         commentProvider((issueId: widget.issueId, teamId: widget.teamId))
             .select((value) => value.apiStatus), (prev, next) {
       if (next == ApiStatus.error) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage ?? 'An error occurred'),

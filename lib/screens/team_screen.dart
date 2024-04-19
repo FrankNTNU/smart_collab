@@ -87,7 +87,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           NotificationBell(
             teamId: teamData.id!,
           ),
-           ],
+        ],
       ),
       // scroll tp top button
       floatingActionButton: _isNotAtTop && // when the keybaord is not open
@@ -137,80 +137,78 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text('${teamData.name}',
-                    style:
-                        const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
               ),
-               if (isOwnerOrAdmin)
-            IconButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) {
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.edit),
-                              title: const Text('Edit Team'),
-                              onTap: () {
-                                // show bottom sheet
-                                showModalBottomSheet(
-                                  isScrollControlled: true,
-                                  // show handle
-                                  enableDrag: true,
-                                  showDragHandle: true,
-                                  context: context,
-                                  builder: (context) {
-                                    return Padding(
-                                      padding: const EdgeInsets.all(8),
-                                      // padding: MediaQuery.of(context)
-                                      //     .viewInsets
-                                      //     .copyWith(left: 16, right: 16),
-                                      child: AddTeamSheet(
-                                          addOrEdit: AddorEdit.update,
-                                          team: teamData),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.delete),
-                              title: const Text('Delete'),
-                              onTap: () {
-                                //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return ConfirmDialog(
-                                      title: 'Delete Team',
-                                      content:
-                                          'Are you sure you want to delete this team?',
-                                      onConfirm: () {
-                                        ref
-                                            .read(teamsProvider.notifier)
-                                            .deleteTeam(teamData.id!);
-                                        Navigator.pop(context);
-                                        // pop again
-                                        Navigator.pop(context);
+              if (isOwnerOrAdmin)
+                IconButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (context) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.edit),
+                                  title: const Text('Edit Team'),
+                                  onTap: () {
+                                    // show bottom sheet
+                                    showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      // show handle
+                                      enableDrag: true,
+                                      showDragHandle: true,
+                                      context: context,
+                                      builder: (context) {
+                                        return Padding(
+                                          padding: const EdgeInsets.all(8),
+                                          // padding: MediaQuery.of(context)
+                                          //     .viewInsets
+                                          //     .copyWith(left: 16, right: 16),
+                                          child: AddTeamSheet(
+                                              addOrEdit: AddorEdit.update,
+                                              team: teamData),
+                                        );
                                       },
-                                      confirmText: 'Delete',
                                     );
                                   },
-                                );
-                              },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.delete),
+                                  title: const Text('Delete'),
+                                  onTap: () {
+                                    //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return ConfirmDialog(
+                                          title: 'Delete Team',
+                                          content:
+                                              'Are you sure you want to delete this team?',
+                                          onConfirm: () {
+                                            ref
+                                                .read(teamsProvider.notifier)
+                                                .deleteTeam(teamData.id!);
+                                            Navigator.pop(context);
+                                            // pop again
+                                            Navigator.pop(context);
+                                          },
+                                          confirmText: 'Delete',
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-                icon: const Icon(Icons.more_horiz))
-      
+                    icon: const Icon(Icons.more_horiz))
             ],
           ),
           // description about team
@@ -219,27 +217,31 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             child: Text(teamData.description ?? ''),
           ),
           const Divider(),
-          if (isOwnerOrAdmin)
-            // add admin button
-            ElevatedButton(
-              onPressed: () {
-                showModalBottomSheet(
-                  isScrollControlled: true,
-                  enableDrag: true,
-                  showDragHandle: true,
-                  context: context,
-                  builder: (context) => Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: InviteToTeam(teamId: widget.team.id!),
-                  ),
-                );
-              },
-              child: const Text('Invite user to team'),
-            ),
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text('Members',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Members',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
+              if (isOwnerOrAdmin)
+                TextButton.icon(
+                  label: const Text('Invite'),
+                  icon: const Icon(Icons.person_add),
+                  onPressed: () {
+                    showModalBottomSheet(
+                      isScrollControlled: true,
+                      enableDrag: true,
+                      showDragHandle: true,
+                      context: context,
+                      builder: (context) => InviteToTeam(teamId: teamData.id!),
+                    );
+                  },
+                ),
+            ],
           ),
           // show a list of admins horizontally
           TeamMembers(

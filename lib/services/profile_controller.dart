@@ -27,6 +27,7 @@ final profileFromEmailProvider =
   FirebaseFirestore firestore = FirebaseFirestore.instance;
   QuerySnapshot<Map<String, dynamic>> snapshot =
       await firestore.collection('users').where('email', isEqualTo: email).get();
+  print('Email in profileFromEmailProvider: $email');
   final data = snapshot.docs.first.data();
   return SmartCollabUser(
     uid: data['uid'],

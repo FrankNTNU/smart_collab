@@ -38,9 +38,12 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
     // save form
     _formKey.currentState!.save();
     // call set admin
-    await ref
+    final uid = await ref
         .read(teamsProvider.notifier)
         .setAsMemeber(email: _enteredAdminEmail, teamId: widget.teamId);
+    if (uid == null || uid.isEmpty) {
+      return;
+    }
     // get profile from email
     final profile =
         await ref.read(profileFromEmailProvider(_enteredAdminEmail).future);
@@ -61,6 +64,8 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
         ref.watch(teamsProvider.select((value) => value.errorMessage));
     ref.listen(teamsProvider.select((value) => value.apiStatus), (prev, next) {
       if (next == ApiStatus.success) {
+        // close currently showing the snackbar
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('User added successfully'),
@@ -68,6 +73,7 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
         );
         Navigator.of(context).pop();
       } else {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage ?? 'Failed to add user'),
@@ -76,9 +82,11 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
       }
     });
     return Padding(
-      padding: MediaQuery.of(context)
-                        .viewInsets
-                        .copyWith(left: 16, right: 16),
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        left: 16,
+        right: 16,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -106,7 +114,7 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                   _enteredAdminEmail = value;
                 });
               },
-      
+
               validator: (value) =>
                   // validate email input
                   value!.isEmpty

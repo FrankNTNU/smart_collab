@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/services/profile_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
+import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../services/activity_controller.dart';
 
@@ -131,15 +132,11 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
                             ),
                           );
                         },
-                        child: CircleAvatar(
-                          radius: 30,
-                          backgroundImage:
-                              profileData.photoURL?.isNotEmpty == true
-                                  ? NetworkImage(profileData.photoURL!)
-                                  : null,
-                        ),
+                        child: UserAvatar(
+                          uid: profileData.uid!,
+                        )
                       ),
-                      Text(profileData.displayName ?? ''),
+                      //Text(profileData.displayName ?? ''),
                       Text(role.value),
                     ],
                   ),

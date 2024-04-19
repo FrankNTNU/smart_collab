@@ -212,44 +212,55 @@ class _IssuesState extends ConsumerState<Issues> {
             itemBuilder: (context, index) {
               return Column(
                 children: [
-                  ListTile(
-                    leading: UserAvatar(
-                        uid: filteredIssues[index].lastUpdatedBy ??
-                            filteredIssues[index]
-                                .roles
-                                .entries
-                                .where((entry) => entry.value == 'owner')
-                                .firstOrNull
-                                ?.key ??
-                            ''),
-                    onTap: () {
-                      // open bottom sheet
-                      showModalBottomSheet(
-                        isScrollControlled: true,
-                        enableDrag: true,
-                        showDragHandle: true,
-                        context: context,
-                        builder: (context) => Padding(
-                          padding: MediaQuery.of(context).viewInsets,
-                          child: IssueScreen(
-                            issue: filteredIssues[index],
+                  Container(
+                    // add a grey light bottom border
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Colors.grey,
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: ListTile(
+                      leading: UserAvatar(
+                          uid: filteredIssues[index].lastUpdatedBy ??
+                              filteredIssues[index]
+                                  .roles
+                                  .entries
+                                  .where((entry) => entry.value == 'owner')
+                                  .firstOrNull
+                                  ?.key ??
+                              ''),
+                      onTap: () {
+                        // open bottom sheet
+                        showModalBottomSheet(
+                          isScrollControlled: true,
+                          enableDrag: true,
+                          showDragHandle: true,
+                          context: context,
+                          builder: (context) => Padding(
+                            padding: MediaQuery.of(context).viewInsets,
+                            child: IssueScreen(
+                              issue: filteredIssues[index],
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                    title: Text(filteredIssues[index].title),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IssueTags(
-                          tags: filteredIssues[index].tags,
-                          teamId: widget.teamId,
-                        ),
-                        LastUpdatedAtInfo(
-                          issueData: filteredIssues[index],
-                          isConcise: true,
-                        )
-                      ],
+                        );
+                      },
+                      title: Text(filteredIssues[index].title),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          IssueTags(
+                            tags: filteredIssues[index].tags,
+                            teamId: widget.teamId,
+                          ),
+                          LastUpdatedAtInfo(
+                            issueData: filteredIssues[index],
+                            isConcise: true,
+                          )
+                        ],
+                      ),
                     ),
                   ),
                   //const Divider(),
@@ -257,6 +268,7 @@ class _IssuesState extends ConsumerState<Issues> {
               );
             },
           ),
+        const SizedBox(height: 32,)
       ],
     );
   }

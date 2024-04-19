@@ -17,12 +17,16 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
     final asyncProfilePicProvider = ref.watch(profileDataProvider(widget.uid));
     return asyncProfilePicProvider.when(
       data: (profileData) {
-        return CircleAvatar(
-          radius: 20,
-          backgroundImage: profileData.photoURL?.isNotEmpty == true
-              ? NetworkImage(profileData.photoURL!)
-              : null,
-          child: profileData.photoURL == null ? const Icon(Icons.person) : null,
+        return Tooltip(
+          message: profileData.displayName,
+          triggerMode: TooltipTriggerMode.tap,
+          child: CircleAvatar(
+            radius: 20,
+            backgroundImage: profileData.photoURL?.isNotEmpty == true
+                ? NetworkImage(profileData.photoURL!)
+                : null,
+            child: profileData.photoURL == null ? const Icon(Icons.person) : null,
+          ),
         );
       },
       loading: () => const CircularProgressIndicator(),

@@ -31,6 +31,7 @@ class _TeamsState extends ConsumerState<Teams> {
       final action =
           ref.watch(teamsProvider.select((value) => value.performedAction));
       if (next == ApiStatus.success) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         // a switch statement to show different snackbar messages
         String message = '';
         switch (action) {

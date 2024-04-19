@@ -11,7 +11,7 @@ import '../widgets/add_or_edit_issue_sheet.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/issue_tags.dart';
-import 'tag_selector_screen.dart';
+import 'filter_tags_selection_menu.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
   const IssueScreen({super.key, required this.issue});
@@ -22,6 +22,26 @@ class IssueScreen extends ConsumerStatefulWidget {
 }
 
 class _IssueScreenState extends ConsumerState<IssueScreen> {
+  void _onTagToggle(String tag) {
+    print('Tag toggled: $tag');
+    final tags = ref
+            .watch(issueProvider(widget.issue.teamId).select((value) => value
+                .issues
+                .where((issue) => issue.id == widget.issue.id)
+                .firstOrNull))
+            ?.tags ??
+        [];
+    if (tags.contains(tag)) {
+      ref
+          .read(issueProvider(widget.issue.teamId).notifier)
+          .removeTagFromIssue(issueId: widget.issue.id, tag: tag);
+    } else {
+      ref
+          .read(issueProvider(widget.issue.teamId).notifier)
+          .addTagToIssue(issueId: widget.issue.id, tag: tag);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     print('Rebuilding IssueScreen');
@@ -100,18 +120,22 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       onTap: !isAuthorOrColloborator
                           ? null
                           : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
+                              showModalBottomSheet(
+                                  isScrollControlled: true,
+                                  enableDrag: true,
+                                  showDragHandle: true,
+                                  context: context,
                                   builder: (context) {
-                                    return TagSelectorScreen(
-                                      teamId: issueData.teamId,
-                                      issueId: widget.issue.id,
-                                      initialTags: widget.issue.tags,
+                                    final mergedTagNames = <String>{
+                                      
+                                      ...issueData.tags,
+                                    }.toList();
+                                    return FilterTagsSelectionMenu(
+                                      initialTags: issueData.tags,
+                                      onSelected: _onTagToggle,
+                                      teamId: widget.issue.teamId,
                                     );
-                                  },
-                                ),
-                              );
+                                  });
                             },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),

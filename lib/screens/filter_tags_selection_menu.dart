@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/tag_controller.dart';
 
+import '../widgets/add_tag_form.dart';
 import '../widgets/issue_tag_chip.dart';
 
 class FilterTagsSelectionMenu extends ConsumerStatefulWidget {
@@ -25,10 +26,28 @@ class _FilterTagsSelectionMenuState
   String _searchTerm = '';
   // selected tags
   List<String> _selectedTags = [];
+  // text edit controller
+  final TextEditingController _searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
     _selectedTags = widget.initialTags;
+  }
+
+  void openAddTagForm() {
+    showModalBottomSheet(
+      showDragHandle: true,
+      isScrollControlled: true,
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: MediaQuery.of(context).viewInsets + const EdgeInsets.all(16),
+          child: AddTagForm(
+            teamId: widget.teamId,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -41,7 +60,8 @@ class _FilterTagsSelectionMenuState
       final lowerCaseSearchTerm = _searchTerm.toLowerCase();
       return lowerCaseTag.contains(lowerCaseSearchTerm);
     }).toList();
-
+    final mergedTagNames =
+        <String>{...tags.map((t) => t.name), ...widget.initialTags}.toList();
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       // padding bottoom viewinset
@@ -68,15 +88,27 @@ class _FilterTagsSelectionMenuState
           ),
           Row(
             children: [
-              const SizedBox(width: 16,),
+              const SizedBox(
+                width: 16,
+              ),
               Expanded(
                 child: TextField(
+                  controller: _searchController,
                   onTapOutside: (event) {
                     FocusScope.of(context).unfocus();
-                  
                   },
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'Search tags',
+                    suffix: // clear
+                        IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchTerm = '';
+                        });
+                      },
+                    ),
                   ),
                   onChanged: (value) {
                     setState(() {
@@ -99,29 +131,29 @@ class _FilterTagsSelectionMenuState
             ],
           ),
           Expanded(
-            child: tags.isEmpty
+            child: mergedTagNames.isEmpty
                 ? const Center(
                     child: Text('No tags found'),
                   )
                 : ListView.builder(
                     shrinkWrap: true,
-                    itemCount: tags.length,
+                    itemCount: mergedTagNames.length,
                     itemBuilder: (context, index) {
-                      final tag = tags[index];
+                      final tag = mergedTagNames[index];
                       return CheckboxListTile(
                         title: IssueTagChip(
-                          tagName: tag.name,
+                          tagName: tag,
                           teamId: widget.teamId,
                         ),
-                        value: _selectedTags.contains(tag.name),
+                        value: _selectedTags.contains(tag),
                         onChanged: (value) {
                           if (value == null) return;
-                          widget.onSelected(tag.name);
+                          widget.onSelected(tag);
                           setState(() {
                             if (value) {
-                              _selectedTags.add(tag.name);
+                              _selectedTags.add(tag);
                             } else {
-                              _selectedTags.remove(tag.name);
+                              _selectedTags.remove(tag);
                             }
                           });
                         },
@@ -129,6 +161,15 @@ class _FilterTagsSelectionMenuState
                     },
                   ),
           ),
+          if (tags.isNotEmpty)
+            ListTile(
+              // add tags
+              title: const Text('Add new tag'),
+              leading: const Icon(Icons.add),
+              onTap: () {
+                openAddTagForm();
+              },
+            ),
         ],
       ),
     );

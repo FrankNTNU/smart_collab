@@ -166,8 +166,8 @@ class TeamsController extends Notifier<TeamsState> {
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
-
-  Future<void> setAsMemeber(
+  
+  Future<String?> setAsMemeber(
       {required String email, required String teamId}) async {
     // set loading
     state = state.copyWith(
@@ -188,7 +188,7 @@ class TeamsController extends Notifier<TeamsState> {
           apiStatus: ApiStatus.error,
           errorMessage: 'User not found',
         );
-        return;
+        return null;
       }
       // update the roles in the team
       await FirebaseFirestore.instance
@@ -203,9 +203,11 @@ class TeamsController extends Notifier<TeamsState> {
         return team;
       }).toList();
       state = state.copyWith(teams: updatedTeams, apiStatus: ApiStatus.success);
+      return userId;
     } catch (e) {
       print('Error occured in the setAsMemeber method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+      return null;
     }
   }
 
