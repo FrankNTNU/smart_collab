@@ -106,7 +106,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: MediaQuery.of(context).viewInsets.copyWith(left: 16, right: 16),
+      padding: MediaQuery.of(context).viewInsets,
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.8,
         child: SingleChildScrollView(

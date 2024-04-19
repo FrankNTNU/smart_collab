@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
+import 'package:smart_collab/widgets/issue_tag_chip.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
+
+import 'add_or_edit_issue_sheet.dart';
+import 'issue_tags.dart';
 
 class Issues extends ConsumerStatefulWidget {
   final String teamId;
@@ -16,6 +21,8 @@ class Issues extends ConsumerStatefulWidget {
 class _IssuesState extends ConsumerState<Issues> {
   // searchTerm
   String _searchTerm = '';
+  // search text edit controller
+  final TextEditingController _searchController = TextEditingController();
   @override
   void initState() {
     super.initState();
@@ -46,31 +53,70 @@ class _IssuesState extends ConsumerState<Issues> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-       const Padding(
+        Row(
+          children: [
+            const Padding(
               padding: EdgeInsets.all(8.0),
               child: Text('Issues',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            
             ),
+            const Spacer(),
+            // add issue button
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  enableDrag: true,
+                  showDragHandle: true,
+                  context: context,
+                  builder: (context) => Padding(
+                    padding: MediaQuery.of(context).viewInsets,
+                    child: AddOrEditIssueSheet(
+                      teamId: widget.teamId,
+                      addOrEdit: AddorEdit.add,
+
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
 
         // search bar
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              onTapOutside: (event) {
-                // unfocus
-                FocusScope.of(context).unfocus();
-              },
-              onChanged: (value) {
-                setState(() {
-                  _searchTerm = value;
-                });
-              },
-              decoration: const InputDecoration(
-                hintText: 'Search issues',
-                prefixIcon: Icon(Icons.search),
-              ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextField(
+            controller: _searchController,
+            onTapOutside: (event) {
+              // unfocus
+              FocusScope.of(context).unfocus();
+            },
+            onChanged: (value) {
+              setState(() {
+                _searchTerm = value;
+              });
+            },
+            decoration:  InputDecoration(
+              hintText: 'Search issues',
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? TextButton.icon(
+                    label: const Text('Clear search'),
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchTerm = '';
+                        });
+                      },
+                    )
+                  : null,
             ),
           ),
+        ),
         if (issues.isEmpty)
           const Center(
             child: Text('No issues found'),
@@ -112,10 +158,9 @@ class _IssuesState extends ConsumerState<Issues> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          issues[index].description,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        IssueTags(
+                          tags: issues[index].tags,
+                          teamId: widget.teamId,
                         ),
                         LastUpdatedAtInfo(
                           issueData: issues[index],
@@ -124,6 +169,7 @@ class _IssuesState extends ConsumerState<Issues> {
                       ],
                     ),
                   ),
+                  //const Divider(),
                 ],
               );
             },

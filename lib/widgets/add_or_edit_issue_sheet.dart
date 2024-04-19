@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/screens/tag_selector_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
+import 'package:smart_collab/widgets/issue_tags.dart';
 import 'package:textfield_tags/textfield_tags.dart';
 
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
+import 'issue_tag_chip.dart';
 
 class AddOrEditIssueSheet extends ConsumerStatefulWidget {
   const AddOrEditIssueSheet(
@@ -28,12 +31,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   final String _enteredStatus = '';
   // enteredDeadline
   DateTime? _enteredDeadline;
-  // enteredTags
-  final List<String> _enteredTags = [];
   late double _distanceToField;
   late StringTagController _stringTagController;
-  // initial tags
-  List<String> _initialTags = ['bug'];
 
   @override
   void didChangeDependencies() {
@@ -49,9 +48,6 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
       setState(() {
         _enteredTitle = widget.issue!.title;
         _enteredDescription = widget.issue!.description;
-        _enteredTags.addAll(widget.issue!.tags);
-        // set initial tags
-        _initialTags = widget.issue!.tags;
       });
     }
   }
@@ -100,6 +96,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tags = ref.watch(issueProvider(widget.teamId).select((value) => value
+            .issues
+            .where((issue) => issue.id == widget.issue?.id)
+            .firstOrNull
+            ?.tags)) ??
+        [];
     ref.listen(issueProvider(widget.teamId).select((value) => value.apiStatus),
         (prev, next) {
       if (next == ApiStatus.success) {
@@ -109,13 +111,13 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                 'Issue ${widget.addOrEdit == AddorEdit.add ? 'added' : 'updated'} successfully'),
           ),
         );
-        Navigator.of(context).pop();
+        //Navigator.of(context).pop();
       }
     });
     return Padding(
-      padding: MediaQuery.of(context).viewInsets.copyWith(left: 16, right: 16),
+      padding: const EdgeInsets.only(left: 16, right: 16),
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.8,
+        height: MediaQuery.of(context).size.height * 0.7,
         child: Form(
           key: _formKey,
           child: ListView(
@@ -150,8 +152,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               TextFormField(
                 initialValue: _enteredDescription,
                 decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: 16,
-                minLines: 8,
+                maxLines: 12,
+                minLines: 6,
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter a description';
@@ -164,113 +166,117 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               ),
               // height 8
               const SizedBox(height: 8),
-              // tags
-              TextFieldTags<String>(
-                textfieldTagsController: _stringTagController,
-                initialTags: _initialTags,
-                textSeparators: const [' ', ','],
-                letterCase: LetterCase.normal,
-                validator: (String tag) {
-                  if (_stringTagController.getTags!.contains(tag)) {
-                    return 'You\'ve already entered that';
-                  }
-                  return null;
-                },
-                inputFieldBuilder: (context, inputFieldValues) {
-                  return TextField(
-                    onTap: () {
-                      _stringTagController.getFocusNode?.requestFocus();
-                    },
-                    controller: inputFieldValues.textEditingController,
-                    focusNode: inputFieldValues.focusNode,
-                    decoration: InputDecoration(
-                      labelText: 'Tags',
-                      isDense: true,
-                      helperStyle: const TextStyle(
-                        color: Color.fromARGB(255, 74, 137, 92),
-                      ),
-                      hintText: inputFieldValues.tags.isNotEmpty
-                          ? ''
-                          : "Enter tag...",
-                      errorText: inputFieldValues.error,
-                      prefixIconConstraints:
-                          BoxConstraints(maxWidth: _distanceToField * 0.8),
-                      prefixIcon: inputFieldValues.tags.isNotEmpty
-                          ? SingleChildScrollView(
-                              controller: inputFieldValues.tagScrollController,
-                              scrollDirection: Axis.vertical,
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                  top: 8,
-                                  bottom: 8,
-                                  left: 8,
-                                ),
-                                child: Wrap(
-                                    runSpacing: 4.0,
-                                    spacing: 4.0,
-                                    children:
-                                        inputFieldValues.tags.map((String tag) {
-                                      return Container(
-                                        decoration: const BoxDecoration(
-                                          borderRadius: BorderRadius.all(
-                                            Radius.circular(20.0),
-                                          ),
-                                          color:
-                                              Color.fromARGB(255, 74, 137, 92),
-                                        ),
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 5.0),
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10.0, vertical: 5.0),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            InkWell(
-                                              child: Text(
-                                                '#$tag',
-                                                style: const TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                              onTap: () {
-                                                //print("$tag selected");
-                                              },
-                                            ),
-                                            const SizedBox(width: 4.0),
-                                            InkWell(
-                                              child: const Icon(
-                                                Icons.cancel,
-                                                size: 14.0,
-                                                color: Color.fromARGB(
-                                                    255, 233, 233, 233),
-                                              ),
-                                              onTap: () {
-                                                inputFieldValues
-                                                    .onTagRemoved(tag);
-                                              },
-                                            )
-                                          ],
-                                        ),
-                                      );
-                                    }).toList()),
-                              ),
-                            )
-                          : null,
-                    ),
-                    onChanged: inputFieldValues.onTagChanged,
-                    onSubmitted: inputFieldValues.onTagSubmitted,
-                  );
-                },
+            
+              // TextFieldTags<String>(
+              //   textfieldTagsController: _stringTagController,
+              //   initialTags: _initialTags,
+              //   textSeparators: const [' ', ','],
+              //   letterCase: LetterCase.normal,
+              //   validator: (String tag) {
+              //     if (_stringTagController.getTags!.contains(tag)) {
+              //       return 'You\'ve already entered that';
+              //     }
+              //     return null;
+              //   },
+              //   inputFieldBuilder: (context, inputFieldValues) {
+              //     return TextField(
+              //       onTap: () {
+              //         _stringTagController.getFocusNode?.requestFocus();
+              //       },
+              //       controller: inputFieldValues.textEditingController,
+              //       focusNode: inputFieldValues.focusNode,
+              //       decoration: InputDecoration(
+              //         labelText: 'Tags',
+              //         isDense: true,
+              //         helperStyle: const TextStyle(
+              //           color: Color.fromARGB(255, 74, 137, 92),
+              //         ),
+              //         hintText: inputFieldValues.tags.isNotEmpty
+              //             ? ''
+              //             : "Enter tag...",
+              //         errorText: inputFieldValues.error,
+              //         prefixIconConstraints:
+              //             BoxConstraints(maxWidth: _distanceToField * 0.8),
+              //         prefixIcon: inputFieldValues.tags.isNotEmpty
+              //             ? SingleChildScrollView(
+              //                 controller: inputFieldValues.tagScrollController,
+              //                 scrollDirection: Axis.vertical,
+              //                 child: Padding(
+              //                   padding: const EdgeInsets.only(
+              //                     top: 8,
+              //                     bottom: 8,
+              //                     left: 8,
+              //                   ),
+              //                   child: Wrap(
+              //                       runSpacing: 4.0,
+              //                       spacing: 4.0,
+              //                       children:
+              //                           inputFieldValues.tags.map((String tag) {
+              //                         return Container(
+              //                           decoration: const BoxDecoration(
+              //                             borderRadius: BorderRadius.all(
+              //                               Radius.circular(20.0),
+              //                             ),
+              //                             color:
+              //                                 Color.fromARGB(255, 74, 137, 92),
+              //                           ),
+              //                           margin: const EdgeInsets.symmetric(
+              //                               horizontal: 5.0),
+              //                           padding: const EdgeInsets.symmetric(
+              //                               horizontal: 10.0, vertical: 5.0),
+              //                           child: Row(
+              //                             mainAxisAlignment:
+              //                                 MainAxisAlignment.start,
+              //                             mainAxisSize: MainAxisSize.min,
+              //                             children: [
+              //                               InkWell(
+              //                                 child: Text(
+              //                                   '#$tag',
+              //                                   style: const TextStyle(
+              //                                       color: Colors.white),
+              //                                 ),
+              //                                 onTap: () {
+              //                                   //print("$tag selected");
+              //                                 },
+              //                               ),
+              //                               const SizedBox(width: 4.0),
+              //                               InkWell(
+              //                                 child: const Icon(
+              //                                   Icons.cancel,
+              //                                   size: 14.0,
+              //                                   color: Color.fromARGB(
+              //                                       255, 233, 233, 233),
+              //                                 ),
+              //                                 onTap: () {
+              //                                   inputFieldValues
+              //                                       .onTagRemoved(tag);
+              //                                 },
+              //                               )
+              //                             ],
+              //                           ),
+              //                         );
+              //                       }).toList()),
+              //                 ),
+              //               )
+              //             : null,
+              //       ),
+              //       onChanged: inputFieldValues.onTagChanged,
+              //       onSubmitted: inputFieldValues.onTagSubmitted,
+              //     );
+              //   },
+              // ),
+              // ElevatedButton(
+              //   onPressed: () {
+              //     _stringTagController.clearTags();
+              //   },
+              //   child: const Text(
+              //     'CLEAR TAGS',
+              //   ),
+              // ),
+              const SizedBox(
+                height: 16,
               ),
-              ElevatedButton(
-                onPressed: () {
-                  _stringTagController.clearTags();
-                },
-                child: const Text(
-                  'CLEAR TAGS',
-                ),
-              ),
+
               // submit button
               ElevatedButton(
                 onPressed: () {

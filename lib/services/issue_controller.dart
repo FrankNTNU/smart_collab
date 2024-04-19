@@ -147,7 +147,75 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
   }
-
+  // add tag to an issue
+  Future<void> addTagToIssue({required String issueId, required String tag}) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'tags': FieldValue.arrayUnion([tag]),
+      });
+      final updatedIssue =
+          state.issues.firstWhere((issue) => issue.id == issueId);
+      final updatedIssues = state.issues.map((issue) {
+        if (issue.id == issueId) {
+          return updatedIssue.copyWith(
+            tags: [...updatedIssue.tags, tag],
+          );
+        }
+        return issue;
+      }).toList();
+      state =
+          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+    } catch (e) {
+      print('Error occured in the addTagToIssue method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+  // remove a tag from an issue
+  Future<void> removeTagFromIssue(
+      {required String issueId, required String tag}) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'tags': FieldValue.arrayRemove([tag]),
+      });
+      final updatedIssue =
+          state.issues.firstWhere((issue) => issue.id == issueId);
+      final updatedIssues = state.issues.map((issue) {
+        if (issue.id == issueId) {
+          return updatedIssue.copyWith(
+            tags: updatedIssue.tags.where((t) => t != tag).toList(),
+          );
+        }
+        return issue;
+      }).toList();
+      state =
+          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+    } catch (e) {
+      print('Error occured in the removeTagFromIssue method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
   // remove a collaborator
   Future<void> removeCollaborator(
       {required String issueId, required String uid}) async {

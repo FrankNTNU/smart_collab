@@ -4,12 +4,15 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/colloaborators.dart';
 import 'package:smart_collab/widgets/comment_field.dart';
 import 'package:smart_collab/widgets/comments.dart';
+import 'package:smart_collab/widgets/issue_tag_chip.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
 import '../widgets/add_or_edit_issue_sheet.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/confirm_dialog.dart';
+import '../widgets/issue_tags.dart';
+import 'tag_selector_screen.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
   const IssueScreen({super.key, required this.issue});
@@ -74,15 +77,10 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                 enableDrag: true,
                                 showDragHandle: true,
                                 context: context,
-                                builder: (context) => Padding(
-                                  padding: MediaQuery.of(context)
-                                      .viewInsets
-                                      .copyWith(left: 16, right: 16),
-                                  child: AddOrEditIssueSheet(
-                                    teamId: widget.issue.teamId,
-                                    addOrEdit: AddorEdit.update,
-                                    issue: issueData,
-                                  ),
+                                builder: (context) => AddOrEditIssueSheet(
+                                  teamId: widget.issue.teamId,
+                                  addOrEdit: AddorEdit.update,
+                                  issue: issueData,
                                 ),
                               );
                             },
@@ -98,15 +96,28 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       fontSize: 16,
                     ),
                   ),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      ...issueData.tags.map((tag) => Chip(
-                            padding: const EdgeInsets.all(0),
-                            label: Text(tag),
-                          ))
-                    ],
-                  ),
+
+                  // show tags
+                  InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return TagSelectorScreen(
+                                teamId: issueData.teamId,
+                                issueId: widget.issue.id,
+                                initialTags: widget.issue.tags,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                      child: IssueTags(
+                        tags: issueData.tags,
+                        teamId: widget.issue.teamId,
+                        isEditable: true,
+                      )),
                   const Divider(),
                   const Text(
                     'Collaborators',
@@ -171,7 +182,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   // height 32
                   const SizedBox(height: 100),
                 ],
-
               ),
             ),
           ),

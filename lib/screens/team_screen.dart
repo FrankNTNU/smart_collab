@@ -148,28 +148,23 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 icon: const Icon(Icons.more_horiz))
         ],
       ),
-      floatingActionButton: // add button
-          FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            isScrollControlled: true,
-            enableDrag: true,
-            showDragHandle: true,
-            context: context,
-            builder: (context) => Padding(
-              // padding: MediaQuery.of(context)
-              //     .viewInsets
-              //     .copyWith(left: 16, right: 16),
-              padding: const EdgeInsets.all(8),
-              child: AddOrEditIssueSheet(
-                teamId: teamData.id!,
-                addOrEdit: AddorEdit.add,
-              ),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: // add button
+      //     FloatingActionButton(
+      //   onPressed: () {
+      //     showModalBottomSheet(
+      //       isScrollControlled: true,
+      //       enableDrag: true,
+      //       showDragHandle: true,
+      //       context: context,
+      //       builder: (context) => AddOrEditIssueSheet(
+      //         teamId: teamData.id!,
+      //         addOrEdit: AddorEdit.add,
+      //       ),
+      //     );
+      //   },
+      //   child: const Icon(Icons.add),
+      // ),
+     
       body: ListView(
         controller: _scrollController,
         children: [
@@ -181,11 +176,17 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 isRoundedBorder: false,
               height: _coverImageHeight,
             ),
+             Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text('${teamData.name}',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
           // description about team
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
             child: Text(teamData.description ?? ''),
           ),
+          const Divider(),
           if (isOwnerOrAdmin)
             // add admin button
             ElevatedButton(
