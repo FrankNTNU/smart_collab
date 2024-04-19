@@ -24,6 +24,8 @@ class TeamScreen extends ConsumerStatefulWidget {
 class _TeamScreenState extends ConsumerState<TeamScreen> {
   // scroll controller
   final _scrollController = ScrollController();
+  // cover image height
+  final double _coverImageHeight = 128;
   @override
   void initState() {
     super.initState();
@@ -75,7 +77,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           NotificationBell(
             teamId: teamData.id!,
           ),
-
           if (isOwnerOrAdmin)
             IconButton(
                 onPressed: () {
@@ -100,9 +101,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                                   context: context,
                                   builder: (context) {
                                     return Padding(
-                                      padding: MediaQuery.of(context)
-                                          .viewInsets
-                                          .copyWith(left: 16, right: 16),
+                                      padding: const EdgeInsets.all(8),
+                                      // padding: MediaQuery.of(context)
+                                      //     .viewInsets
+                                      //     .copyWith(left: 16, right: 16),
                                       child: AddTeamSheet(
                                           addOrEdit: AddorEdit.update,
                                           team: teamData),
@@ -155,9 +157,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             showDragHandle: true,
             context: context,
             builder: (context) => Padding(
-              padding: MediaQuery.of(context)
-                  .viewInsets
-                  .copyWith(left: 16, right: 16),
+              // padding: MediaQuery.of(context)
+              //     .viewInsets
+              //     .copyWith(left: 16, right: 16),
+              padding: const EdgeInsets.all(8),
               child: AddOrEditIssueSheet(
                 teamId: teamData.id!,
                 addOrEdit: AddorEdit.add,
@@ -174,9 +177,9 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           if (teamData.imageUrl != null)
             // network image
             CoverImage(
-              imageUrl: teamData.imageUrl!,
-              isRoundedBorder: false,
-              height: MediaQuery.of(context).size.height * 0.2,
+                imageUrl: teamData.imageUrl!,
+                isRoundedBorder: false,
+              height: _coverImageHeight,
             ),
           // description about team
           Padding(
@@ -193,9 +196,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                   showDragHandle: true,
                   context: context,
                   builder: (context) => Padding(
-                    padding: MediaQuery.of(context)
-                        .viewInsets
-                        .copyWith(left: 16, right: 16),
+                    padding: const EdgeInsets.all(8),
                     child: InviteToTeam(teamId: widget.team.id!),
                   ),
                 );

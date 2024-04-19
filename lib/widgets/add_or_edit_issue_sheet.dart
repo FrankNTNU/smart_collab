@@ -112,171 +112,176 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
         Navigator.of(context).pop();
       }
     });
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: Form(
-        key: _formKey,
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            // header
-            Row(
-              children: [
-                Text(
-                  '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Edit'} issue',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const Spacer(),
-                const CloseButton()
-              ],
-            ),
-            // title
-            TextFormField(
-              initialValue: _enteredTitle,
-              decoration: const InputDecoration(labelText: 'Title'),
-              validator: (value) {
-                if (value!.isEmpty) {
-                  return 'Please enter a title';
-                }
-                return null;
-              },
-              onSaved: (value) {
-                _enteredTitle = value!;
-              },
-            ),
-            // descroption
-            TextFormField(
-              initialValue: _enteredDescription,
-              decoration: const InputDecoration(labelText: 'Description'),
-              maxLines: 16,
-              minLines: 8,
-              validator: (value) {
-                if (value!.isEmpty) {
-                  return 'Please enter a description';
-                }
-                return null;
-              },
-              onSaved: (value) {
-                _enteredDescription = value!;
-              },
-            ),
-            // height 8
-            const SizedBox(height: 8),
-            // tags
-            TextFieldTags<String>(
-              textfieldTagsController: _stringTagController,
-              initialTags: _initialTags,
-              textSeparators: const [' ', ','],
-              letterCase: LetterCase.normal,
-              validator: (String tag) {
-                if (_stringTagController.getTags!.contains(tag)) {
-                  return 'You\'ve already entered that';
-                }
-                return null;
-              },
-              inputFieldBuilder: (context, inputFieldValues) {
-                return TextField(
-                  onTap: () {
-                    _stringTagController.getFocusNode?.requestFocus();
-                  },
-                  controller: inputFieldValues.textEditingController,
-                  focusNode: inputFieldValues.focusNode,
-                  decoration: InputDecoration(
-                    labelText: 'Tags',
-                    isDense: true,
-                    helperStyle: const TextStyle(
-                      color: Color.fromARGB(255, 74, 137, 92),
-                    ),
-                    hintText:
-                        inputFieldValues.tags.isNotEmpty ? '' : "Enter tag...",
-                    errorText: inputFieldValues.error,
-                    prefixIconConstraints:
-                        BoxConstraints(maxWidth: _distanceToField * 0.8),
-                    prefixIcon: inputFieldValues.tags.isNotEmpty
-                        ? SingleChildScrollView(
-                            controller: inputFieldValues.tagScrollController,
-                            scrollDirection: Axis.vertical,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                top: 8,
-                                bottom: 8,
-                                left: 8,
-                              ),
-                              child: Wrap(
-                                  runSpacing: 4.0,
-                                  spacing: 4.0,
-                                  children:
-                                      inputFieldValues.tags.map((String tag) {
-                                    return Container(
-                                      decoration: const BoxDecoration(
-                                        borderRadius: BorderRadius.all(
-                                          Radius.circular(20.0),
-                                        ),
-                                        color: Color.fromARGB(255, 74, 137, 92),
-                                      ),
-                                      margin: const EdgeInsets.symmetric(
-                                          horizontal: 5.0),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10.0, vertical: 5.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          InkWell(
-                                            child: Text(
-                                              '#$tag',
-                                              style: const TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                            onTap: () {
-                                              //print("$tag selected");
-                                            },
-                                          ),
-                                          const SizedBox(width: 4.0),
-                                          InkWell(
-                                            child: const Icon(
-                                              Icons.cancel,
-                                              size: 14.0,
-                                              color: Color.fromARGB(
-                                                  255, 233, 233, 233),
-                                            ),
-                                            onTap: () {
-                                              inputFieldValues
-                                                  .onTagRemoved(tag);
-                                            },
-                                          )
-                                        ],
-                                      ),
-                                    );
-                                  }).toList()),
-                            ),
-                          )
-                        : null,
+    return Padding(
+      padding: MediaQuery.of(context).viewInsets.copyWith(left: 16, right: 16),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              // header
+              Row(
+                children: [
+                  Text(
+                    '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Edit'} issue',
+                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  onChanged: inputFieldValues.onTagChanged,
-                  onSubmitted: inputFieldValues.onTagSubmitted,
-                );
-              },
-            ),
-            ElevatedButton(
-              onPressed: () {
-                _stringTagController.clearTags();
-              },
-              child: const Text(
-                'CLEAR TAGS',
+                  const Spacer(),
+                  const CloseButton()
+                ],
               ),
-            ),
-            // submit button
-            ElevatedButton(
-              onPressed: () {
-                _submit();
-              },
-              child: Text(
-                  '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update'} Issue'),
-            ),
-            const SizedBox(height: 32),
-          ],
+              // title
+              TextFormField(
+                initialValue: _enteredTitle,
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter a title';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  _enteredTitle = value!;
+                },
+              ),
+              // descroption
+              TextFormField(
+                initialValue: _enteredDescription,
+                decoration: const InputDecoration(labelText: 'Description'),
+                maxLines: 16,
+                minLines: 8,
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return 'Please enter a description';
+                  }
+                  return null;
+                },
+                onSaved: (value) {
+                  _enteredDescription = value!;
+                },
+              ),
+              // height 8
+              const SizedBox(height: 8),
+              // tags
+              TextFieldTags<String>(
+                textfieldTagsController: _stringTagController,
+                initialTags: _initialTags,
+                textSeparators: const [' ', ','],
+                letterCase: LetterCase.normal,
+                validator: (String tag) {
+                  if (_stringTagController.getTags!.contains(tag)) {
+                    return 'You\'ve already entered that';
+                  }
+                  return null;
+                },
+                inputFieldBuilder: (context, inputFieldValues) {
+                  return TextField(
+                    onTap: () {
+                      _stringTagController.getFocusNode?.requestFocus();
+                    },
+                    controller: inputFieldValues.textEditingController,
+                    focusNode: inputFieldValues.focusNode,
+                    decoration: InputDecoration(
+                      labelText: 'Tags',
+                      isDense: true,
+                      helperStyle: const TextStyle(
+                        color: Color.fromARGB(255, 74, 137, 92),
+                      ),
+                      hintText: inputFieldValues.tags.isNotEmpty
+                          ? ''
+                          : "Enter tag...",
+                      errorText: inputFieldValues.error,
+                      prefixIconConstraints:
+                          BoxConstraints(maxWidth: _distanceToField * 0.8),
+                      prefixIcon: inputFieldValues.tags.isNotEmpty
+                          ? SingleChildScrollView(
+                              controller: inputFieldValues.tagScrollController,
+                              scrollDirection: Axis.vertical,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 8,
+                                  bottom: 8,
+                                  left: 8,
+                                ),
+                                child: Wrap(
+                                    runSpacing: 4.0,
+                                    spacing: 4.0,
+                                    children:
+                                        inputFieldValues.tags.map((String tag) {
+                                      return Container(
+                                        decoration: const BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                            Radius.circular(20.0),
+                                          ),
+                                          color:
+                                              Color.fromARGB(255, 74, 137, 92),
+                                        ),
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 5.0),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10.0, vertical: 5.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            InkWell(
+                                              child: Text(
+                                                '#$tag',
+                                                style: const TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                              onTap: () {
+                                                //print("$tag selected");
+                                              },
+                                            ),
+                                            const SizedBox(width: 4.0),
+                                            InkWell(
+                                              child: const Icon(
+                                                Icons.cancel,
+                                                size: 14.0,
+                                                color: Color.fromARGB(
+                                                    255, 233, 233, 233),
+                                              ),
+                                              onTap: () {
+                                                inputFieldValues
+                                                    .onTagRemoved(tag);
+                                              },
+                                            )
+                                          ],
+                                        ),
+                                      );
+                                    }).toList()),
+                              ),
+                            )
+                          : null,
+                    ),
+                    onChanged: inputFieldValues.onTagChanged,
+                    onSubmitted: inputFieldValues.onTagSubmitted,
+                  );
+                },
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  _stringTagController.clearTags();
+                },
+                child: const Text(
+                  'CLEAR TAGS',
+                ),
+              ),
+              // submit button
+              ElevatedButton(
+                onPressed: () {
+                  _submit();
+                },
+                child: Text(
+                    '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update'} Issue'),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );

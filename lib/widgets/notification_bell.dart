@@ -5,7 +5,7 @@ import 'package:smart_collab/services/activity_controller.dart';
 
 class NotificationBell extends ConsumerStatefulWidget {
   final String teamId;
-  const NotificationBell({super.key, required this.teamId});
+  const NotificationBell({super.key, required this.teamId}) ;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() =>
@@ -13,6 +13,17 @@ class NotificationBell extends ConsumerStatefulWidget {
 }
 
 class _NotificationBellState extends ConsumerState<NotificationBell> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(
+      Duration.zero,
+      () {
+        ref.read(activityProvider(widget.teamId).notifier).fetchActivities();
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final unreadActivities = ref.watch(

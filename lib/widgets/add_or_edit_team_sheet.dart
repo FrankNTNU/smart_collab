@@ -105,85 +105,88 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.8,
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // title and close button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Text(
-                      widget.addOrEdit == AddorEdit.add
-                          ? 'Add Team'
-                          : 'Update Team',
-                      style: Theme.of(context).textTheme.headlineMedium,
+    return Padding(
+      padding: MediaQuery.of(context).viewInsets.copyWith(left: 16, right: 16),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // title and close button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        widget.addOrEdit == AddorEdit.add
+                            ? 'Add Team'
+                            : 'Update Team',
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+                // team image circular avatar
+                TeamImagePicker(
+                  imageOnSelect: _imageOnSelect,
+                  defaultImageUrl: widget.team?.imageUrl,
+                ),
+                TextFormField(
+                  initialValue: _enteredName,
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                  ),
+                  onSaved: (newValue) {
+                    setState(() {
+                      _enteredName = newValue!;
+                    });
+                  },
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter a name' : null,
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  minLines: 4,
+                  maxLines: 8,
+                  controller: _descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    suffix: // clear text button
+                        IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _descriptionController.clear();
+                      },
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-              // team image circular avatar
-              TeamImagePicker(
-                imageOnSelect: _imageOnSelect,
-                defaultImageUrl: widget.team?.imageUrl,
-              ),
-              TextFormField(
-                initialValue: _enteredName,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
+                  onSaved: (newValue) {
+                    setState(() {
+                      _enteredDescription = newValue!;
+                    });
+                  },
+                  validator: (value) =>
+                      value!.isEmpty ? 'Please enter a description' : null,
                 ),
-                onSaved: (newValue) {
-                  setState(() {
-                    _enteredName = newValue!;
-                  });
-                },
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a name' : null,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                minLines: 4,
-                maxLines: 8,
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  suffix: // clear text button
-                      IconButton(
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _descriptionController.clear();
-                    },
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _submit,
+                  child: Text(
+                    widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
                   ),
                 ),
-                onSaved: (newValue) {
-                  setState(() {
-                    _enteredDescription = newValue!;
-                  });
-                },
-                validator: (value) =>
-                    value!.isEmpty ? 'Please enter a description' : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submit,
-                child: Text(
-                  widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
-                ),
-              ),
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),

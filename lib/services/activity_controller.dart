@@ -33,8 +33,8 @@ class Activity {
       id: json['id'] ?? '',
       message: json['message'] ?? '',
       userId: json['userId'],
-      activityType: json['activityType'],
-      activityDetails: json['activityDetails'],
+      activityType: json['activityType'] ?? '',
+      activityDetails: Map<String, dynamic>.from(json['activityDetails']),
       timestamp: json['timestamp'],
     );
   }
@@ -181,7 +181,7 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
             },
             timestamp: DateTime.now().toIso8601String(),
           ),
-        ],
+        ]..sort((a, b) => b.timestamp.compareTo(a.timestamp)),
         apiStatus: ApiStatus.success,
       );
     } catch (e, stackTrace) {
@@ -198,7 +198,7 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
     try {
       // fetch activities from Firestore
       final snapshot = await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
-          .collection('activities')
+          .collection('activities').orderBy('timestamp', descending: true)
           .get();
       // get read activities from shared_preferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -210,8 +210,8 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
             .toList(),
         apiStatus: ApiStatus.success,
       );
-    } catch (e) {
-      print('Error fetching activities: $e');
+    } catch (e, stackTrace) {
+      print('Error fetching activities: $e, $stackTrace');
       state = state.copyWith(error: e.toString(), apiStatus: ApiStatus.error);
     }
   }

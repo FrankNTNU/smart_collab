@@ -102,6 +102,10 @@ class _CommentFieldState extends ConsumerState<CommentField> {
             Expanded(
               child: TextField(
                 controller: _textController,
+                // on tap outside unfocus
+                onTapOutside: (_) {
+                  FocusScope.of(context).unfocus();
+                },
                 decoration: InputDecoration(
                   labelText: 'Add comment',
                   border: const OutlineInputBorder(),

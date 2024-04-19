@@ -75,49 +75,54 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
         );
       }
     });
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // title
-        const Row(
-          children: [
-            Text('Invite user to team', style: TextStyle(fontSize: 20)),
-            Spacer(),
-            CloseButton()
-          ],
-        ),
-        Form(
-          key: _formKey,
-          child: TextFormField(
-            // email field properties
-            keyboardType: TextInputType.emailAddress,
-            autocorrect: false,
-            enableSuggestions: false,
-            decoration: InputDecoration(
-              labelText: 'Enter User\'s Email',
-              errorText: errorMessage,
-            ),
-            onChanged: (value) {
-              setState(() {
-                _enteredAdminEmail = value;
-              });
-            },
-
-            validator: (value) =>
-                // validate email input
-                value!.isEmpty
-                    ? 'Please enter an email'
-                    : value.contains('@')
-                        ? null
-                        : 'Please enter a valid email',
+    return Padding(
+      padding: MediaQuery.of(context)
+                        .viewInsets
+                        .copyWith(left: 16, right: 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // title
+          const Row(
+            children: [
+              Text('Invite user to team', style: TextStyle(fontSize: 20)),
+              Spacer(),
+              CloseButton()
+            ],
           ),
-        ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Invite user'),
-        ),
-        const SizedBox(height: 32),
-      ],
+          Form(
+            key: _formKey,
+            child: TextFormField(
+              // email field properties
+              keyboardType: TextInputType.emailAddress,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: InputDecoration(
+                labelText: 'Enter User\'s Email',
+                errorText: errorMessage,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _enteredAdminEmail = value;
+                });
+              },
+      
+              validator: (value) =>
+                  // validate email input
+                  value!.isEmpty
+                      ? 'Please enter an email'
+                      : value.contains('@')
+                          ? null
+                          : 'Please enter a valid email',
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _submit,
+            child: const Text('Invite user'),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 }

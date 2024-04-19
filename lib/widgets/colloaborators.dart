@@ -54,7 +54,7 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
     final ownerUid =
         issue?.roles.entries.firstWhere((role) => role.value == 'owner').key;
     // isOwnerOrAdmin
-    final isOwner = ref.watch(authControllerProvider).user!.uid == ownerUid;
+    final isLoggedInUserTheOwner = ref.watch(authControllerProvider).user!.uid == ownerUid;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -74,7 +74,8 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
             ...collaborators.map((role) {
               return InkWell(
                 onLongPress: () {
-                  showModalBottomSheet(
+                  if (isLoggedInUserTheOwner) {
+                    showModalBottomSheet(
                     context: context,
                     builder: (context) => Padding(
                       padding: const EdgeInsets.all(16),
@@ -111,6 +112,7 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
                       ),
                     ),
                   );
+                  }
                 },
                 child: Padding(
                   padding: const EdgeInsets.only(top: 8, right: 8),
@@ -123,7 +125,7 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
                 ),
               );
             }),
-          if (isOwner)
+          if (isLoggedInUserTheOwner)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Column(

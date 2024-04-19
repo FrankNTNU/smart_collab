@@ -22,6 +22,7 @@ class IssueScreen extends ConsumerStatefulWidget {
 class _IssueScreenState extends ConsumerState<IssueScreen> {
   @override
   Widget build(BuildContext context) {
+    print('Rebuilding IssueScreen');
     final issueData = ref.watch(issueProvider(widget.issue.teamId).select(
         (value) => value.issues
             .where((issue) => issue.id == widget.issue.id)
@@ -159,9 +160,18 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                         child: const Text('Delete Issue'),
                       ),
                     ),
+                  // created at information
+                  Text(
+                    'Created at ${issueData.createdAt}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey,
+                    ),
+                  ),
                   // height 32
-                  const SizedBox(height: 64),
+                  const SizedBox(height: 100),
                 ],
+
               ),
             ),
           ),

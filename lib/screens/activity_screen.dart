@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/activity_controller.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/utils/time_utils.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
 import 'issue_screen.dart';
@@ -18,20 +19,15 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(
-      Duration.zero,
-      () {
-        // fetch activity
-        ref.read(activityProvider(widget.teamId).notifier).fetchActivities();
-      },
-    );
   }
 
   void _activityOnTapped(Activity activity) async {
     // set as read
-    await ref.read(activityProvider(widget.teamId).notifier).setAsRead(activity.id);
+    await ref
+        .read(activityProvider(widget.teamId).notifier)
+        .setAsRead(activity.id);
     print('Activity type: ${activity.activityType}');
-   
+
     switch (activity.activityType) {
       case 'add_comment':
       case 'set_as_collaborator':
@@ -71,8 +67,8 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var activities =
-        ref.watch(activityProvider(widget.teamId).select((value) => value.activities));
+    var activities = ref.watch(
+        activityProvider(widget.teamId).select((value) => value.activities));
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.8,
       child: SingleChildScrollView(
@@ -85,7 +81,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Activity',
+                    'Activities',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -110,12 +106,9 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                 itemCount: activities.length,
                 itemBuilder: (context, index) {
                   final activity = activities[index];
-
                   return ListTile(
                     // if teamId is not provided then show team name
-                    leading:  
-                        UserAvatar(uid: activity.userId)
-                        ,
+                    leading: UserAvatar(uid: activity.userId),
                     trailing: // show a small red dot if it is unread,
                         activity.read
                             ? null
@@ -127,7 +120,8 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                       _activityOnTapped(activity);
                     },
                     title: Text(activity.message),
-                    subtitle: Text(activity.timestamp.toString()),
+                    subtitle: Text(TimeUtils.getFuzzyTime(
+                        DateTime.parse(activity.timestamp))),
                   );
                 },
               ),

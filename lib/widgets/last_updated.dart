@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/utils/time_utils.dart';
 
 import '../services/issue_controller.dart';
 import '../services/profile_controller.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
 class LastUpdatedAtInfo extends ConsumerWidget {
   final Issue issueData;
@@ -11,9 +13,10 @@ class LastUpdatedAtInfo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final updatedAtMessage = TimeUtils.getFuzzyTime(issueData.updatedAt);
     if (issueData.lastUpdatedBy == null || isConcise) {
       return Text(
-        'Last updated at ${issueData.updatedAt.toString().substring(0, 16)}',
+        'Last updated $updatedAtMessage',
         style: const TextStyle(
           fontSize: 12,
           color: Colors.grey,
@@ -26,7 +29,7 @@ class LastUpdatedAtInfo extends ConsumerWidget {
     return asyncProfilePicProvider.when(
       data: (profileData) {
         return Text(
-          'Last updated by ${profileData.displayName} at ${issueData.updatedAt.toString().substring(0, 16)}',
+          'Last updated by ${profileData.displayName} $updatedAtMessage',
           style: const TextStyle(
             fontSize: 12,
             color: Colors.grey,
@@ -34,14 +37,14 @@ class LastUpdatedAtInfo extends ConsumerWidget {
         );
       },
       loading: () =>  Text(
-        'Last updated at ${issueData.updatedAt.toString().substring(0, 16)}',
+        'Last updated $updatedAtMessage',
         style: const TextStyle(
           fontSize: 12,
           color: Colors.grey,
         ),
       ),
       error: (error, stack) =>  Text(
-        'Last updated at ${issueData.updatedAt.toString().substring(0, 16)}',
+        'Last updated $updatedAtMessage',
         style: const TextStyle(
           fontSize: 12,
           color: Colors.grey,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/utils/time_utils.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../services/comment_controller.dart';
@@ -42,60 +43,75 @@ class _CommentsState extends ConsumerState<Comments> {
         ),
       );
     }
+    
     return ListView.builder(
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
       itemCount: comments.length,
       itemBuilder: (context, index) {
-        return ListTile(
-          onLongPress: () {
-            // show bottom menu
-            showModalBottomSheet(
-              context: context,
-              builder: (context) {
-                return Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        leading: const Icon(Icons.delete),
-                        title: const Text('Delete'),
-                        onTap: () {
-                          //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return ConfirmDialog(
-                                title: 'Delete Comment',
-                                content:
-                                    'Are you sure you want to delete this comment?',
-                                onConfirm: () {
-                                  ref
-                                      .read(commentProvider((
-                                        issueId: widget.issueId,
-                                        teamId: widget.teamId
-                                      )).notifier)
-                                      .deleteComment(
-                                          comments[index].id, widget.issueId);
-                                  Navigator.pop(context);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (index == 0)
+            // show commebnt count
+              Text(
+                '${comments.length} comments',
+               style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+              ),
+            ListTile(
+              onLongPress: () {
+                // show bottom menu
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) {
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.delete),
+                            title: const Text('Delete'),
+                            onTap: () {
+                              //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return ConfirmDialog(
+                                    title: 'Delete Comment',
+                                    content:
+                                        'Are you sure you want to delete this comment?',
+                                    onConfirm: () {
+                                      ref
+                                          .read(commentProvider((
+                                            issueId: widget.issueId,
+                                            teamId: widget.teamId
+                                          )).notifier)
+                                          .deleteComment(
+                                              comments[index].id, widget.issueId);
+                                      Navigator.pop(context);
+                                    },
+                                    confirmText: 'Delete',
+                                  );
                                 },
-                                confirmText: 'Delete',
                               );
                             },
-                          );
-                        },
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 );
               },
-            );
-          },
-          contentPadding: const EdgeInsets.all(0),
-          leading: UserAvatar(uid: comments[index].userId),
-          title: Text(comments[index].content),
-          subtitle: Text(comments[index].createdAt.toString()),
+              contentPadding: const EdgeInsets.all(0),
+              leading: UserAvatar(uid: comments[index].userId),
+              title: Text(comments[index].content),
+              subtitle: Text(TimeUtils.getFuzzyTime(comments[index].createdAt)),
+            ),
+          ],
         );
       },
     );
