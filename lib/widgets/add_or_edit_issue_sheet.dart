@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/screens/tag_selector_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:smart_collab/widgets/issue_tags.dart';
 import 'package:textfield_tags/textfield_tags.dart';
 
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
-import 'issue_tag_chip.dart';
 
 class AddOrEditIssueSheet extends ConsumerStatefulWidget {
   const AddOrEditIssueSheet(
@@ -92,6 +89,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
             issueId: issueId,
           );
     }
+    Navigator.of(context).pop();
   }
 
   @override

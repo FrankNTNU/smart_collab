@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
-import 'package:smart_collab/widgets/add_or_edit_issue_sheet.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
 import 'package:smart_collab/widgets/invite_to_team.dart';
@@ -26,13 +25,19 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   final _scrollController = ScrollController();
   // cover image height
   final double _coverImageHeight = 128;
+  // isCloseToBottom
+  bool isNotAtTop = false;
   @override
   void initState() {
     super.initState();
     // listen to scroll event
     _scrollController.addListener(() {
-      if (_scrollController.position.pixels ==
-          _scrollController.position.maxScrollExtent) {
+      setState(() {
+        isNotAtTop = _scrollController.position.pixels > 0;
+      });
+      final isCloseToBottom = _scrollController.position.pixels ==
+          _scrollController.position.maxScrollExtent;
+      if (isCloseToBottom) {
         print('User reached end of list');
         ref
             .read(issueProvider(widget.team.id!).notifier)
@@ -59,11 +64,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       );
     }
     print('All roles: ${teamData.roles}');
-    final uid = ref.watch(authControllerProvider.select((value) => value.user!.uid));
-    final isOwnerOrAdmin = teamData
-                .roles[uid] ==
-            'owner' ||
-        teamData.roles[uid] == 'admin';
+    final uid =
+        ref.watch(authControllerProvider.select((value) => value.user!.uid));
+    final isOwnerOrAdmin =
+        teamData.roles[uid] == 'owner' || teamData.roles[uid] == 'admin';
 
     final isFetching = ref.watch(issueProvider(widget.team.id!).select(
         (value) =>
@@ -71,7 +75,10 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             value.performedAction == PerformedAction.fetch));
     return Scaffold(
       appBar: AppBar(
-        title: Tooltip(message: 'teamId: ${teamData.id}',child: Text(teamData.name ?? ''),),
+        title: Tooltip(
+          message: 'teamId: ${teamData.id}',
+          child: Text(teamData.name ?? ''),
+        ),
         actions: [
           // notification icon button
           NotificationBell(
@@ -148,6 +155,20 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 icon: const Icon(Icons.more_horiz))
         ],
       ),
+      // scroll tp top button
+      floatingActionButton: isNotAtTop && // when the keybaord is not open 
+          MediaQuery.of(context).viewInsets.bottom == 0
+          ? FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: const Icon(Icons.arrow_upward),
+            )
+          : null,
       // floatingActionButton: // add button
       //     FloatingActionButton(
       //   onPressed: () {
@@ -164,7 +185,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       //   },
       //   child: const Icon(Icons.add),
       // ),
-     
+
       body: ListView(
         controller: _scrollController,
         children: [
@@ -172,14 +193,15 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           if (teamData.imageUrl != null)
             // network image
             CoverImage(
-                imageUrl: teamData.imageUrl!,
-                isRoundedBorder: false,
+              imageUrl: teamData.imageUrl!,
+              isRoundedBorder: false,
               height: _coverImageHeight,
             ),
-             Padding(
+          Padding(
             padding: const EdgeInsets.all(8.0),
             child: Text('${teamData.name}',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           ),
           // description about team
           Padding(

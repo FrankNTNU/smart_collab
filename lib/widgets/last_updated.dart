@@ -4,7 +4,6 @@ import 'package:smart_collab/utils/time_utils.dart';
 
 import '../services/issue_controller.dart';
 import '../services/profile_controller.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class LastUpdatedAtInfo extends ConsumerWidget {
   final Issue issueData;

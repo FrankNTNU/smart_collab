@@ -4,7 +4,6 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/colloaborators.dart';
 import 'package:smart_collab/widgets/comment_field.dart';
 import 'package:smart_collab/widgets/comments.dart';
-import 'package:smart_collab/widgets/issue_tag_chip.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
@@ -96,7 +95,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       fontSize: 16,
                     ),
                   ),
-
                   // show tags
                   InkWell(
                       onTap: () {
@@ -113,10 +111,13 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           ),
                         );
                       },
-                      child: IssueTags(
-                        tags: issueData.tags,
-                        teamId: widget.issue.teamId,
-                        isEditable: true,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: IssueTags(
+                          tags: issueData.tags,
+                          teamId: widget.issue.teamId,
+                          isEditable: true,
+                        ),
                       )),
                   const Divider(),
                   const Text(

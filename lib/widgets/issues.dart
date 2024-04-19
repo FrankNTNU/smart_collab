@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:smart_collab/widgets/issue_tag_chip.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
@@ -63,7 +62,8 @@ class _IssuesState extends ConsumerState<Issues> {
             ),
             const Spacer(),
             // add issue button
-            IconButton(
+            TextButton.icon(
+              label: const Text('Add issue'),
               icon: const Icon(Icons.add),
               onPressed: () {
                 showModalBottomSheet(

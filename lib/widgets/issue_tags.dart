@@ -28,7 +28,18 @@ class IssueTags extends StatelessWidget {
                 isLoose: isLoose,
               ),
             ),
-        if (isEditable)
+        if (isEditable && tags.isEmpty)
+          // add tag chip
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(Icons.add),
+                Text('Add tag'),
+              ],  
+            ),
+          ),
+        if (isEditable && tags.isNotEmpty)
           // add icon
           const Icon(Icons.add),
       ],
