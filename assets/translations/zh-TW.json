@@ -96,5 +96,7 @@
     "teams": "團隊",
     "listview": "列表視圖",
     "home": "首頁",
-    "about": "關於"
+    "about": "關於",
+    "x_has_duplicate": "{} 已經存在",
+    "days": "天"
 }

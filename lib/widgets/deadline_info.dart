@@ -21,10 +21,12 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
     final issueData = widget.issueData;
 
     final daysLeft = issueData.deadline!.difference(DateTime.now()).inDays;
+    print('daysLeft: $daysLeft');
     final isToday = issueData.deadline!.year == DateTime.now().year &&
         issueData.deadline!.month == DateTime.now().month &&
         issueData.deadline!.day == DateTime.now().day;
     final isOverdue = issueData.deadline!.isBefore(DateTime.now()) && !isToday;
+
     final isTomorrow = daysLeft < 1;
 
     return InkWell(
@@ -51,63 +53,68 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
                   ),
                 ],
               ),
-            if (isToday || isTomorrow || isOverdue || daysLeft < 7)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  isToday
-                      ? TranslationKeys.today.tr()
-                      : isTomorrow
-                          ? TranslationKeys.tomorrow.tr()
-                          : isOverdue
-                              ? TranslationKeys.overdue
-                              : TranslationKeys.inXDays.tr(args: [daysLeft.toString()]),
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+            if (isToday)
+              FuzzyDeadlineChip(
+                color: Colors.red,
+                text: TranslationKeys.today.tr(),
+              )
+            else if (isOverdue)
+              FuzzyDeadlineChip(
+                color: Colors.red,
+                text:
+                    '${TranslationKeys.overdue.tr()} ${daysLeft.abs()} ${TranslationKeys.days.tr()}',
+              )
+            else if (isTomorrow)
+              FuzzyDeadlineChip(
+                color: Colors.orangeAccent,
+                text: TranslationKeys.tomorrow.tr(),
               )
             else if (daysLeft >= 7)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                    TranslationKeys.inXDays.tr(
-                        args: [issueData.deadline!.difference(DateTime.now()).inDays.toString()]
-                    ), // red
-                    style: const TextStyle(
-                      color: Colors.green,
-                      // bold
-                      fontWeight: FontWeight.bold,
-                    )),
+              FuzzyDeadlineChip(
+                color: Colors.green,
+                text: TranslationKeys.inXDays.tr(args: [
+                  issueData.deadline!
+                      .difference(DateTime.now())
+                      .inDays
+                      .toString()
+                ]), // r
               )
             else
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                    TranslationKeys.inXDays.tr(
-                        args: [issueData.deadline!.difference(DateTime.now()).inDays.toString()]
-                    
-                    ), // red
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      // bold
-                      fontWeight: FontWeight.bold,
-                    )),
+              FuzzyDeadlineChip(
+                color: Colors.orangeAccent,
+                text: TranslationKeys.inXDays.tr(args: [
+                  issueData.deadline!
+                      .difference(DateTime.now())
+                      .inDays
+                      .toString()
+                ]), //
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class FuzzyDeadlineChip extends StatelessWidget {
+  const FuzzyDeadlineChip({super.key, required this.color, required this.text});
+
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

@@ -38,6 +38,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       case ActivityType.closeIssue:
       case ActivityType.createIssue:
       case ActivityType.updateIssue:
+      case ActivityType.setAsCollaborator:
         _openIssueScreen(activity);
         break;
       default:

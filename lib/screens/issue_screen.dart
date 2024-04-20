@@ -99,7 +99,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     final uid = ref.watch(authControllerProvider).user!.uid;
     final username = ref.watch(authControllerProvider).user!.displayName!;
     // add to activity
-    final message = isClosed
+    final message = !isClosed
         ? TranslationKeys.xHasOpenedIssueY.tr(args: [username, issueData.title])
         : TranslationKeys.xHasClosedIssueY
             .tr(args: [username, issueData.title]);

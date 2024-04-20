@@ -1,7 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/services/profile_controller.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
@@ -106,7 +108,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
                   FocusScope.of(context).unfocus();
                 },
                 decoration: InputDecoration(
-                  labelText: 'Add comment',
+                  labelText: TranslationKeys.addComment.tr(),
                   border: const OutlineInputBorder(),
                   errorText: errorMessage,
                 ),

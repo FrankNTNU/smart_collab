@@ -3,6 +3,7 @@ import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/deadline_info.dart';
 import 'package:smart_collab/widgets/issue_tags.dart';
+import 'package:smart_collab/widgets/issues.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
@@ -62,12 +63,13 @@ class IssueTile extends StatelessWidget {
                   issueData: issueData,
                   isConcise: true,
                 ),
-                if (tabIndex == 1)
+                if (tabIndex == IssueTabEnum.overdue ||
+                    tabIndex == IssueTabEnum.upcoming)
                   DeadlineInfo(
                     issueData: issueData,
                     isConcise: true,
                   ),
-                if (tabIndex == 2)
+                if (tabIndex == IssueTabEnum.closed)
                   const IsOpenChip(
                     isOpen: false,
                   )

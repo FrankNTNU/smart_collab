@@ -71,7 +71,9 @@ class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
               );
       if (isExist) {
         setState(() {
-          _errorMessage = TranslationKeys.xHasDuplicate.tr();
+          _errorMessage = TranslationKeys.xHasDuplicate.tr(
+            args: [_enteredTagName!],
+          );
         });
         return;
       }
@@ -81,6 +83,21 @@ class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
           );
     }
     if (widget.addOrEdit == AddorEdit.edit) {
+      final hasNameChanged = widget.initialTag!.name != _enteredTagName;
+      if (hasNameChanged) {
+        final isExist =
+            await ref.read(tagProvider(widget.teamId).notifier).isTagNameExists(
+                  _enteredTagName!,
+                );
+        if (isExist) {
+          setState(() {
+            _errorMessage = TranslationKeys.xHasDuplicate.tr(
+              args: [_enteredTagName!],
+            );
+          });
+          return;
+        }
+      }
       ref.read(tagProvider(widget.teamId).notifier).updateTag(
             tagId: widget.initialTag!.id,
             oldTagName: widget.initialTag!.name,

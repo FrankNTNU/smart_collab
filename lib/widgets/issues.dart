@@ -1,23 +1,23 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/screens/calendar_view.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:smart_collab/widgets/tab_view_bar.dart';
 import 'package:smart_collab/widgets/issue_tile.dart';
+import 'package:smart_collab/widgets/tab_view_bar.dart';
 
 import '../screens/filter_tags_selection_menu.dart';
 import '../utils/translation_keys.dart';
 import 'add_or_edit_issue_sheet.dart';
 import 'issue_tags.dart';
-import 'title_text.dart';
 
 // tab enum
 class IssueTabEnum {
   static const open = 0;
-  static const upcoming = 1;
-  static const closed = 2;
+  // overdue
+  static const overdue = 1;
+  static const upcoming = 2;
+  static const closed = 3;
 }
 
 // tab view enum
@@ -129,7 +129,14 @@ class _IssuesState extends ConsumerState<Issues> {
                 issue.deadline!.isAfter(DateTime.now()))
             .toList()
         : filteredIssues;
-
+    // if overdue tab is selected, then filter issues
+    filteredIssues = _currentTabIndex == IssueTabEnum.overdue
+        ? filteredIssues
+            .where((issue) =>
+                issue.deadline != null &&
+                issue.deadline!.isBefore(DateTime.now()))
+            .toList()
+        : filteredIssues;
     // if first tab (open) is selected, then filter issues, if third tab (closed) is selected, then filter issues
     filteredIssues = filteredIssues
         .where((issue) => _currentTabIndex == IssueTabEnum.closed
@@ -146,7 +153,6 @@ class _IssuesState extends ConsumerState<Issues> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-       
         Row(
           children: [
             Expanded(
@@ -242,11 +248,13 @@ class _IssuesState extends ConsumerState<Issues> {
           tabs: [
             TranslationKeys.openIssues.tr(),
             TranslationKeys.upcoming.tr(),
+            TranslationKeys.overdue.tr(),
             TranslationKeys.closedIssues.tr(),
           ],
           icons: const [
             Icons.content_paste,
-            Icons.hourglass_bottom,
+            Icons.hourglass_top_rounded,
+            Icons.event_busy,
             Icons.do_not_disturb_on
           ],
         ),

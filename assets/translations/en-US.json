@@ -22,7 +22,7 @@
     "title": "Title",
     "description": "Description",
     "create": "Create",
-    "please_enter_something": "Please enter {}", 
+    "please_enter_something": "Please enter {}",
     "members": "Members",
     "invite": "Invite",
     "owner": "Owner",
@@ -43,7 +43,6 @@
     "calendar": "Calendar",
     "search_something": "Search {}",
     "included_tags": "Included tags",
-
     "clear": "Clear",
     "filter_by_tags": "Filter by tags",
     "tag_description": "Tags are useful for organizing and filtering issues",
@@ -97,5 +96,7 @@
     "teams": "Teams",
     "listview": "List view",
     "home": "Home",
-    "about": "About"
+    "about": "About",
+    "x_has_duplicate": "{} has duplicate",
+    "days": "days"
 }

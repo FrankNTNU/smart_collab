@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/issues.dart';
 import 'package:smart_collab/widgets/title_text.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -108,7 +110,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '$openIssueCount open',
+                  '$openIssueCount ${TranslationKeys.open.tr()}',
                   style: const TextStyle(
                     color: Colors.black,
                   ),
@@ -127,7 +129,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  '$closedIssueCount closed',
+                  '$closedIssueCount ${TranslationKeys.closed.tr()}',
                   style: const TextStyle(
                     color: Colors.black,
                   ),
