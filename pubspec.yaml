@@ -17,6 +17,7 @@ dependencies:
   flutter_riverpod: ^2.5.1
   google_sign_in: ^6.2.1
   image_picker: ^1.0.8
+  qr_flutter: ^4.1.0
   shared_preferences: ^2.2.3
   textfield_tags: ^3.0.1
   timeago: ^3.6.1

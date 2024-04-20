@@ -10,7 +10,9 @@ import '../services/auth_controller.dart';
 import '../widgets/add_or_edit_issue_sheet.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/confirm_dialog.dart';
+import '../widgets/grey_description.dart';
 import '../widgets/issue_tags.dart';
+import '../widgets/title_text.dart';
 import 'filter_tags_selection_menu.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
@@ -77,12 +79,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
-                      Text(
+                      TitleText(
                         issueData.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
                       ),
                       // spacer and close button
                       const Spacer(),
@@ -126,14 +124,11 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   showDragHandle: true,
                                   context: context,
                                   builder: (context) {
-                                    final mergedTagNames = <String>{
-                                      
-                                      ...issueData.tags,
-                                    }.toList();
                                     return FilterTagsSelectionMenu(
                                       initialTags: issueData.tags,
                                       onSelected: _onTagToggle,
                                       teamId: widget.issue.teamId,
+                                      title: 'Edit Tags',
                                     );
                                   });
                             },
@@ -145,18 +140,38 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           isEditable: isAuthorOrColloborator,
                         ),
                       )),
+                  // deadline
+                  if (issueData.deadline != null)
+                    InkWell(
+
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // calendar icon
+                            const Icon(
+                              Icons.calendar_today,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Deadline: ${issueData.deadline.toString().substring(0, 10)}',
+                              style: const TextStyle(
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const Divider(),
-                  const Text(
+                  const TitleText(
                     'Collaborators',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   // grey description
-                  const Text(
+                  const GreyDescription(
                     'People who can edit this issue',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
+                  
                   ),
                   Collaborators(
                       issueId: issueData.id, teamId: widget.issue.teamId),
@@ -164,9 +179,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   // show a list of admins horizontally
 
                   const Divider(),
-                  const Text('Comments',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  const TitleText('Comments'),
                   Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   const Divider(),
                   if (areYouTheOnwerOrAdmin)
@@ -199,12 +212,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       ),
                     ),
                   // created at information
-                  Text(
+                  GreyDescription(
                     'Created at ${issueData.createdAt}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                    ),
                   ),
                   // height 32
                   const SizedBox(height: 100),

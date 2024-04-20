@@ -5,6 +5,7 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/utils/time_utils.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
+import '../widgets/title_text.dart';
 import 'issue_screen.dart';
 
 class ActivityScreen extends ConsumerStatefulWidget {
@@ -74,24 +75,18 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
       child: SingleChildScrollView(
         child: Column(
           children: [
-            const SizedBox(height: 20),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Activities',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  TitleText(
+                    'Activities'
                   ),
                   CloseButton(),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
             if (activities.isEmpty)
               const SizedBox(
                 height: 200,

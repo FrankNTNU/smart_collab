@@ -93,7 +93,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
                 value.performedAction == PerformedAction.add));
 
     return Container(
-      color: Colors.white.withOpacity(0.9),
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
       // bottom padding
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
       child: Padding(

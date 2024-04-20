@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/tag_controller.dart';
 import 'color_pallete.dart';
+import 'title_text.dart';
 
 class AddTagForm extends ConsumerStatefulWidget {
   const AddTagForm({super.key, required this.teamId});
@@ -59,9 +60,8 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'Add new tag',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            TitleText(
+              'Add new tag'
             ),
             CloseButton(),
           ],

@@ -3,17 +3,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/tag_controller.dart';
 
 import '../widgets/add_tag_form.dart';
+import '../widgets/grey_description.dart';
 import '../widgets/issue_tag_chip.dart';
+import '../widgets/title_text.dart';
 
 class FilterTagsSelectionMenu extends ConsumerStatefulWidget {
   final Function(String tag) onSelected;
   final List<String> initialTags;
   final String teamId;
+  final String title;
   const FilterTagsSelectionMenu(
       {super.key,
       required this.onSelected,
       required this.initialTags,
-      required this.teamId});
+      required this.teamId, this.title = 'Filter by tags'});
 
   @override
   ConsumerState<FilterTagsSelectionMenu> createState() =>
@@ -69,21 +72,25 @@ class _FilterTagsSelectionMenuState
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+           Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                Text(
-                  'Filter by tags',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                TitleText(
+                  widget.title,
                 ),
-                Spacer(),
-                CloseButton(),
+                const Spacer(),
+                const CloseButton(),
               ],
+            ),
+          ),
+          // small grey description
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: GreyDescription(
+              'Tags are useful for organizing and filtering issues.'
             ),
           ),
           Row(

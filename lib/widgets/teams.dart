@@ -5,6 +5,7 @@ import 'package:smart_collab/widgets/cover_image.dart';
 
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
+import 'title_text.dart';
 
 class Teams extends ConsumerStatefulWidget {
   const Teams({super.key});
@@ -83,8 +84,7 @@ class _TeamsState extends ConsumerState<Teams> {
         // header
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          child: Text('My Teams',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          child: TitleText('My Teams'),
         ),
         RefreshIndicator(
           onRefresh: () async =>

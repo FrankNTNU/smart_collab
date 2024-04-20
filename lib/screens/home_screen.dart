@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/main.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/profile.dart';
@@ -34,10 +35,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = ref.watch(isDarkModeProvider);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
+          // dark mode icon
+          IconButton(
+              onPressed: () {
+                ref.read(isDarkModeProvider.notifier).state = !isDarkMode;
+              },
+              icon: const Icon(Icons.brightness_2)),
           // logout button
           IconButton(
             icon: const Icon(Icons.logout),
@@ -65,7 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
         child: const Icon(Icons.add),
       ),
-      body:  ListView(
+      body: ListView(
         children: const [
           // show profile information
           SizedBox(height: 20),

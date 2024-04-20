@@ -47,7 +47,10 @@ class _IssueTagChipState extends ConsumerState<IssueTagChip> {
         color: Color(int.parse('0xff$tagColor')),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(widget.tagName),
+      child: Text(widget.tagName, // black
+          style: const TextStyle(
+            color: Colors.black,
+          )),
     );
   }
 }

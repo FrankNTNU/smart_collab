@@ -5,6 +5,7 @@ import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../services/comment_controller.dart';
 import 'confirm_dialog.dart';
+import 'grey_description.dart';
 
 class Comments extends ConsumerStatefulWidget {
   final String issueId;
@@ -54,12 +55,8 @@ class _CommentsState extends ConsumerState<Comments> {
           children: [
             if (index == 0)
             // show commebnt count
-              Text(
+              GreyDescription(
                 '${comments.length} comments',
-               style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                  ),
               ),
             ListTile(
               onLongPress: () {

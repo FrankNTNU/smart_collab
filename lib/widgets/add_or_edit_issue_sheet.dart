@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:textfield_tags/textfield_tags.dart';
+import 'package:smart_collab/widgets/title_text.dart';
 
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
@@ -29,8 +29,10 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   // enteredDeadline
   DateTime? _enteredDeadline;
   late double _distanceToField;
-  late StringTagController _stringTagController;
-
+  // error message
+  String? _errorMessage;
+  // description editing controller
+  final _descriptionController = TextEditingController();
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -40,11 +42,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   @override
   void initState() {
     super.initState();
-    _stringTagController = StringTagController();
     if (widget.addOrEdit == AddorEdit.update) {
       setState(() {
         _enteredTitle = widget.issue!.title;
         _enteredDescription = widget.issue!.description;
+        _descriptionController.text = widget.issue!.description;
+        _enteredDeadline = widget.issue!.deadline;
       });
     }
   }
@@ -56,6 +59,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
     }
     // save form
     _formKey.currentState!.save();
+    if (_enteredDeadline == null) {
+      setState(() {
+        _errorMessage = 'Please select a deadline';
+      });
+      return;
+    }
     // get curent username
     final username = ref.watch(authControllerProvider
         .select((value) => value.user?.displayName ?? ''));
@@ -63,7 +72,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
       await ref.read(issueProvider(widget.teamId).notifier).updateIssue(
           title: _enteredTitle,
           description: _enteredDescription,
-          tags: _stringTagController.getTags ?? [],
+          deadline: _enteredDeadline,
           issueId: widget.issue!.id);
       // add to activity
       await ref.read(activityProvider(widget.teamId).notifier).addActivity(
@@ -74,12 +83,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
             issueId: widget.issue!.id,
           );
     } else {
-      final issueId = await ref
-          .read(issueProvider(widget.teamId).notifier)
-          .addIssue(
-              title: _enteredTitle,
-              description: _enteredDescription,
-              tags: _stringTagController.getTags ?? []);
+      final issueId =
+          await ref.read(issueProvider(widget.teamId).notifier).addIssue(
+                title: _enteredTitle,
+                description: _enteredDescription,
+                deadline: _enteredDeadline,
+              );
       // add to activity
       await ref.read(activityProvider(widget.teamId).notifier).addActivity(
             recipientUid: username,
@@ -94,12 +103,6 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final tags = ref.watch(issueProvider(widget.teamId).select((value) => value
-            .issues
-            .where((issue) => issue.id == widget.issue?.id)
-            .firstOrNull
-            ?.tags)) ??
-        [];
     ref.listen(issueProvider(widget.teamId).select((value) => value.apiStatus),
         (prev, next) {
       if (next == ApiStatus.success) {
@@ -113,7 +116,10 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
       }
     });
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16),
+      padding: EdgeInsets.only(
+          left: 16,
+          right: 16, // bottom viewinset
+          bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.7,
         child: Form(
@@ -124,9 +130,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               // header
               Row(
                 children: [
-                  Text(
+                  TitleText(
                     '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Edit'} issue',
-                    style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   const Spacer(),
                   const CloseButton()
@@ -148,8 +153,15 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               ),
               // descroption
               TextFormField(
-                initialValue: _enteredDescription,
-                decoration: const InputDecoration(labelText: 'Description'),
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                    labelText: 'Description',
+                    suffix: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _descriptionController.clear();
+                      },
+                    )),
                 maxLines: 12,
                 minLines: 6,
                 validator: (value) {
@@ -164,113 +176,40 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               ),
               // height 8
               const SizedBox(height: 8),
-            
-              // TextFieldTags<String>(
-              //   textfieldTagsController: _stringTagController,
-              //   initialTags: _initialTags,
-              //   textSeparators: const [' ', ','],
-              //   letterCase: LetterCase.normal,
-              //   validator: (String tag) {
-              //     if (_stringTagController.getTags!.contains(tag)) {
-              //       return 'You\'ve already entered that';
-              //     }
-              //     return null;
-              //   },
-              //   inputFieldBuilder: (context, inputFieldValues) {
-              //     return TextField(
-              //       onTap: () {
-              //         _stringTagController.getFocusNode?.requestFocus();
-              //       },
-              //       controller: inputFieldValues.textEditingController,
-              //       focusNode: inputFieldValues.focusNode,
-              //       decoration: InputDecoration(
-              //         labelText: 'Tags',
-              //         isDense: true,
-              //         helperStyle: const TextStyle(
-              //           color: Color.fromARGB(255, 74, 137, 92),
-              //         ),
-              //         hintText: inputFieldValues.tags.isNotEmpty
-              //             ? ''
-              //             : "Enter tag...",
-              //         errorText: inputFieldValues.error,
-              //         prefixIconConstraints:
-              //             BoxConstraints(maxWidth: _distanceToField * 0.8),
-              //         prefixIcon: inputFieldValues.tags.isNotEmpty
-              //             ? SingleChildScrollView(
-              //                 controller: inputFieldValues.tagScrollController,
-              //                 scrollDirection: Axis.vertical,
-              //                 child: Padding(
-              //                   padding: const EdgeInsets.only(
-              //                     top: 8,
-              //                     bottom: 8,
-              //                     left: 8,
-              //                   ),
-              //                   child: Wrap(
-              //                       runSpacing: 4.0,
-              //                       spacing: 4.0,
-              //                       children:
-              //                           inputFieldValues.tags.map((String tag) {
-              //                         return Container(
-              //                           decoration: const BoxDecoration(
-              //                             borderRadius: BorderRadius.all(
-              //                               Radius.circular(20.0),
-              //                             ),
-              //                             color:
-              //                                 Color.fromARGB(255, 74, 137, 92),
-              //                           ),
-              //                           margin: const EdgeInsets.symmetric(
-              //                               horizontal: 5.0),
-              //                           padding: const EdgeInsets.symmetric(
-              //                               horizontal: 10.0, vertical: 5.0),
-              //                           child: Row(
-              //                             mainAxisAlignment:
-              //                                 MainAxisAlignment.start,
-              //                             mainAxisSize: MainAxisSize.min,
-              //                             children: [
-              //                               InkWell(
-              //                                 child: Text(
-              //                                   '#$tag',
-              //                                   style: const TextStyle(
-              //                                       color: Colors.white),
-              //                                 ),
-              //                                 onTap: () {
-              //                                   //print("$tag selected");
-              //                                 },
-              //                               ),
-              //                               const SizedBox(width: 4.0),
-              //                               InkWell(
-              //                                 child: const Icon(
-              //                                   Icons.cancel,
-              //                                   size: 14.0,
-              //                                   color: Color.fromARGB(
-              //                                       255, 233, 233, 233),
-              //                                 ),
-              //                                 onTap: () {
-              //                                   inputFieldValues
-              //                                       .onTagRemoved(tag);
-              //                                 },
-              //                               )
-              //                             ],
-              //                           ),
-              //                         );
-              //                       }).toList()),
-              //                 ),
-              //               )
-              //             : null,
-              //       ),
-              //       onChanged: inputFieldValues.onTagChanged,
-              //       onSubmitted: inputFieldValues.onTagSubmitted,
-              //     );
-              //   },
-              // ),
-              // ElevatedButton(
-              //   onPressed: () {
-              //     _stringTagController.clearTags();
-              //   },
-              //   child: const Text(
-              //     'CLEAR TAGS',
-              //   ),
-              // ),
+              const Text('Deadline'),
+              // deadline field
+              InkWell(
+                onTap: () {
+                  final threeYearsFromNow = DateTime.now().add(
+                    const Duration(days: 365 * 3),
+                  );
+                  // date picker
+                  showDatePicker(
+                    context: context,
+                    initialDate: _enteredDeadline ?? DateTime.now(),
+                    firstDate: DateTime.now(),
+                    lastDate: threeYearsFromNow,
+                  ).then((pickedDate) {
+                    if (pickedDate == null) {
+                      return;
+                    }
+                    setState(() {
+                      _enteredDeadline = pickedDate;
+                    });
+                  });
+                },
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    errorText: _errorMessage,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(_enteredDeadline == null
+                        ? 'Select the deadline'
+                        : _enteredDeadline.toString().substring(0, 10)),
+                  ),
+                ),
+              ),
               const SizedBox(
                 height: 16,
               ),

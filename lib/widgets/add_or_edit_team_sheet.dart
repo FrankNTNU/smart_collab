@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/activity_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
+import 'package:smart_collab/widgets/title_text.dart';
 
 import '../services/auth_controller.dart';
 import 'team_image_picker.dart';
@@ -121,12 +122,9 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Text(
-                        widget.addOrEdit == AddorEdit.add
-                            ? 'Add Team'
-                            : 'Update Team',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
+                      child: TitleText(widget.addOrEdit == AddorEdit.add
+                          ? 'Add Team'
+                          : 'Update Team'),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
@@ -177,6 +175,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                   validator: (value) =>
                       value!.isEmpty ? 'Please enter a description' : null,
                 ),
+
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _submit,

@@ -21,16 +21,27 @@ void main() async {
   runApp(const ProviderScope(child: MainApp()));
 }
 
-class MainApp extends ConsumerWidget {
+// isDarkModeProvider
+final isDarkModeProvider = StateProvider((_) => true);
+
+class MainApp extends ConsumerStatefulWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends ConsumerState<MainApp> {
+  @override
+  Widget build(BuildContext context) {
     final isAuthenicated = ref.watch(authControllerProvider.select(
       (value) => value.isAuthenicated,
     ));
     return MaterialApp(
-
+        // theme
+        theme: ref.watch(isDarkModeProvider)
+            ? ThemeData.dark()
+            : ThemeData.light(),
         // remove debug label
         debugShowCheckedModeBanner: false,
         home: !isAuthenicated ? const LoginScreen() : const HomeScreen());

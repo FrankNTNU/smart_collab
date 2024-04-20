@@ -17,7 +17,7 @@ class Issue {
   // roles
   final Map<String, String> roles;
   // deadline
-  final DateTime deadline;
+  final DateTime? deadline;
   // tags
   final List<String> tags;
   // teamId
@@ -33,7 +33,7 @@ class Issue {
     required this.updatedAt,
     required this.id,
     required this.roles,
-    required this.deadline,
+     this.deadline,
     required this.tags,
     required this.teamId,
     this.lastUpdatedBy,
@@ -77,8 +77,9 @@ class Issue {
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       roles: Map<String, String>.from(json['roles']),
-      deadline:
-          DateTime.parse(json['deadline'] ?? DateTime.now().toIso8601String()),
+      deadline: json['deadline'] != null
+          ? DateTime.parse(json['deadline'])
+          : null,
       tags: List<String>.from(json['tags'] ?? []),
       teamId: json['teamId'],
       lastUpdatedBy: json['lastUpdatedBy'],
@@ -367,7 +368,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   Future<void> updateIssue({
     required String title,
     required String description,
-    required List<String> tags,
+    List<String>? tags,
+    DateTime? deadline,
     required String issueId,
   }) async {
     state = state.copyWith(
@@ -380,12 +382,15 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .collection('issues')
           .doc(issueId)
           .update({
-        'title': title,
-        'description': description,
-        'updatedAt': DateTime.now().toIso8601String(),
-        'tags': tags,
-        'lastUpdatedBy': state.userId,
-      });
+            'title': title,
+            'description': description,
+            'updatedAt': DateTime.now().toIso8601String(),
+            'lastUpdatedBy': state.userId,
+          }
+            ..addAll(tags != null ? {'tags': tags} : {})
+            ..addAll(deadline != null
+                ? {'deadline': deadline.toIso8601String()}
+                : {}));
       final updatedIssue =
           state.issues.firstWhere((issue) => issue.id == issueId);
       final updatedIssues = state.issues.map((issue) {
@@ -396,6 +401,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
             tags: tags,
             updatedAt: DateTime.now(),
             lastUpdatedBy: state.userId,
+            deadline: deadline ?? DateTime.now(),
           );
         }
         return issue;
@@ -415,7 +421,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   Future<String> addIssue({
     required String title,
     required String description,
-    required List<String> tags,
+    List<String>? tags,
+    DateTime? deadline,
   }) async {
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
@@ -426,24 +433,25 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .doc(state.teamId)
           .collection('issues')
           .add({
-        'title': title,
-        'description': description,
-        'createdAt': DateTime.now().toIso8601String(),
-        'updatedAt': DateTime.now().toIso8601String(),
-        'teamId': state.teamId,
-        'roles': {state.userId: 'owner'},
-        'tags': tags,
-      });
+            'title': title,
+            'description': description,
+            'createdAt': DateTime.now().toIso8601String(),
+            'updatedAt': DateTime.now().toIso8601String(),
+            'deadline':
+                deadline?.toIso8601String() ?? DateTime.now().toIso8601String(),
+            'teamId': state.teamId,
+            'roles': {state.userId: 'owner'},
+          }..addAll(tags != null ? {'tags': tags} : {}));
       final issue = Issue(
         title: title,
         description: description,
         status: '',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        deadline: deadline ?? DateTime.now(),
         id: issueRef.id,
         roles: {state.userId: 'owner'},
-        deadline: DateTime.now(),
-        tags: tags,
+        tags: [],
         teamId: state.teamId,
       );
       state = state.copyWith(apiStatus: ApiStatus.success, issues: [

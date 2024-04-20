@@ -9,6 +9,7 @@ import 'package:smart_collab/widgets/user_avatar.dart';
 import '../screens/filter_tags_selection_menu.dart';
 import 'add_or_edit_issue_sheet.dart';
 import 'issue_tags.dart';
+import 'title_text.dart';
 
 class Issues extends ConsumerStatefulWidget {
   final String teamId;
@@ -106,13 +107,12 @@ class _IssuesState extends ConsumerState<Issues> {
           children: [
             const Padding(
               padding: EdgeInsets.all(8.0),
-              child: Text('Issues',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: TitleText('Issues'),
             ),
             const Spacer(),
             // add issue button
             TextButton.icon(
-              label: const Text('Add issue'),
+              label: const Text('New issue'),
               icon: const Icon(Icons.add),
               onPressed: () {
                 showModalBottomSheet(
@@ -120,12 +120,9 @@ class _IssuesState extends ConsumerState<Issues> {
                   enableDrag: true,
                   showDragHandle: true,
                   context: context,
-                  builder: (context) => Padding(
-                    padding: MediaQuery.of(context).viewInsets,
-                    child: AddOrEditIssueSheet(
-                      teamId: widget.teamId,
-                      addOrEdit: AddorEdit.add,
-                    ),
+                  builder: (context) => AddOrEditIssueSheet(
+                    teamId: widget.teamId,
+                    addOrEdit: AddorEdit.add,
                   ),
                 );
               },

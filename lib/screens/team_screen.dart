@@ -11,6 +11,7 @@ import '../services/issue_controller.dart';
 import '../services/team_controller.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/issues.dart';
+import '../widgets/title_text.dart';
 
 class TeamScreen extends ConsumerStatefulWidget {
   final Team team;
@@ -136,9 +137,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text('${teamData.name}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                child: TitleText('${teamData.name}'),
               ),
               if (isOwnerOrAdmin)
                 IconButton(
@@ -223,9 +222,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             children: [
               const Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text('Members',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                child: TitleText('Members',),
               ),
               if (isOwnerOrAdmin)
                 TextButton.icon(

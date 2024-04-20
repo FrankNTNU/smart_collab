@@ -4,6 +4,7 @@ import 'package:smart_collab/utils/time_utils.dart';
 
 import '../services/issue_controller.dart';
 import '../services/profile_controller.dart';
+import 'grey_description.dart';
 
 class LastUpdatedAtInfo extends ConsumerWidget {
   final Issue issueData;
@@ -14,12 +15,8 @@ class LastUpdatedAtInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final updatedAtMessage = TimeUtils.getFuzzyTime(issueData.updatedAt);
     if (issueData.lastUpdatedBy == null || isConcise) {
-      return Text(
+      return GreyDescription(
         'Last updated $updatedAtMessage',
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.grey,
-        ),
       );
     }
     final asyncProfilePicProvider =
@@ -27,27 +24,15 @@ class LastUpdatedAtInfo extends ConsumerWidget {
 
     return asyncProfilePicProvider.when(
       data: (profileData) {
-        return Text(
+        return GreyDescription(
           'Last updated by ${profileData.displayName} $updatedAtMessage',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
         );
       },
-      loading: () =>  Text(
+      loading: () =>  GreyDescription(
         'Last updated $updatedAtMessage',
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.grey,
-        ),
       ),
-      error: (error, stack) =>  Text(
+      error: (error, stack) =>  GreyDescription(
         'Last updated $updatedAtMessage',
-        style: const TextStyle(
-          fontSize: 12,
-          color: Colors.grey,
-        ),
       ),
     );
   }
