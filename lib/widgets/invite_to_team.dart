@@ -67,6 +67,10 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
   Widget build(BuildContext context) {
     final errorMessage =
         ref.watch(teamsProvider.select((value) => value.errorMessage));
+    final tenMinutesFromNow = DateTime.now()
+        .add(const Duration(minutes: 10))
+        .toString()
+        .substring(0, 16);
     ref.listen(teamsProvider.select((value) => value.apiStatus), (prev, next) {
       if (next == ApiStatus.success) {
         // close currently showing the snackbar
@@ -157,10 +161,6 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                 showDragHandle: true,
                 context: context,
                 builder: (context) {
-                  final tenMinutesFromNow = DateTime.now()
-                      .add(const Duration(minutes: 10))
-                      .toString()
-                      .substring(0, 16);
                   return Container(
                     width: double.infinity,
                     height: MediaQuery.of(context).size.height * 0.75,
@@ -177,10 +177,29 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                             CloseButton()
                           ],
                         ),
-                        // a small grey description
-                        GreyDescription(
-                            'This QR code is only valid for 10 minutes. Expiring at $tenMinutesFromNow'),
-                        const GreyDescription('Have the user click on the (+) icon on the home screen and select "Join a team" and scan this QR code.'),
+                        const Wrap(
+                          children: [
+                            Text('Have the user click on the '),
+                            Text('(+) icon',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                )),
+                            Text(' on the '),
+                            Text('home screen',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                )),
+                            Text(' and select '),
+                            Text('Join a team',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                )),
+                            Text(' to scan this QR code')
+                          ],
+                        ),
                         Expanded(
                           child: Align(
                             // center
@@ -193,6 +212,10 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                                     MediaQuery.of(context).size.height * 0.35),
                           ),
                         ),
+
+                        // a small grey description
+                        GreyDescription(
+                            'This QR code is only valid for 10 minutes. Expiring at $tenMinutesFromNow'),
                       ],
                     ),
                   );

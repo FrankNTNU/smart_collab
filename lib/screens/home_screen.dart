@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/main.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/profile.dart';
@@ -10,13 +9,23 @@ import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/title_text.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+  final Function(bool) toggleTheme;
+  final bool isDarkMode;
+  const HomeScreen(
+      {super.key, required this.toggleTheme, required this.isDarkMode});
 
   @override
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _isDarkModel = false;
+  @override
+  void initState() {
+    super.initState();
+    _isDarkModel = widget.isDarkMode;
+  }
+
   void _logout() {
     // confirm logout
     showDialog(
@@ -36,7 +45,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = ref.watch(isDarkModeProvider);
     final username = ref.watch(authControllerProvider).user?.displayName;
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -56,7 +64,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: ListView(
         children: [
-          const SizedBox(height: 32,),
+          const SizedBox(
+            height: 32,
+          ),
           // welcome text
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -68,16 +78,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
               PopupMenuButton(
-
                 itemBuilder: (context) => [
                   PopupMenuItem(
-                    child: ListTile(
-                      leading: const Icon(Icons.brightness_2),
-                      title: const Text('Dark Mode'),
-                      onTap: () {
-                        ref.read(isDarkModeProvider.notifier).state =
-                            !isDarkMode;
-                      },
+                    child: StatefulBuilder(
+                      builder: (context, setState) => ListTile(
+                        leading: const Icon(Icons.brightness_2),
+                        title: Text(_isDarkModel ? 'Light Mode' : 'Dark Mode'),
+                        onTap: () {
+                          setState(() {
+                            widget.toggleTheme(!_isDarkModel);
+                            _isDarkModel = !_isDarkModel;
+                          });
+                        },
+                      ),
                     ),
                   ),
                   PopupMenuItem(

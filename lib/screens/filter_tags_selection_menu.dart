@@ -36,9 +36,6 @@ class _FilterTagsSelectionMenuState
   void initState() {
     super.initState();
     _selectedTags = widget.initialTags;
-    Future.delayed(Duration.zero, () {
-      ref.read(tagProvider(widget.teamId).notifier).fetchTags();
-    });
   }
 
   void openAddTagForm() {
