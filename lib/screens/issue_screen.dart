@@ -53,11 +53,14 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                 .select((value) => value.issueMap[widget.issue.id]))
             ?.tags ??
         [];
+    print('Tags in state in onTagToggle: $tags');
     if (tags.contains(tag)) {
+      print('Removing tag from issue, tag: $tag');
       ref
           .read(issueProvider(widget.issue.teamId).notifier)
           .removeTagFromIssue(issueId: widget.issue.id, tag: tag);
     } else {
+      print('Adding tag to issue, tag: $tag');
       ref
           .read(issueProvider(widget.issue.teamId).notifier)
           .addTagToIssue(issueId: widget.issue.id, tag: tag);
@@ -117,6 +120,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     print('Rebuilding IssueScreen');
     final issueData = ref.watch(issueProvider(widget.issue.teamId)
         .select((value) => value.issueMap[widget.issue.id]));
+    print('Tags in issue screen: ${issueData?.tags}');
     if (issueData == null) {
       return Center(
         child: Text(TranslationKeys.somethingNotFound.tr(
@@ -256,7 +260,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   context: context,
                                   builder: (context) {
                                     return FilterTagsSelectionMenu(
-                                      purpose: TagSelectionPurpose.editIssue ,
+                                      purpose: TagSelectionPurpose.editIssue,
                                       initialTags: issueData.tags,
                                       onSelected: _onTagToggle,
                                       teamId: widget.issue.teamId,

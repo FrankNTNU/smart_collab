@@ -205,7 +205,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       final updatedIssueMap = {
         ...state.issueMap,
         issueId: state.issueMap[issueId]!.copyWith(
-          tags: [...state.issueMap[issueId]!.tags, tag],
+          tags: {...state.issueMap[issueId]!.tags, tag}.toList(),
         ),
       };
       state = state.copyWith(
@@ -252,7 +252,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       final updatedIssueMap = {
         ...state.issueMap,
         issueId: state.issueMap[issueId]!.copyWith(
-          tags: state.issueMap[issueId]!.tags..remove(tag),
+          tags: state.issueMap[issueId]!.tags..removeWhere((t) => t == tag),
         ),
       };
       state = state.copyWith(
