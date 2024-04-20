@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/utils/time_utils.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 
 import '../services/issue_controller.dart';
 import '../services/profile_controller.dart';
@@ -9,14 +11,17 @@ import 'grey_description.dart';
 class LastUpdatedAtInfo extends ConsumerWidget {
   final Issue issueData;
   final bool isConcise;
-  const LastUpdatedAtInfo({super.key, required this.issueData, this.isConcise = false});
+  const LastUpdatedAtInfo(
+      {super.key, required this.issueData, this.isConcise = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final updatedAtMessage = TimeUtils.getFuzzyTime(issueData.updatedAt);
+    final updatedAtMessage = TranslationKeys.lastUpdatedAt.tr(args: [
+          TimeUtils.getFuzzyTime(issueData.updatedAt, context: context)
+        ]);
     if (issueData.lastUpdatedBy == null || isConcise) {
       return GreyDescription(
-        'Last updated $updatedAtMessage',
+        updatedAtMessage,
       );
     }
     final asyncProfilePicProvider =
@@ -25,14 +30,14 @@ class LastUpdatedAtInfo extends ConsumerWidget {
     return asyncProfilePicProvider.when(
       data: (profileData) {
         return GreyDescription(
-          'Last updated by ${profileData.displayName} $updatedAtMessage',
+          '${profileData.displayName} $updatedAtMessage',
         );
       },
-      loading: () =>  GreyDescription(
-        'Last updated $updatedAtMessage',
+      loading: () => GreyDescription(
+        updatedAtMessage,
       ),
-      error: (error, stack) =>  GreyDescription(
-        'Last updated $updatedAtMessage',
+      error: (error, stack) => GreyDescription(
+        updatedAtMessage,
       ),
     );
   }

@@ -9,6 +9,7 @@ environment:
 dependencies:
   cached_network_image: ^3.3.1
   cloud_firestore: ^4.16.1
+  easy_localization: ^3.0.5
   firebase_auth: ^4.19.1
   firebase_core: ^2.29.0
   firebase_storage: ^11.7.1
@@ -21,7 +22,6 @@ dependencies:
   qr_flutter: ^4.1.0
   shared_preferences: ^2.2.3
   table_calendar: ^3.1.1
-  textfield_tags: ^3.0.1
   timeago: ^3.6.1
 
 dev_dependencies:
@@ -36,3 +36,4 @@ flutter:
   # include assets/images
   assets:
     - assets/images/
+    - assets/translations/  

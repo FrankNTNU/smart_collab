@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -6,6 +7,7 @@ import 'package:smart_collab/services/profile_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
 import '../services/auth_controller.dart';
+import '../utils/translation_keys.dart';
 import 'grey_description.dart';
 import 'title_text.dart';
 
@@ -76,7 +78,7 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
         // close currently showing the snackbar
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+           const SnackBar(
             content: Text('User added successfully'),
           ),
         );
@@ -101,11 +103,11 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // title
-          const Row(
+           Row(
             children: [
-              TitleText('Invite user to team'),
-              Spacer(),
-              CloseButton()
+              TitleText(TranslationKeys.inviteToTeam.tr()),
+              const Spacer(),
+              const CloseButton()
             ],
           ),
           Row(
@@ -120,7 +122,9 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                     autocorrect: false,
                     enableSuggestions: false,
                     decoration: InputDecoration(
-                      labelText: 'Enter User\'s Email',
+                      labelText: TranslationKeys.pleaseEnterSomething.tr(
+                        args: [TranslationKeys.userEmail.tr()],
+                      ),
                       errorText: errorMessage,
                       suffix: IconButton(
                         icon: const Icon(Icons.clear),
@@ -138,21 +142,25 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                     validator: (value) =>
                         // validate email input
                         value!.isEmpty
-                            ? 'Please enter an email'
+                            ? TranslationKeys.pleaseEnterSomething.tr(
+                                args: [TranslationKeys.userEmail.tr()],
+                              )
                             : value.contains('@')
                                 ? null
-                                : 'Please enter a valid email',
+                                : TranslationKeys.pleaseEnterSomething.tr(
+                                    args: [TranslationKeys.aValidEmail.tr()],
+                                  ),
                   ),
                 ),
               ),
               ElevatedButton(
                 onPressed: _submit,
-                child: const Text('Invite user'),
+                child:  Text(TranslationKeys.inviteUser.tr()),
               ),
             ],
           ),
           TextButton.icon(
-            label: const Text('Or show them the QR code'),
+            label:  Text(TranslationKeys.showQrcode.tr()),
             onPressed: () {
               // open qr code scanner
               showModalBottomSheet(

@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/team_screen.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
 
 import '../services/auth_controller.dart';
@@ -37,16 +39,24 @@ class _TeamsState extends ConsumerState<Teams> {
         String message = '';
         switch (action) {
           case PerformedAction.add:
-            message = 'Team added successfully';
+            message = TranslationKeys.xFetchedSuccessfully.tr(
+              args: [TranslationKeys.team.tr()],
+            );
             break;
           case PerformedAction.update:
-            message = 'Team updated successfully';
+            message = TranslationKeys.xUpdatedSuccessfully.tr(
+              args: [TranslationKeys.team.tr()],
+            );
             break;
           case PerformedAction.delete:
-            message = 'Team deleted successfully';
+            message = TranslationKeys.xDeletedSuccessfully.tr(
+              args: [TranslationKeys.team.tr()],
+            );
             break;
           case PerformedAction.fetch:
-            message = 'Teams fetched successfully';
+            message = TranslationKeys.xFetchedSuccessfully.tr(
+              args: [TranslationKeys.teams.tr()],
+            );
             break;
           default:
             message = '';
@@ -68,11 +78,13 @@ class _TeamsState extends ConsumerState<Teams> {
     ));
 
     if (teams.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('No teams found'),
+            Text(TranslationKeys.somethingNotFound.tr(
+              args: [TranslationKeys.teams.tr()],
+            )),
           ],
         ),
       );
@@ -82,9 +94,9 @@ class _TeamsState extends ConsumerState<Teams> {
       children: [
         if (isLoading) const Center(child: CircularProgressIndicator()),
         // header
-        const Padding(
-          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-          child: TitleText('My Teams'),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: TitleText(TranslationKeys.myTeams.tr()),
         ),
         RefreshIndicator(
           onRefresh: () async =>

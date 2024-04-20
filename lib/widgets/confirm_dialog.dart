@@ -1,4 +1,6 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 
 class ConfirmDialog extends StatelessWidget {
   const ConfirmDialog({
@@ -7,7 +9,7 @@ class ConfirmDialog extends StatelessWidget {
     required this.content,
     required this.onConfirm,
     required this.confirmText,
-    this.cancelText = 'Cancel',
+    this.cancelText = TranslationKeys.cancel,
   });
 
   final String title;
@@ -26,7 +28,7 @@ class ConfirmDialog extends StatelessWidget {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text(cancelText),
+          child: Text(cancelText.tr()),
         ),
         TextButton(
           onPressed: () {

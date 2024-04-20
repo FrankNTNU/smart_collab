@@ -71,5 +71,10 @@
 	<string>Camera permission is required for scanning QR codes.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Microphone permission is required for voice chat.</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en-US</string>
+		<string>zh-TW</string>
+	</array>	
 </dict>
 </plist>

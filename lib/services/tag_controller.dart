@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/issue_controller.dart';
 
 import 'auth_controller.dart';
 import 'team_controller.dart';
@@ -114,10 +115,89 @@ class TagsController extends FamilyNotifier<TagsState, String> {
     }
   }
 
+  // update tag
+  Future<void> updateTag(
+      {required String tagId,
+      required String oldTagName,
+      String? newTagName,
+      String? newColor}) async {
+    // set loading
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update tag on Firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('tags')
+          .doc(tagId)
+          .update({}
+            ..addAll(newTagName != null ? {'name': newTagName} : {})
+            ..addAll(newColor != null ? {'color': newColor} : {}));
+      // update the state
+      final tags = state.tags.map((tag) {
+        if (tag.id == tagId) {
+          return tag.copyWith(name: newTagName, color: newColor);
+        }
+        return tag;
+      }).toList();
+      state = state.copyWith(
+        tags: tags,
+        apiStatus: ApiStatus.success,
+      );
+      var updatedIssuesWithNewTags = <(String, List<String>)>[];
+      if (newTagName != null && newTagName != oldTagName) {
+        // update all tag names in issues/{issueId} the tags array property
+        final issuesWithReferencedTag = await FirebaseFirestore.instance
+            .collection('teams')
+            .doc(state.teamId)
+            .collection('issues')
+            .where('tags', arrayContains: oldTagName)
+            .get();
+
+        for (var doc in issuesWithReferencedTag.docs) {
+          final issue = doc.data();
+          //final tags = issue['tags'] as List<String>;
+          final tags = List<String>.from(issue['tags']);
+          final updatedTags = tags.map((tag) {
+            if (tag == oldTagName) {
+              return newTagName;
+            }
+            return tag;
+          }).toList();
+          updatedIssuesWithNewTags.add((doc.id, updatedTags));
+          await doc.reference.update({'tags': updatedTags});
+        }
+        // update the issue states in issue provider
+        ref
+            .read(issueProvider(state.teamId).notifier)
+            .updatedIssuesState(updatedIssuesWithNewTags);
+      }
+    } catch (e) {
+      print('Error updating tag: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  // is tag name exists on Firestore teams/{teamId}/tags
+  Future<bool> isTagNameExists(String tagName) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('teams')
+        .doc(state.teamId)
+        .collection('tags')
+        .where('name', isEqualTo: tagName)
+        .get();
+    return snapshot.docs.isNotEmpty;
+  }
+
   // add tag
   Future<void> addTag({
     required String name,
     String? description,
+
     /// color in hex
     String? color,
   }) async {
@@ -151,6 +231,7 @@ class TagsController extends FamilyNotifier<TagsState, String> {
       );
     }
   }
+
   // remove tag by name
   Future<void> removeTagByName(String tagName) async {
     // set loading
@@ -183,6 +264,7 @@ class TagsController extends FamilyNotifier<TagsState, String> {
       );
     }
   }
+
   // remove tag by id
   Future<void> removeTag(String tagId) async {
     // set loading
@@ -212,7 +294,6 @@ class TagsController extends FamilyNotifier<TagsState, String> {
   }
 }
 
-final tagProvider =
-    NotifierProvider.family<TagsController, TagsState, String>(
+final tagProvider = NotifierProvider.family<TagsController, TagsState, String>(
   () => TagsController(),
 );

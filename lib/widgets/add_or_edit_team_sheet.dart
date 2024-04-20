@@ -11,7 +11,7 @@ import 'team_image_picker.dart';
 
 enum AddorEdit {
   add,
-  update,
+  edit,
 }
 
 class AddTeamSheet extends ConsumerStatefulWidget {
@@ -39,7 +39,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.addOrEdit == AddorEdit.update) {
+    if (widget.addOrEdit == AddorEdit.edit) {
       setState(() {
         _enteredName = widget.team!.name!;
         _enteredDescription = widget.team!.description!;

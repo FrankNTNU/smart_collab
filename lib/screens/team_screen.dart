@@ -1,18 +1,28 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/screens/activity_screen.dart';
+import 'package:smart_collab/screens/calendar_view.dart';
 import 'package:smart_collab/services/auth_controller.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
 import 'package:smart_collab/widgets/delete_confirm_dialog.dart';
 import 'package:smart_collab/widgets/invite_to_team.dart';
 import 'package:smart_collab/widgets/notification_bell.dart';
+import 'package:smart_collab/widgets/tab_view_bar.dart';
 import 'package:smart_collab/widgets/team_members.dart';
 
 import '../services/issue_controller.dart';
 import '../services/team_controller.dart';
 import '../widgets/issues.dart';
 import '../widgets/title_text.dart';
-
+class MainFeatureTabIndex {
+  static const int home = 0;
+  static const int calendar = 1;
+  static const int about = 2;
+  static const int activities = 3;
+}
 class TeamScreen extends ConsumerStatefulWidget {
   final Team team;
   const TeamScreen({super.key, required this.team});
@@ -28,6 +38,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   final double _coverImageHeight = 128;
   // isCloseToBottom
   bool _isNotAtTop = false;
+  // main feature tab index
+  int _mainFeatureTabIndex = MainFeatureTabIndex.home;
   @override
   void initState() {
     super.initState();
@@ -104,23 +116,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               child: const Icon(Icons.arrow_upward),
             )
           : null,
-      // floatingActionButton: // add button
-      //     FloatingActionButton(
-      //   onPressed: () {
-      //     showModalBottomSheet(
-      //       isScrollControlled: true,
-      //       enableDrag: true,
-      //       showDragHandle: true,
-      //       context: context,
-      //       builder: (context) => AddOrEditIssueSheet(
-      //         teamId: teamData.id!,
-      //         addOrEdit: AddorEdit.add,
-      //       ),
-      //     );
-      //   },
-      //   child: const Icon(Icons.add),
-      // ),
-
       body: ListView(
         controller: _scrollController,
         children: [
@@ -132,6 +127,37 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               isRoundedBorder: false,
               height: _coverImageHeight,
             ),
+            const SizedBox(height: 8,),
+          Tabs(
+            initialTabIndex: _mainFeatureTabIndex,
+            tabs: [
+              TranslationKeys.home.tr(),
+              TranslationKeys.calendar.tr(),
+              TranslationKeys.about.tr(),
+              //TranslationKeys.activities.tr(),
+            ],
+            icons: const [
+              Icons.home,
+              Icons.event,
+              Icons.group,
+              //Icons.notifications,
+            ],
+            onTabChange: (index) {
+              setState(() {
+                _mainFeatureTabIndex = index;
+              });
+            },
+          ),
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.calendar)
+           Column(
+             children: [
+               CalendarViewScreen(
+                teamId: widget.team.id!,
+                         ),
+              const SizedBox(height: 32,)
+             ],
+           ),
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -145,7 +171,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                     PopupMenuItem(
                       child: ListTile(
                         leading: const Icon(Icons.edit),
-                        title: const Text('Edit Team'),
+                        title: Text(
+                            '${TranslationKeys.edit.tr()} ${TranslationKeys.team.tr()}'),
                         onTap: () {
                           showModalBottomSheet(
                             isScrollControlled: true,
@@ -156,7 +183,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                               return Padding(
                                 padding: const EdgeInsets.all(8),
                                 child: AddTeamSheet(
-                                  addOrEdit: AddorEdit.update,
+                                  addOrEdit: AddorEdit.edit,
                                   team: teamData,
                                 ),
                               );
@@ -168,25 +195,26 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                     PopupMenuItem(
                       child: ListTile(
                         leading: const Icon(Icons.delete),
-                        title: const Text('Delete'),
+                        title: Text(TranslationKeys.delete.tr()),
                         onTap: () {
                           showDialog(
                             context: context,
                             builder: (context) {
                               return DeleteConfirmDialog(
-                                deleteValidationText: teamData.name ?? 'I want to delete this team',
+                                deleteValidationText: teamData.name ??
+                                    'I want to delete this team',
                                 title: 'Delete Team',
-                                content: 'Are you sure you want to delete this team?',
+                                content: TranslationKeys.confirmDeleteTeam.tr(),
                                 onConfirm: () {
                                   // have the user enter the team name before deletion
-                                  
+
                                   ref
                                       .read(teamsProvider.notifier)
                                       .deleteTeam(teamData.id!);
                                   Navigator.pop(context);
                                   Navigator.pop(context);
                                 },
-                                confirmText: 'Delete',
+                                confirmText: TranslationKeys.delete.tr(),
                               );
                             },
                           );
@@ -195,25 +223,30 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                     ),
                   ],
                   icon: const Icon(Icons.more_horiz),
-                )],
+                )
+            ],
           ),
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
           // description about team
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
             child: Text(teamData.description ?? ''),
           ),
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
           const Divider(),
-
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: TitleText('Members',),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TitleText(
+                  TranslationKeys.members.tr(),
+                ),
               ),
               if (isOwnerOrAdmin)
                 TextButton.icon(
-                  label: const Text('Invite'),
+                  label: Text(TranslationKeys.invite.tr()),
                   icon: const Icon(Icons.person_add),
                   onPressed: () {
                     showModalBottomSheet(
@@ -227,14 +260,19 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 ),
             ],
           ),
+           if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
           // show a list of admins horizontally
           TeamMembers(
             teamId: teamData.id!,
           ),
+            if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
           const Divider(),
-
+if (_mainFeatureTabIndex == MainFeatureTabIndex.home)
           Issues(teamId: teamData.id!),
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.home)
           if (isFetching) const Center(child: CircularProgressIndicator()),
+          if (_mainFeatureTabIndex == MainFeatureTabIndex.activities)
+          ActivityScreen(teamId: widget.team.id!, isModal: false,),
         ],
       ),
     );

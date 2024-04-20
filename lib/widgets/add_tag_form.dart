@@ -1,18 +1,27 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 
 import '../services/tag_controller.dart';
+import '../utils/translation_keys.dart';
 import 'color_pallete.dart';
 import 'title_text.dart';
 
-class AddTagForm extends ConsumerStatefulWidget {
-  const AddTagForm({super.key, required this.teamId});
+class AddOrEditTagForm extends ConsumerStatefulWidget {
+  const AddOrEditTagForm(
+      {super.key,
+      required this.teamId,
+      required this.addOrEdit,
+      this.initialTag});
   final String teamId;
+  final AddorEdit addOrEdit;
+  final IssueTag? initialTag;
   @override
-  ConsumerState<AddTagForm> createState() => _AddTagFormState();
+  ConsumerState<AddOrEditTagForm> createState() => _AddTagFormState();
 }
 
-class _AddTagFormState extends ConsumerState<AddTagForm> {
+class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
   // formkey
   final _formKey = GlobalKey<FormState>();
   // selected hex color
@@ -27,27 +36,58 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
     _selectedHexColor = null;
     _enteredTagName = null;
     _errorMessage = null;
+    if (widget.addOrEdit == AddorEdit.edit && widget.initialTag != null) {
+      _selectedHexColor = widget.initialTag!.color;
+      _enteredTagName = widget.initialTag!.name;
+      
+    }
   }
 
-  void _submit() {
+  void _submit() async {
+    // trim the entered tag name
+    _enteredTagName = _enteredTagName!.trim();
     final isValid = _formKey.currentState!.validate();
     if (!isValid) return;
     if (_enteredTagName == null || _enteredTagName!.isEmpty) {
       setState(() {
-        _errorMessage = 'Tag name is required';
+        _errorMessage = TranslationKeys.pleaseEnterSomething.tr(args: [
+          TranslationKeys.tagName.tr(),
+        ]);
       });
       return;
     }
     if (_selectedHexColor == null) {
       setState(() {
-        _errorMessage = 'Color is required';
+        _errorMessage = TranslationKeys.pleaseSelectSomething.tr(args: [
+          TranslationKeys.tagColor.tr(),
+        ]);
       });
       return;
     }
-    ref.read(tagProvider(widget.teamId).notifier).addTag(
-          name: _enteredTagName!,
-          color: _selectedHexColor!,
-        );
+    if (widget.addOrEdit == AddorEdit.add) {
+      final isExist =
+          await ref.read(tagProvider(widget.teamId).notifier).isTagNameExists(
+                _enteredTagName!,
+              );
+      if (isExist) {
+        setState(() {
+          _errorMessage = TranslationKeys.xHasDuplicate.tr();
+        });
+        return;
+      }
+      ref.read(tagProvider(widget.teamId).notifier).addTag(
+            name: _enteredTagName!,
+            color: _selectedHexColor!,
+          );
+    }
+    if (widget.addOrEdit == AddorEdit.edit) {
+      ref.read(tagProvider(widget.teamId).notifier).updateTag(
+            tagId: widget.initialTag!.id,
+            oldTagName: widget.initialTag!.name,
+            newTagName: _enteredTagName,
+            newColor: _selectedHexColor,
+          );
+    }
     Navigator.pop(context);
   }
 
@@ -57,13 +97,15 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Row(
+        Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             TitleText(
-              'Add new tag'
+              widget.addOrEdit == AddorEdit.add
+                  ? '${TranslationKeys.add.tr()} ${TranslationKeys.tag.tr()}'
+                  : '${TranslationKeys.edit.tr()} ${TranslationKeys.tag.tr()}',
             ),
-            CloseButton(),
+            const CloseButton(),
           ],
         ),
         const SizedBox(
@@ -72,8 +114,9 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
         Form(
           key: _formKey,
           child: TextFormField(
-            decoration: const InputDecoration(
-              hintText: 'Tag name',
+            initialValue: _enteredTagName,
+            decoration: InputDecoration(
+              hintText: TranslationKeys.tagName.tr(),
             ),
             onChanged: (value) {
               setState(() {
@@ -81,15 +124,19 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
                 _formKey.currentState!.validate();
               });
             },
-            validator: (value) =>
-                value!.isEmpty ? 'Tag name is required' : null,
+            validator: (value) => value!.isEmpty
+                ? TranslationKeys.pleaseEnterSomething.tr(args: [
+                    TranslationKeys.tagName.tr(),
+                  ])
+                : null,
           ),
         ),
         const SizedBox(
           height: 8,
         ),
-        const Text('Color'),
+        Text(TranslationKeys.tagColor.tr()),
         ColorPallete(
+          initialColor: _selectedHexColor,
           onSelected: (color) {
             setState(() {
               _selectedHexColor = color;
@@ -103,7 +150,9 @@ class _AddTagFormState extends ConsumerState<AddTagForm> {
           onPressed: () {
             _submit();
           },
-          child: const Text('Add'),
+          child: Text(widget.addOrEdit == AddorEdit.add
+              ? TranslationKeys.create.tr()
+              : TranslationKeys.update.tr()),
         )
       ],
     );

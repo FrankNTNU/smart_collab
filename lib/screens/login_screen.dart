@@ -1,5 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 
 import '../services/auth_controller.dart';
 
@@ -34,10 +36,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             width: double.infinity,
           ),
           // welcome text
-           Padding(
+          Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
-              'Welcome to Smart Collab',
+              TranslationKeys.welcomeToSmartcollab.tr(),
               style: TextStyle(
                 fontSize: Theme.of(context).textTheme.headlineMedium!.fontSize,
                 fontWeight: FontWeight.bold,
@@ -61,7 +63,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(
                             width: 5.0,
                           ),
-                          const Text('Sign-in with Google')
+                          Text(TranslationKeys.signInWithGoogle.tr())
                         ],
                       ),
                     ),

@@ -26,6 +26,8 @@ class Issue {
   final String? lastUpdatedBy;
   // isClosed
   final bool isClosed;
+  // linked issue id
+  String? linkedIssueId;
   // ctor
   Issue({
     required this.title,
@@ -187,6 +189,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   // add tag to an issue
   Future<void> addTagToIssue(
       {required String issueId, required String tag}) async {
+    if (tag.isEmpty) return;
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
     try {
@@ -214,6 +217,21 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         errorMessage: e.toString(),
       );
     }
+  }
+
+  // update local issues state due to updated tag name
+  void updatedIssuesState(
+      List<(String, List<String>)> updatedIssuesWithNewTags) {
+    final updatedIssueMap = updatedIssuesWithNewTags
+        .fold<Map<String, Issue>>({...state.issueMap}, (map, tuple) {
+      final issueId = tuple.$1;
+      final newTags = tuple.$2;
+      return {
+        ...map,
+        issueId: map[issueId]!.copyWith(tags: newTags),
+      };
+    });
+    state = state.copyWith(issueMap: updatedIssueMap);
   }
 
   // remove a tag from an issue

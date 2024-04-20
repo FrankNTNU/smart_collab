@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
@@ -6,6 +7,7 @@ import 'package:smart_collab/widgets/title_text.dart';
 
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
+import '../utils/translation_keys.dart';
 
 class AddOrEditIssueSheet extends ConsumerStatefulWidget {
   const AddOrEditIssueSheet(
@@ -42,7 +44,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.addOrEdit == AddorEdit.update) {
+    if (widget.addOrEdit == AddorEdit.edit) {
       setState(() {
         _enteredTitle = widget.issue!.title;
         _enteredDescription = widget.issue!.description;
@@ -61,23 +63,29 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
     _formKey.currentState!.save();
     if (_enteredDeadline == null) {
       setState(() {
-        _errorMessage = 'Please select a deadline';
+        _errorMessage = TranslationKeys.pleaseEnterSomething.tr(args: [
+          TranslationKeys.deadline.tr(),
+        ]);
       });
       return;
     }
     // get curent username
     final username = ref.watch(authControllerProvider
         .select((value) => value.user?.displayName ?? ''));
-    if (widget.addOrEdit == AddorEdit.update) {
+    if (widget.addOrEdit == AddorEdit.edit) {
       await ref.read(issueProvider(widget.teamId).notifier).updateIssue(
           title: _enteredTitle,
           description: _enteredDescription,
           deadline: _enteredDeadline,
           issueId: widget.issue!.id);
+      final message = TranslationKeys.xUpdatedTheIssueY.tr(args: [
+        username,
+        _enteredTitle,
+      ]);
       // add to activity
       await ref.read(activityProvider(widget.teamId).notifier).addActivity(
             recipientUid: username,
-            message: '$username updated an issue $_enteredTitle',
+            message: message,
             activityType: ActivityType.updateIssue,
             teamId: widget.teamId,
             issueId: widget.issue!.id,
@@ -89,10 +97,14 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                 description: _enteredDescription,
                 deadline: _enteredDeadline,
               );
+      final message = TranslationKeys.xAddedANewIssueY.tr(args: [
+        username,
+        _enteredTitle,
+      ]);
       // add to activity
       await ref.read(activityProvider(widget.teamId).notifier).addActivity(
             recipientUid: username,
-            message: '$username added an issue $_enteredTitle',
+            message: message,
             activityType: ActivityType.createIssue,
             teamId: widget.teamId,
             issueId: issueId,
@@ -106,16 +118,21 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
     ref.listen(issueProvider(widget.teamId).select((value) => value.apiStatus),
         (prev, next) {
       if (next == ApiStatus.success) {
+        final message = widget.addOrEdit == AddorEdit.add
+            ? TranslationKeys.xCreatedSuccessfully
+                .tr(args: [TranslationKeys.issue.tr()])
+            : TranslationKeys.xUpdatedSuccessfully
+                .tr(args: [TranslationKeys.issue.tr()]);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                'Issue ${widget.addOrEdit == AddorEdit.add ? 'added' : 'updated'} successfully'),
+            content: Text(message),
           ),
         );
         //Navigator.of(context).pop();
       }
     });
-    final isLoading  = ref.watch(issueProvider(widget.teamId).select((value) => value.apiStatus == ApiStatus.loading));
+    final isLoading = ref.watch(issueProvider(widget.teamId)
+        .select((value) => value.apiStatus == ApiStatus.loading));
     return Padding(
       padding: EdgeInsets.only(
           left: 16,
@@ -132,7 +149,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               Row(
                 children: [
                   TitleText(
-                    '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Edit'} issue',
+                    '${widget.addOrEdit == AddorEdit.add ? TranslationKeys.add.tr() : TranslationKeys.edit.tr()} ${TranslationKeys.issue.tr()}',
                   ),
                   const Spacer(),
                   const CloseButton()
@@ -141,10 +158,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               // title
               TextFormField(
                 initialValue: _enteredTitle,
-                decoration: const InputDecoration(labelText: 'Title'),
+                decoration:  InputDecoration(labelText: TranslationKeys.title.tr()),
                 validator: (value) {
                   if (value!.isEmpty) {
-                    return 'Please enter a title';
+                    return TranslationKeys.pleaseEnterSomething.tr(args: [
+                      TranslationKeys.title.tr(),
+                    ]);
                   }
                   return null;
                 },
@@ -156,7 +175,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               TextFormField(
                 controller: _descriptionController,
                 decoration: InputDecoration(
-                    labelText: 'Description',
+                    labelText: TranslationKeys.description.tr(),
                     suffix: IconButton(
                       icon: const Icon(Icons.clear),
                       onPressed: () {
@@ -167,7 +186,9 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                 minLines: 6,
                 validator: (value) {
                   if (value!.isEmpty) {
-                    return 'Please enter a description';
+                    return TranslationKeys.pleaseEnterSomething.tr(args: [
+                      TranslationKeys.description.tr(),
+                    ]);
                   }
                   return null;
                 },
@@ -177,7 +198,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               ),
               // height 8
               const SizedBox(height: 8),
-              const Text('Deadline'),
+               Text(TranslationKeys.deadline.tr()),
               // deadline field
               InkWell(
                 onTap: () {
@@ -206,7 +227,9 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Text(_enteredDeadline == null
-                        ? 'Select the deadline'
+                        ? TranslationKeys.pleaseSelectSomething.tr(
+                            args: [TranslationKeys.deadline.tr()],
+                          )
                         : _enteredDeadline.toString().substring(0, 10)),
                   ),
                 ),
@@ -217,14 +240,14 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               if (isLoading)
                 const Center(child: CircularProgressIndicator())
               else
-              // submit button
-              ElevatedButton(
-                onPressed: () {
-                  _submit();
-                },
-                child: Text(
-                    '${widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update'} Issue'),
-              ),
+                // submit button
+                ElevatedButton(
+                  onPressed: () {
+                    _submit();
+                  },
+                  child: Text(
+                      '${widget.addOrEdit == AddorEdit.add ? TranslationKeys.add.tr() : TranslationKeys.update.tr()} ${TranslationKeys.issue.tr()}'),
+                ),
               const SizedBox(height: 32),
             ],
           ),

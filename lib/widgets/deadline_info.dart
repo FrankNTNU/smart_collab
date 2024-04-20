@@ -1,6 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+
+import '../utils/translation_keys.dart';
 
 class DeadlineInfo extends ConsumerStatefulWidget {
   final Issue issueData;
@@ -40,7 +43,7 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Deadline: ${issueData.deadline.toString().substring(0, 10)}',
+                    '${TranslationKeys.deadline.tr()} ${issueData.deadline.toString().substring(0, 10)}',
                     style: const TextStyle(),
                   ),
                   const SizedBox(
@@ -57,12 +60,12 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
                 ),
                 child: Text(
                   isToday
-                      ? 'Today'
+                      ? TranslationKeys.today.tr()
                       : isTomorrow
-                          ? 'Tomorrow'
+                          ? TranslationKeys.tomorrow.tr()
                           : isOverdue
-                              ? 'Overdue'
-                              : 'In $daysLeft days',
+                              ? TranslationKeys.overdue
+                              : TranslationKeys.inXDays.tr(args: [daysLeft.toString()]),
                   style: const TextStyle(
                     color: Colors.red,
                     fontWeight: FontWeight.bold,
@@ -77,7 +80,9 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                    'In ${issueData.deadline!.difference(DateTime.now()).inDays} days', // red
+                    TranslationKeys.inXDays.tr(
+                        args: [issueData.deadline!.difference(DateTime.now()).inDays.toString()]
+                    ), // red
                     style: const TextStyle(
                       color: Colors.green,
                       // bold
@@ -92,7 +97,10 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                    'In ${issueData.deadline!.difference(DateTime.now()).inDays} days', // red
+                    TranslationKeys.inXDays.tr(
+                        args: [issueData.deadline!.difference(DateTime.now()).inDays.toString()]
+                    
+                    ), // red
                     style: const TextStyle(
                       color: Colors.grey,
                       // bold

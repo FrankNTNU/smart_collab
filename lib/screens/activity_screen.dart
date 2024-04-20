@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/activity_controller.dart';
@@ -5,12 +6,14 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/utils/time_utils.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
+import '../utils/translation_keys.dart';
 import '../widgets/title_text.dart';
 import 'issue_screen.dart';
 
 class ActivityScreen extends ConsumerStatefulWidget {
   final String teamId;
-  const ActivityScreen({super.key, required this.teamId});
+  final bool isModal;
+  const ActivityScreen({super.key, required this.teamId, this.isModal = true});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _ActivityScreenState();
@@ -42,12 +45,12 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     }
   }
 
-  void  _openIssueScreen(Activity activity) {
+  void _openIssueScreen(Activity activity) {
     final teamId = activity.activityDetails['teamId'];
     final issueId = activity.activityDetails['issueId'];
     print('teamId: $teamId, issueId: $issueId');
-    final issue = ref.watch(issueProvider(teamId).select((value) =>
-        value.issueMap[issueId]));
+    final issue = ref.watch(
+        issueProvider(teamId).select((value) => value.issueMap[issueId]));
     if (issue == null) {
       print('Issue not found');
       return;
@@ -72,25 +75,31 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     var activities = ref.watch(
         activityProvider(widget.teamId).select((value) => value.activities));
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.8,
+      height: widget.isModal ? MediaQuery.of(context).size.height * 0.8 : null,
       child: SingleChildScrollView(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TitleText('Activities'),
-                  CloseButton(),
-                ],
-              ),
-            ),
-            if (activities.isEmpty)
+            if (widget.isModal)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TitleText(TranslationKeys.activities.tr()),
+                    const CloseButton(),
+                  ],
+                ),
+              )
+            else
               const SizedBox(
+                height: 8,
+              ),
+            if (activities.isEmpty)
+              SizedBox(
                 height: 200,
                 child: Center(
-                  child: Text('No activity yet'),
+                  child: Text(TranslationKeys.somethingNotFound
+                      .tr(args: [TranslationKeys.activities.tr()])),
                 ),
               )
             else
@@ -115,7 +124,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                     },
                     title: Text(activity.message),
                     subtitle: Text(TimeUtils.getFuzzyTime(
-                        DateTime.parse(activity.timestamp))),
+                        DateTime.parse(activity.timestamp),context: context)),
                   );
                 },
               ),

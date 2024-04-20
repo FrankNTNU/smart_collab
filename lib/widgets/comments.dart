@@ -1,6 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/utils/time_utils.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../services/comment_controller.dart';
@@ -37,10 +39,14 @@ class _CommentsState extends ConsumerState<Comments> {
         commentProvider((issueId: widget.issueId, teamId: widget.teamId))
             .select((value) => value.comments));
     if (comments.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(8.0),
+      return Padding(
+        padding: const EdgeInsets.all(8.0),
         child: Center(
-          child: Text('No comments found'),
+          child: Text(
+            TranslationKeys.somethingNotFound.tr(args: [
+              TranslationKeys.comments.tr(),
+            ]),
+          ),
         ),
       );
     }
@@ -56,7 +62,7 @@ class _CommentsState extends ConsumerState<Comments> {
             if (index == 0)
               // show commebnt count
               GreyDescription(
-                '${comments.length} comments',
+                '${comments.length} ${TranslationKeys.comments.tr()}',
               ),
             InkWell(
               onLongPress: () {
@@ -71,16 +77,18 @@ class _CommentsState extends ConsumerState<Comments> {
                         children: [
                           ListTile(
                             leading: const Icon(Icons.delete),
-                            title: const Text('Delete'),
+                            title:  Text(TranslationKeys.delete.tr()),
                             onTap: () {
                               //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
                               showDialog(
                                 context: context,
                                 builder: (context) {
                                   return ConfirmDialog(
-                                    title: 'Delete Comment',
+                                    title: TranslationKeys.delete.tr(),
                                     content:
-                                        'Are you sure you want to delete this comment?',
+                                       TranslationKeys.confirmSomething.tr(args: [
+                                        TranslationKeys.comment.tr(),
+                                       ]),
                                     onConfirm: () {
                                       ref
                                           .read(commentProvider((
@@ -91,7 +99,7 @@ class _CommentsState extends ConsumerState<Comments> {
                                               widget.issueId);
                                       Navigator.pop(context);
                                     },
-                                    confirmText: 'Delete',
+                                    confirmText: TranslationKeys.delete.tr(),
                                   );
                                 },
                               );
@@ -107,7 +115,8 @@ class _CommentsState extends ConsumerState<Comments> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                     child: UserAvatar(uid: comments[index].userId),
                   ),
                   const SizedBox(width: 8),
@@ -117,7 +126,7 @@ class _CommentsState extends ConsumerState<Comments> {
                       children: [
                         Text(comments[index].content),
                         GreyDescription(
-                            TimeUtils.getFuzzyTime(comments[index].createdAt)),
+                            TimeUtils.getFuzzyTime(comments[index].createdAt, context: context)),
                       ],
                     ),
                   ),

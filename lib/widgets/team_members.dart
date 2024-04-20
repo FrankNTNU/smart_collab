@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
@@ -6,6 +7,7 @@ import 'package:smart_collab/services/team_controller.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../services/activity_controller.dart';
+import '../utils/translation_keys.dart';
 
 class TeamMembers extends ConsumerStatefulWidget {
   const TeamMembers({
@@ -101,7 +103,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
                                   if (teamData.roles[role.key] == 'admin')
                                     ListTile(
                                       leading: const Icon(Icons.person),
-                                      title: const Text('Set as member'),
+                                      title:  Text(TranslationKeys.setAdMember.tr()),
                                       onTap: () {
                                         _setAsMember(
                                           profileData.email!,
@@ -113,7 +115,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
                                     ListTile(
                                       leading: const Icon(
                                           Icons.admin_panel_settings),
-                                      title: const Text('Set as admin'),
+                                      title:  Text(TranslationKeys.setAsAdmin.tr(),),
                                       onTap: () {
                                         _setAdAdmin(profileData.email!);
                                       },
@@ -122,7 +124,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
                                   // remove from team
                                   ListTile(
                                     leading: const Icon(Icons.delete),
-                                    title: const Text('Remove from team'),
+                                    title:  Text(TranslationKeys.removeFromTeam.tr()),
                                     onTap: () {
                                       _removeFromTeam(profileData.uid!);
                                     },
@@ -137,7 +139,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
                         )
                       ),
                       //Text(profileData.displayName ?? ''),
-                      Text(role.value),
+                      Text(role.value.tr()),
                     ],
                   ),
                 );

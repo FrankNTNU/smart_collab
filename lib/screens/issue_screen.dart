@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/activity_controller.dart';
@@ -9,6 +10,7 @@ import 'package:smart_collab/widgets/deadline_info.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
+import '../utils/translation_keys.dart';
 import '../widgets/add_or_edit_issue_sheet.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/confirm_dialog.dart';
@@ -43,11 +45,12 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       }
     });
   }
+
   void _onTagToggle(String tag) {
     print('Tag toggled: $tag');
     final tags = ref
-            .watch(issueProvider(widget.issue.teamId).select((value) => value
-                .issueMap[widget.issue.id]))
+            .watch(issueProvider(widget.issue.teamId)
+                .select((value) => value.issueMap[widget.issue.id]))
             ?.tags ??
         [];
     if (tags.contains(tag)) {
@@ -66,15 +69,17 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       context: context,
       builder: (context) {
         return ConfirmDialog(
-          title: 'Delete',
-          content: 'Are you sure you want to delete this issue?',
+          title: TranslationKeys.delete.tr(),
+          content: TranslationKeys.confirmSomething.tr(
+            args: [TranslationKeys.delete.tr()],
+          ),
           onConfirm: () {
             ref
                 .read(issueProvider(widget.issue.teamId).notifier)
                 .removeIssue(widget.issue.id);
             Navigator.pop(context);
           },
-          confirmText: 'Delete',
+          confirmText: TranslationKeys.delete.tr(),
         );
       },
     );
@@ -89,13 +94,16 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
         .read(issueProvider(widget.issue.teamId).notifier)
         .setIsClosed(issueId: widget.issue.id, isClosed: isClosed);
     final uid = ref.watch(authControllerProvider).user!.uid;
-    final username = ref.watch(authControllerProvider).user!.displayName;
+    final username = ref.watch(authControllerProvider).user!.displayName!;
     // add to activity
+    final message = isClosed
+        ? TranslationKeys.xHasOpenedIssueY.tr(args: [username, issueData.title])
+        : TranslationKeys.xHasClosedIssueY
+            .tr(args: [username, issueData.title]);
     await ref.read(activityProvider(widget.issue.teamId).notifier).addActivity(
           issueId: widget.issue.id,
           teamId: widget.issue.teamId,
-          message:
-              '$username has ${isClosed ? 'closed' : 'opened'} the issue ${issueData.title}',
+          message: message,
           activityType:
               isClosed ? ActivityType.closeIssue : ActivityType.openIssue,
           recipientUid: uid!,
@@ -107,11 +115,13 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   @override
   Widget build(BuildContext context) {
     print('Rebuilding IssueScreen');
-    final issueData = ref.watch(issueProvider(widget.issue.teamId).select(
-        (value) => value.issueMap[widget.issue.id]));
+    final issueData = ref.watch(issueProvider(widget.issue.teamId)
+        .select((value) => value.issueMap[widget.issue.id]));
     if (issueData == null) {
-      return const Center(
-        child: Text('Issue not found'),
+      return Center(
+        child: Text(TranslationKeys.somethingNotFound.tr(
+          args: [TranslationKeys.issues.tr()],
+        )),
       );
     }
     final areYouTheOnwerOrAdmin = issueData
@@ -150,8 +160,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           issueData.title,
                         ),
                       ),
-                     
-                     const CloseButton(),
+
+                      const CloseButton(),
                     ],
                   ),
                   // last updated at information
@@ -159,14 +169,15 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       LastUpdatedAtInfo(issueData: issueData),
-                        if (isAuthorOrColloborator)
+                      if (isAuthorOrColloborator)
                         // edit button
                         PopupMenuButton(
                           itemBuilder: (BuildContext context) => [
                             PopupMenuItem(
                               child: ListTile(
                                 leading: const Icon(Icons.edit),
-                                title: const Text('Edit Issue'),
+                                title: Text(
+                                    '${TranslationKeys.edit.tr()} ${TranslationKeys.issue.tr()}'),
                                 onTap: () {
                                   showModalBottomSheet(
                                     isScrollControlled: true,
@@ -175,7 +186,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                     context: context,
                                     builder: (context) => AddOrEditIssueSheet(
                                       teamId: widget.issue.teamId,
-                                      addOrEdit: AddorEdit.update,
+                                      addOrEdit: AddorEdit.edit,
                                       issue: issueData,
                                     ),
                                   );
@@ -187,7 +198,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                               PopupMenuItem(
                                 child: ListTile(
                                   leading: const Icon(Icons.close),
-                                  title: const Text('Close Issue'),
+                                  title: Text(
+                                      '${TranslationKeys.close.tr()} ${TranslationKeys.issue.tr()}'),
                                   onTap: () {
                                     _toggleIsClosed(
                                         isClosed: true, issueData: issueData);
@@ -199,7 +211,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                               PopupMenuItem(
                                 child: ListTile(
                                   leading: const Icon(Icons.refresh),
-                                  title: const Text('Open Issue'),
+                                  title: Text(
+                                      '${TranslationKeys.open.tr()} ${TranslationKeys.issue.tr()}'),
                                   onTap: () {
                                     _toggleIsClosed(
                                         isClosed: false, issueData: issueData);
@@ -210,7 +223,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                               PopupMenuItem(
                                 child: ListTile(
                                   leading: const Icon(Icons.delete),
-                                  title: const Text('Delete Issue'),
+                                  title: Text(
+                                      '${TranslationKeys.delete.tr()} ${TranslationKeys.issue.tr()}'),
                                   onTap: () {
                                     _showDeletionDialog();
                                   },
@@ -242,10 +256,12 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   context: context,
                                   builder: (context) {
                                     return FilterTagsSelectionMenu(
+                                      purpose: TagSelectionPurpose.editIssue ,
                                       initialTags: issueData.tags,
                                       onSelected: _onTagToggle,
                                       teamId: widget.issue.teamId,
-                                      title: 'Edit Tags',
+                                      title:
+                                          '${TranslationKeys.edit.tr()} ${TranslationKeys.tags.tr()}',
                                     );
                                   });
                             },
@@ -261,11 +277,13 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   // show a list of admins horizontally
 
                   const Divider(),
-                  const TitleText('Comments'),
+                  TitleText(
+                    TranslationKeys.comments.tr(),
+                  ),
                   Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   const Divider(),
-                  const TitleText(
-                    'Collaborators',
+                  TitleText(
+                    TranslationKeys.collaborators.tr(),
                   ),
                   // grey description
                   const GreyDescription(
@@ -276,9 +294,11 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   const Divider(),
 
                   // created at information
-                  GreyDescription(
-                    'Created at ${issueData.createdAt}',
-                  ),
+                  GreyDescription(TranslationKeys.createdAtWhen.tr(
+                    args: [
+                      issueData.createdAt.toString().substring(0, 10),
+                    ],
+                  )),
                   // height 32
                   const SizedBox(height: 100),
                 ],
@@ -294,21 +314,21 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
             ),
           ),
           if (_isNotAtTop)
-          // scroll to top floating button
-          Positioned(
-            bottom: 80,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: () {
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                );
-              },
-              child: const Icon(Icons.arrow_upward),
+            // scroll to top floating button
+            Positioned(
+              bottom: 80,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: const Icon(Icons.arrow_upward),
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -334,7 +354,7 @@ class IsOpenChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
-        isOpen ? 'Open' : 'Closed',
+        isOpen ? TranslationKeys.open.tr() : TranslationKeys.closed.tr(),
         style: TextStyle(
           color: isOpen ? Colors.green : Colors.grey,
           fontWeight: FontWeight.bold,

@@ -1,10 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 //import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smart_collab/services/auth_controller.dart';
+import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
-import 'package:smart_collab/widgets/profile.dart';
 import 'package:smart_collab/widgets/teams.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
@@ -35,12 +36,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (context) {
         return ConfirmDialog(
-          title: 'Logout',
-          content: 'Are you sure you want to logout?',
+          title: TranslationKeys.logout.tr(),
+          content: TranslationKeys.confirmSomething.tr(
+            args: [TranslationKeys.logout.tr()],
+          ),
           onConfirm: () {
             ref.read(authControllerProvider.notifier).signOut();
           },
-          confirmText: 'Logout',
+          confirmText: TranslationKeys.logout.tr(),
         );
       },
     );
@@ -58,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         children: [
           SpeedDialChild(
             child: const Icon(Icons.group_add),
-            label: 'Join a team',
+            label: TranslationKeys.joinTeam.tr(),
             onTap: () {
               showDialog(
                 context: context,
@@ -70,7 +73,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           SpeedDialChild(
             child: const Icon(Icons.add),
-            label: 'Create a team',
+            label: TranslationKeys.createTeam.tr(),
             onTap: () {
               showModalBottomSheet(
                 isScrollControlled: true,
@@ -98,7 +101,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: TitleText('Welcome back, \n$username!'),
+                  child: TitleText(
+                      TranslationKeys.greeting.tr(args: [username ?? 'User'])),
                 ),
               ),
               UserAvatar(uid: ref.watch(authControllerProvider).user!.uid!),
@@ -108,7 +112,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: StatefulBuilder(
                       builder: (context, setState) => ListTile(
                         leading: const Icon(Icons.brightness_2),
-                        title: Text(_isDarkModel ? 'Light Mode' : 'Dark Mode'),
+                        title: Text(_isDarkModel
+                            ? TranslationKeys.lightMode.tr()
+                            : TranslationKeys.darkMode.tr()),
                         onTap: () {
                           setState(() {
                             widget.toggleTheme(!_isDarkModel);
@@ -121,8 +127,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   PopupMenuItem(
                     child: ListTile(
                       leading: const Icon(Icons.logout),
-                      title: const Text('Logout'),
+                      title: Text(TranslationKeys.logout.tr()),
                       onTap: _logout,
+                    ),
+                  ),
+                  // change language
+                  PopupMenuItem(
+                    child: ListTile(
+                      leading: const Icon(Icons.language),
+                      title: Text(context.locale == const Locale('en', 'US')
+                          ? '繁體中文'
+                          : 'English'),
+                      onTap: () {
+                        // supported language
+                        print(
+                            'current locale: ${context.locale}, supported languages: ${context.supportedLocales}');
+                        context.setLocale(
+                            context.locale == const Locale('en', 'US')
+                                ? const Locale('zh', 'TW')
+                                : const Locale('en', 'US'));
+                        // pop
+                        Navigator.of(context).pop();
+                      },
                     ),
                   ),
                 ],

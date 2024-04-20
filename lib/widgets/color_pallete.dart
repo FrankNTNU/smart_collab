@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 class ColorPallete extends StatefulWidget {
   // onSelected
   final Function(String) onSelected;
-  const ColorPallete({super.key, required this.onSelected});
+  final String? initialColor;
+  const ColorPallete({super.key, required this.onSelected, this.initialColor});
 
   @override
   State<ColorPallete> createState() => _ColorPalleteState();
@@ -19,6 +20,13 @@ class _ColorPalleteState extends State<ColorPallete> {
   void initState() {
     super.initState();
     setGenerateRandomColors(10);
+    if (widget.initialColor != null) {
+      setState(() {
+        _selectedHexColor = '#${widget.initialColor}';
+        // add the initial color to the generated colors
+        generatedHexColors.insert(0, '#${widget.initialColor}');
+      });
+    }
   }
 
   void setGenerateRandomColors(int num) {
