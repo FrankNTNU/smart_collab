@@ -180,6 +180,7 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                         // a small grey description
                         GreyDescription(
                             'This QR code is only valid for 10 minutes. Expiring at $tenMinutesFromNow'),
+                        const GreyDescription('Have the user click on the (+) icon on the home screen and select "Join a team" and scan this QR code.'),
                         Expanded(
                           child: Align(
                             // center

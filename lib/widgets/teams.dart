@@ -80,7 +80,7 @@ class _TeamsState extends ConsumerState<Teams> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isLoading) const CircularProgressIndicator(),
+        if (isLoading) const Center(child: CircularProgressIndicator()),
         // header
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),

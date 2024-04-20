@@ -73,7 +73,7 @@ class TagsState {
   }
 }
 
-class TagsController extends AutoDisposeFamilyNotifier<TagsState, String> {
+class TagsController extends FamilyNotifier<TagsState, String> {
   @override
   TagsState build(String arg) {
     return TagsState(
@@ -213,6 +213,6 @@ class TagsController extends AutoDisposeFamilyNotifier<TagsState, String> {
 }
 
 final tagProvider =
-    NotifierProvider.autoDispose.family<TagsController, TagsState, String>(
+    NotifierProvider.family<TagsController, TagsState, String>(
   () => TagsController(),
 );

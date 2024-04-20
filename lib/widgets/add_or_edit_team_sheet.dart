@@ -106,8 +106,12 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = ref.watch(teamsProvider.select((value) => value.apiStatus == ApiStatus.loading));
     return Padding(
-      padding: MediaQuery.of(context).viewInsets,
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16, right: 16
+      ),
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.8,
         child: SingleChildScrollView(
@@ -120,12 +124,9 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: TitleText(widget.addOrEdit == AddorEdit.add
-                          ? 'Add Team'
-                          : 'Update Team'),
-                    ),
+                    TitleText(widget.addOrEdit == AddorEdit.add
+                        ? 'Add Team'
+                        : 'Update Team'),
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () {
@@ -177,6 +178,9 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                 ),
 
                 const SizedBox(height: 20),
+                if (isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
                 ElevatedButton(
                   onPressed: _submit,
                   child: Text(

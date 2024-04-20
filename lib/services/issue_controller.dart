@@ -33,7 +33,7 @@ class Issue {
     required this.updatedAt,
     required this.id,
     required this.roles,
-     this.deadline,
+    this.deadline,
     required this.tags,
     required this.teamId,
     this.lastUpdatedBy,
@@ -77,9 +77,8 @@ class Issue {
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       roles: Map<String, String>.from(json['roles']),
-      deadline: json['deadline'] != null
-          ? DateTime.parse(json['deadline'])
-          : null,
+      deadline:
+          json['deadline'] != null ? DateTime.parse(json['deadline']) : null,
       tags: List<String>.from(json['tags'] ?? []),
       teamId: json['teamId'],
       lastUpdatedBy: json['lastUpdatedBy'],
@@ -300,6 +299,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   // fetchIssues
   Future<void> fetchIssues(String teamId, {List<String>? includedTags}) async {
     const limit = 5;
+    print('Fetching issues...');
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
     try {
@@ -309,12 +309,12 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .collection('issues')
           .where('teamId', isEqualTo: teamId)
           .orderBy('updatedAt', descending: true);
-
+      print('Included tags: $includedTags');
       if (includedTags != null && includedTags.isNotEmpty) {
         query = query.where('tags', arrayContainsAny: includedTags);
       }
-
-      if (state.lastDoc != null) {
+      print('Last doc: ${state.lastDoc}, exisits? ${state.lastDoc?.exists}');
+      if (state.lastDoc != null && state.lastDoc!.exists && state.issues.isNotEmpty) {
         query = query.startAfterDocument(state.lastDoc!);
       }
 
@@ -323,13 +323,13 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       final lastDoc = snapShot.docs.isNotEmpty ? snapShot.docs.last : null;
       state = state.copyWith(lastDoc: lastDoc);
 
-      final issues = snapShot.docs.map((doc) {
+      final fetchIssues = snapShot.docs.map((doc) {
         return Issue.fromJson(doc.data() as Map<String, dynamic>)
             .copyWith(id: doc.id);
       }).toList();
-
-      state = state.copyWith(
-          issues: [...state.issues, ...issues], apiStatus: ApiStatus.success);
+      print('Have fetched ${fetchIssues.length} issues');
+      state = state
+          .copyWith(issues: [...state.issues, ...fetchIssues], apiStatus: ApiStatus.success);
     } catch (e, stackTrace) {
       print('Error occurred in the fetchIssues method: $e, $stackTrace');
       state = state.copyWith(

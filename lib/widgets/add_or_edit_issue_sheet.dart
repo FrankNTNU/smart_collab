@@ -115,6 +115,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
         //Navigator.of(context).pop();
       }
     });
+    final isLoading  = ref.watch(issueProvider(widget.teamId).select((value) => value.apiStatus == ApiStatus.loading));
     return Padding(
       padding: EdgeInsets.only(
           left: 16,
@@ -213,7 +214,9 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               const SizedBox(
                 height: 16,
               ),
-
+              if (isLoading)
+                const Center(child: CircularProgressIndicator())
+              else
               // submit button
               ElevatedButton(
                 onPressed: () {

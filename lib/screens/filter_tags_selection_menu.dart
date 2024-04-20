@@ -16,7 +16,8 @@ class FilterTagsSelectionMenu extends ConsumerStatefulWidget {
       {super.key,
       required this.onSelected,
       required this.initialTags,
-      required this.teamId, this.title = 'Filter by tags'});
+      required this.teamId,
+      this.title = 'Filter by tags'});
 
   @override
   ConsumerState<FilterTagsSelectionMenu> createState() =>
@@ -35,6 +36,9 @@ class _FilterTagsSelectionMenuState
   void initState() {
     super.initState();
     _selectedTags = widget.initialTags;
+    Future.delayed(Duration.zero, () {
+      ref.read(tagProvider(widget.teamId).notifier).fetchTags();
+    });
   }
 
   void openAddTagForm() {
@@ -55,14 +59,17 @@ class _FilterTagsSelectionMenuState
 
   @override
   Widget build(BuildContext context) {
+    final sourceTags = ref
+        .watch(tagProvider(widget.teamId).select((value) => value.tags));
+    print('Source tags: $sourceTags');
     // get tags
-    final tags = ref
-        .watch(tagProvider(widget.teamId).select((value) => value.tags))
+    final tags =sourceTags
         .where((tag) {
       final lowerCaseTag = tag.name.toLowerCase();
       final lowerCaseSearchTerm = _searchTerm.toLowerCase();
       return lowerCaseTag.contains(lowerCaseSearchTerm);
     }).toList();
+    print('Tags in selection menu: $tags');
     final mergedTagNames =
         <String>{...tags.map((t) => t.name), ...widget.initialTags}.toList();
     return Container(
@@ -74,7 +81,7 @@ class _FilterTagsSelectionMenuState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Padding(
+          Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
@@ -90,8 +97,7 @@ class _FilterTagsSelectionMenuState
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: GreyDescription(
-              'Tags are useful for organizing and filtering issues.'
-            ),
+                'Tags are useful for organizing and filtering issues.'),
           ),
           Row(
             children: [
@@ -168,15 +174,14 @@ class _FilterTagsSelectionMenuState
                     },
                   ),
           ),
-          if (tags.isNotEmpty)
-            ListTile(
-              // add tags
-              title: const Text('Add new tag'),
-              leading: const Icon(Icons.add),
-              onTap: () {
-                openAddTagForm();
-              },
-            ),
+          ListTile(
+            // add tags
+            title: const Text('Add new tag'),
+            leading: const Icon(Icons.add),
+            onTap: () {
+              openAddTagForm();
+            },
+          ),
         ],
       ),
     );

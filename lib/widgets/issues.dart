@@ -184,11 +184,17 @@ class _IssuesState extends ConsumerState<Issues> {
                 const SizedBox(
                   width: 8,
                 ),
-                const Text('Included tags:'),
+                const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Included tags:')),
                 const SizedBox(
                   width: 4,
                 ),
                 IssueTags(tags: _includedFilterTags, teamId: widget.teamId),
+                const SizedBox(
+                  width: 4,
+                ),
+                const Icon(Icons.add),
                 const SizedBox(
                   width: 8,
                 )
@@ -205,7 +211,8 @@ class _IssuesState extends ConsumerState<Issues> {
           ListView.builder(
             // never scroll
             shrinkWrap: true,
-            physics: const ClampingScrollPhysics(), itemCount: filteredIssues.length,
+            physics: const ClampingScrollPhysics(),
+            itemCount: filteredIssues.length,
             itemBuilder: (context, index) {
               return Column(
                 children: [
@@ -265,7 +272,9 @@ class _IssuesState extends ConsumerState<Issues> {
               );
             },
           ),
-        const SizedBox(height: 32,)
+        const SizedBox(
+          height: 32,
+        )
       ],
     );
   }

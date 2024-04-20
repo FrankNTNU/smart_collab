@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
+import 'package:smart_collab/widgets/delete_confirm_dialog.dart';
 import 'package:smart_collab/widgets/invite_to_team.dart';
 import 'package:smart_collab/widgets/notification_bell.dart';
 import 'package:smart_collab/widgets/team_members.dart';
@@ -140,75 +141,62 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 child: TitleText('${teamData.name}'),
               ),
               if (isOwnerOrAdmin)
-                IconButton(
-                    onPressed: () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  leading: const Icon(Icons.edit),
-                                  title: const Text('Edit Team'),
-                                  onTap: () {
-                                    // show bottom sheet
-                                    showModalBottomSheet(
-                                      isScrollControlled: true,
-                                      // show handle
-                                      enableDrag: true,
-                                      showDragHandle: true,
-                                      context: context,
-                                      builder: (context) {
-                                        return Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          // padding: MediaQuery.of(context)
-                                          //     .viewInsets
-                                          //     .copyWith(left: 16, right: 16),
-                                          child: AddTeamSheet(
-                                              addOrEdit: AddorEdit.update,
-                                              team: teamData),
-                                        );
-                                      },
-                                    );
-                                  },
+                PopupMenuButton(
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      child: ListTile(
+                        leading: const Icon(Icons.edit),
+                        title: const Text('Edit Team'),
+                        onTap: () {
+                          showModalBottomSheet(
+                            isScrollControlled: true,
+                            enableDrag: true,
+                            showDragHandle: true,
+                            context: context,
+                            builder: (context) {
+                              return Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: AddTeamSheet(
+                                  addOrEdit: AddorEdit.update,
+                                  team: teamData,
                                 ),
-                                ListTile(
-                                  leading: const Icon(Icons.delete),
-                                  title: const Text('Delete'),
-                                  onTap: () {
-                                    //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return ConfirmDialog(
-                                          title: 'Delete Team',
-                                          content:
-                                              'Are you sure you want to delete this team?',
-                                          onConfirm: () {
-                                            ref
-                                                .read(teamsProvider.notifier)
-                                                .deleteTeam(teamData.id!);
-                                            Navigator.pop(context);
-                                            // pop again
-                                            Navigator.pop(context);
-                                          },
-                                          confirmText: 'Delete',
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                    icon: const Icon(Icons.more_horiz))
-            ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      child: ListTile(
+                        leading: const Icon(Icons.delete),
+                        title: const Text('Delete'),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return DeleteConfirmDialog(
+                                deleteValidationText: teamData.name ?? 'I want to delete this team',
+                                title: 'Delete Team',
+                                content: 'Are you sure you want to delete this team?',
+                                onConfirm: () {
+                                  // have the user enter the team name before deletion
+                                  
+                                  ref
+                                      .read(teamsProvider.notifier)
+                                      .deleteTeam(teamData.id!);
+                                  Navigator.pop(context);
+                                  Navigator.pop(context);
+                                },
+                                confirmText: 'Delete',
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  icon: const Icon(Icons.more_horiz),
+                )],
           ),
           // description about team
           Padding(

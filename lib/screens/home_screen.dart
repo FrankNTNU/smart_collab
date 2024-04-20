@@ -7,6 +7,7 @@ import 'package:smart_collab/widgets/profile.dart';
 import 'package:smart_collab/widgets/teams.dart';
 
 import '../widgets/add_or_edit_team_sheet.dart';
+import '../widgets/title_text.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -36,23 +37,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = ref.watch(isDarkModeProvider);
+    final username = ref.watch(authControllerProvider).user?.displayName;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          // dark mode icon
-          IconButton(
-              onPressed: () {
-                ref.read(isDarkModeProvider.notifier).state = !isDarkMode;
-              },
-              icon: const Icon(Icons.brightness_2)),
-          // logout button
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-        ],
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showModalBottomSheet(
@@ -61,25 +47,55 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             enableDrag: true,
             showDragHandle: true,
             context: context,
-            builder: (context) => Padding(
-              padding: MediaQuery.of(context)
-                  .viewInsets
-                  .copyWith(left: 16, right: 16),
-              child: const AddTeamSheet(
-                addOrEdit: AddorEdit.add,
-              ),
+            builder: (context) => const AddTeamSheet(
+              addOrEdit: AddorEdit.add,
             ),
           );
         },
         child: const Icon(Icons.add),
       ),
       body: ListView(
-        children: const [
+        children: [
+          const SizedBox(height: 32,),
+          // welcome text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TitleText('Welcome back, \n$username!'),
+                ),
+              ),
+              PopupMenuButton(
+
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    child: ListTile(
+                      leading: const Icon(Icons.brightness_2),
+                      title: const Text('Dark Mode'),
+                      onTap: () {
+                        ref.read(isDarkModeProvider.notifier).state =
+                            !isDarkMode;
+                      },
+                    ),
+                  ),
+                  PopupMenuItem(
+                    child: ListTile(
+                      leading: const Icon(Icons.logout),
+                      title: const Text('Logout'),
+                      onTap: _logout,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
           // show profile information
-          SizedBox(height: 20),
-          Profile(),
-          Divider(),
-          Teams(),
+          const SizedBox(height: 20),
+          const Profile(),
+          const Divider(),
+          const Teams(),
         ],
       ),
     );

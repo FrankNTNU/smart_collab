@@ -166,7 +166,7 @@ class TeamsController extends Notifier<TeamsState> {
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
     }
   }
-  
+
   Future<String?> setAsMemeber(
       {required String email, required String teamId}) async {
     // set loading
@@ -365,12 +365,53 @@ class TeamsController extends Notifier<TeamsState> {
           await FirebaseStorage.instance.refFromURL(team.imageUrl!).delete();
         }
       }
-      // delete the team from firestore
+      // deletion order is important!
+      // delete activites of the team
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .collection('activities')
+          .get()
+          .then((snapshot) {
+        for (DocumentSnapshot doc in snapshot.docs) {
+          doc.reference.delete();
+        }
+      });
+      // delete tags of the team
+      final tagsSnapshot = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .collection('tags')
+          .get();
+      for (DocumentSnapshot doc in tagsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+      // delete issues of the team
+      final issuesSnapshot = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .collection('issues')
+          .get();
+      for (DocumentSnapshot doc in issuesSnapshot.docs) {
+        await doc.reference.delete();
+      }
+      // delete issues/comments of the team
+      final commentsSnapshot = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(teamId)
+          .collection('issues')
+          .doc('comments')
+          .get();
+      if (commentsSnapshot.exists) {
+        await commentsSnapshot.reference.delete();
+      }
+      // finally delete the team document
       await FirebaseFirestore.instance.collection('teams').doc(teamId).delete();
       state = state.copyWith(
         apiStatus: ApiStatus.success,
         teams: state.teams.where((team) => team.id != teamId).toList(),
       );
+      // delete all subcollections of the team
     } catch (e) {
       print('Error occured in the deleteTeam method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
