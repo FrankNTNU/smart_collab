@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/screens/calendar_view.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:smart_collab/widgets/issue_tabs.dart';
+import 'package:smart_collab/widgets/tab_view_bar.dart';
 import 'package:smart_collab/widgets/issue_tile.dart';
 
 import '../screens/filter_tags_selection_menu.dart';
 import 'add_or_edit_issue_sheet.dart';
 import 'issue_tags.dart';
 import 'title_text.dart';
+
+// tab enum
+class IssueTabEnum {
+  static const open = 0;
+  static const upcoming = 1;
+  static const closed = 2;
+}
+
+// tab view enum
+class IssueTabViewEnum {
+  static const listView = 0;
+  static const calendarView = 1;
+}
 
 class Issues extends ConsumerStatefulWidget {
   final String teamId;
@@ -26,7 +40,9 @@ class _IssuesState extends ConsumerState<Issues> {
   // search text edit controller
   final TextEditingController _searchController = TextEditingController();
   // current tab index
-  int _currentTabIndex = 0;
+  int _currentTabIndex = IssueTabEnum.open;
+  // view tab index
+  int _currentTabViewIndex = IssueTabViewEnum.listView;
   // search tags on selected
   void _searchTagsOnSelected(String tag) {
     setState(() {
@@ -79,8 +95,10 @@ class _IssuesState extends ConsumerState<Issues> {
 
   @override
   Widget build(BuildContext context) {
-    var filteredIssues = ref
-        .watch(issueProvider(widget.teamId).select((value) => value.issues))
+    final sourceIssues = ref
+        .watch(issueProvider(widget.teamId).select((value) => value.issueMap)).values.toList();
+    print('Source issue length: ${sourceIssues.length}');
+    var filteredIssues = sourceIssues
         .where((issue) {
       return (issue.title.toLowerCase().contains(_searchTerm.toLowerCase()) ||
           issue.description
@@ -100,7 +118,7 @@ class _IssuesState extends ConsumerState<Issues> {
             );
           }).toList();
     // if upcoming tab is selected, then filter issues
-    filteredIssues = _currentTabIndex == 1
+    filteredIssues = _currentTabIndex == IssueTabEnum.upcoming
         ? filteredIssues
             .where((issue) =>
                 issue.deadline != null &&
@@ -110,10 +128,11 @@ class _IssuesState extends ConsumerState<Issues> {
 
     // if first tab (open) is selected, then filter issues, if third tab (closed) is selected, then filter issues
     filteredIssues = filteredIssues
-        .where(
-            (issue) => _currentTabIndex == 2 ? issue.isClosed : !issue.isClosed)
+        .where((issue) => _currentTabIndex == IssueTabEnum.closed
+            ? issue.isClosed
+            : !issue.isClosed)
         .toList();
-    if (_currentTabIndex == 1) {
+    if (_currentTabIndex == IssueTabEnum.upcoming) {
       // sort by deadline with upcoming first
       filteredIssues.sort((a, b) => a.deadline!.compareTo(b.deadline!));
     } else {
@@ -149,105 +168,144 @@ class _IssuesState extends ConsumerState<Issues> {
             ),
           ],
         ),
-        // search bar
-        Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  onTapOutside: (event) {
-                    // unfocus
-                    FocusScope.of(context).unfocus();
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      _searchTerm = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Search issues',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? TextButton.icon(
-                            label: const Text('Clear'),
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                                _searchTerm = '';
-                              });
-                            },
-                          )
-                        : null,
+        Tabs(
+          onTabChange: (index) {
+            setState(() {
+              _currentTabViewIndex = index;
+            });
+          },
+          icons: const [
+            Icons.list,
+            Icons.event,
+          ],
+          tabs: const [
+            'Issues',
+            'Calendar',
+          ],
+          initialTabIndex: _currentTabViewIndex,
+        ),
+        if (_currentTabViewIndex == IssueTabViewEnum.listView)
+          Column(
+            children: [
+              // search bar
+              Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: TextField(
+                        controller: _searchController,
+                        onTapOutside: (event) {
+                          // unfocus
+                          FocusScope.of(context).unfocus();
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            _searchTerm = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Search issues',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? TextButton.icon(
+                                  label: const Text('Clear'),
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    setState(() {
+                                      _searchController.clear();
+                                      _searchTerm = '';
+                                    });
+                                  },
+                                )
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        _openFilterTagsSelectionMenu();
+                      },
+                      icon: const Icon(Icons.filter_list)),
+                ],
+              ),
+              // include tags for search
+              InkWell(
+                onTap: _openFilterTagsSelectionMenu,
+                child: SizedBox(
+                  height: 32,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      const SizedBox(
+                        width: 8,
+                      ),
+                      const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text('Included tags:')),
+                      const SizedBox(
+                        width: 4,
+                      ),
+                      IssueTags(
+                          tags: _includedFilterTags, teamId: widget.teamId),
+                      const SizedBox(
+                        width: 4,
+                      ),
+                      const Icon(Icons.add),
+                      const SizedBox(
+                        width: 8,
+                      )
+                    ],
                   ),
                 ),
               ),
-            ),
-            IconButton(
-                onPressed: () {
-                  _openFilterTagsSelectionMenu();
+              const Divider(),
+              const SizedBox(
+                height: 8,
+              ),
+              // a tab for issues
+              Tabs(
+                initialTabIndex: _currentTabIndex,
+                onTabChange: (index) {
+                  setState(() {
+                    _currentTabIndex = index;
+                  });
                 },
-                icon: const Icon(Icons.filter_list)),
-          ],
-        ),
-        // include tags for search
-        InkWell(
-          onTap: _openFilterTagsSelectionMenu,
-          child: SizedBox(
-            height: 32,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                const SizedBox(
-                  width: 8,
-                ),
-                const Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('Included tags:')),
-                const SizedBox(
-                  width: 4,
-                ),
-                IssueTags(tags: _includedFilterTags, teamId: widget.teamId),
-                const SizedBox(
-                  width: 4,
-                ),
-                const Icon(Icons.add),
-                const SizedBox(
-                  width: 8,
+                icons: const [
+                  Icons.content_paste,
+                  Icons.hourglass_bottom,
+                  Icons.do_not_disturb_on
+                ],
+              ),
+              if (filteredIssues.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 32),
+                  child: Center(
+                    child: Text('No issues found'),
+                  ),
                 )
-              ],
-            ),
+              else
+                ListView.builder(
+                  // never scroll
+                  shrinkWrap: true,
+                  physics: const ClampingScrollPhysics(),
+                  itemCount: filteredIssues.length,
+                  itemBuilder: (context, index) {
+                    return IssueTile(
+                      issueData: filteredIssues[index],
+                      tabIndex: _currentTabIndex,
+                    );
+                  },
+                ),
+            ],
           ),
-        ),
-
-        const Divider(),
-        // a tab for issues
-        IssueTabs(onTabChange: (index) {
-          setState(() {
-            _currentTabIndex = index;
-          });
-        }),
-        if (filteredIssues.isEmpty)
-          const Center(
-            child: Text('No issues found'),
-          )
-        else
-          ListView.builder(
-            // never scroll
-            shrinkWrap: true,
-            physics: const ClampingScrollPhysics(),
-            itemCount: filteredIssues.length,
-            itemBuilder: (context, index) {
-              return IssueTile(
-                issueData: filteredIssues[index],
-                tabIndex: _currentTabIndex,
-              );
-            },
+        if (_currentTabViewIndex == IssueTabViewEnum.calendarView)
+          CalendarViewScreen(
+            teamId: widget.teamId,
           ),
         const SizedBox(
-          height: 32,
+          height: 64,
         )
       ],
     );

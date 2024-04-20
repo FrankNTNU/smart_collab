@@ -47,7 +47,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     final issueId = activity.activityDetails['issueId'];
     print('teamId: $teamId, issueId: $issueId');
     final issue = ref.watch(issueProvider(teamId).select((value) =>
-        value.issues.where((issue) => issue.id == issueId).firstOrNull));
+        value.issueMap[issueId]));
     if (issue == null) {
       print('Issue not found');
       return;

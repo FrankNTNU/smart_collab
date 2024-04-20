@@ -44,7 +44,7 @@ class _CommentsState extends ConsumerState<Comments> {
         ),
       );
     }
-    
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const ClampingScrollPhysics(),
@@ -54,11 +54,11 @@ class _CommentsState extends ConsumerState<Comments> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (index == 0)
-            // show commebnt count
+              // show commebnt count
               GreyDescription(
                 '${comments.length} comments',
               ),
-            ListTile(
+            InkWell(
               onLongPress: () {
                 // show bottom menu
                 showModalBottomSheet(
@@ -87,8 +87,8 @@ class _CommentsState extends ConsumerState<Comments> {
                                             issueId: widget.issueId,
                                             teamId: widget.teamId
                                           )).notifier)
-                                          .deleteComment(
-                                              comments[index].id, widget.issueId);
+                                          .deleteComment(comments[index].id,
+                                              widget.issueId);
                                       Navigator.pop(context);
                                     },
                                     confirmText: 'Delete',
@@ -103,10 +103,26 @@ class _CommentsState extends ConsumerState<Comments> {
                   },
                 );
               },
-              contentPadding: const EdgeInsets.all(0),
-              leading: UserAvatar(uid: comments[index].userId),
-              title: Text(comments[index].content),
-              subtitle: Text(TimeUtils.getFuzzyTime(comments[index].createdAt)),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                    child: UserAvatar(uid: comments[index].userId),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(comments[index].content),
+                        GreyDescription(
+                            TimeUtils.getFuzzyTime(comments[index].createdAt)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         );

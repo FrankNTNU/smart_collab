@@ -26,13 +26,28 @@ class IssueScreen extends ConsumerStatefulWidget {
 }
 
 class _IssueScreenState extends ConsumerState<IssueScreen> {
+  // scroll controller
+  final _scrollController = ScrollController();
+  // isCloseToBottom
+  bool _isNotAtTop = false;
+  @override
+  void initState() {
+    super.initState();
+    // listen to scroll event
+    _scrollController.addListener(() {
+      bool isNotAtTop = _scrollController.position.pixels > 0;
+      if (_isNotAtTop != isNotAtTop) {
+        setState(() {
+          _isNotAtTop = isNotAtTop;
+        });
+      }
+    });
+  }
   void _onTagToggle(String tag) {
     print('Tag toggled: $tag');
     final tags = ref
             .watch(issueProvider(widget.issue.teamId).select((value) => value
-                .issues
-                .where((issue) => issue.id == widget.issue.id)
-                .firstOrNull))
+                .issueMap[widget.issue.id]))
             ?.tags ??
         [];
     if (tags.contains(tag)) {
@@ -93,9 +108,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   Widget build(BuildContext context) {
     print('Rebuilding IssueScreen');
     final issueData = ref.watch(issueProvider(widget.issue.teamId).select(
-        (value) => value.issues
-            .where((issue) => issue.id == widget.issue.id)
-            .firstOrNull));
+        (value) => value.issueMap[widget.issue.id]));
     if (issueData == null) {
       return const Center(
         child: Text('Issue not found'),
@@ -105,17 +118,18 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                 .roles[ref.watch(authControllerProvider).user!.uid] ==
             'owner' ||
         issueData.roles[ref.watch(authControllerProvider).user!.uid] == 'admin';
-    final isAuthorOrColloborator =
+    final isAuthor =
+        issueData.roles[ref.watch(authControllerProvider).user!.uid] == 'owner';
+    final isAuthorOrColloborator = isAuthor ||
         issueData.roles[ref.watch(authControllerProvider).user!.uid] ==
-                'owner' ||
-            issueData.roles[ref.watch(authControllerProvider).user!.uid] ==
-                'collaborator';
+            'collaborator';
     return SizedBox(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.85,
       child: Stack(
         children: [
           SingleChildScrollView(
+            controller: _scrollController,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -131,12 +145,21 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       const SizedBox(
                         width: 8,
                       ),
-                      TitleText(
-                        issueData.title,
+                      Expanded(
+                        child: TitleText(
+                          issueData.title,
+                        ),
                       ),
-                      // spacer and close button
-                      const Spacer(),
-                      if (isAuthorOrColloborator)
+                     
+                     const CloseButton(),
+                    ],
+                  ),
+                  // last updated at information
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      LastUpdatedAtInfo(issueData: issueData),
+                        if (isAuthorOrColloborator)
                         // edit button
                         PopupMenuButton(
                           itemBuilder: (BuildContext context) => [
@@ -183,7 +206,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   },
                                 ),
                               ),
-                            if (isAuthorOrColloborator)
+                            if (isAuthor)
                               PopupMenuItem(
                                 child: ListTile(
                                   leading: const Icon(Icons.delete),
@@ -196,11 +219,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           ],
                           child: const Icon(Icons.more_horiz),
                         ),
-                      const CloseButton(),
                     ],
                   ),
-                  // last updated at information
-                  LastUpdatedAtInfo(issueData: issueData),
                   // deadline
                   if (issueData.deadline != null)
                     DeadlineInfo(issueData: issueData),
@@ -238,6 +258,11 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                         ),
                       )),
 
+                  // show a list of admins horizontally
+
+                  const Divider(),
+                  const TitleText('Comments'),
+                  Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   const Divider(),
                   const TitleText(
                     'Collaborators',
@@ -248,13 +273,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   ),
                   Collaborators(
                       issueId: issueData.id, teamId: widget.issue.teamId),
-
-                  // show a list of admins horizontally
-
                   const Divider(),
-                  const TitleText('Comments'),
-                  Comments(issueId: issueData.id, teamId: widget.issue.teamId),
-                  const Divider(),
+
                   // created at information
                   GreyDescription(
                     'Created at ${issueData.createdAt}',
@@ -271,6 +291,22 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
             child: CommentField(
               issueId: issueData.id,
               teamId: widget.issue.teamId,
+            ),
+          ),
+          if (_isNotAtTop)
+          // scroll to top floating button
+          Positioned(
+            bottom: 80,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: () {
+                _scrollController.animateTo(
+                  0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: const Icon(Icons.arrow_upward),
             ),
           ),
         ],

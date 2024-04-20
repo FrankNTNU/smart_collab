@@ -35,7 +35,7 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
                 children: [
                   // calendar icon
                   const Icon(
-                    Icons.calendar_today,
+                    Icons.event,
                     color: Colors.grey,
                   ),
                   const SizedBox(width: 8),

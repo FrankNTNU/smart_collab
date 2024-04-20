@@ -130,6 +130,7 @@ class _TeamsState extends ConsumerState<Teams> {
                           child: const Icon(Icons.image),
                         ),
                       ListTile(
+                        contentPadding: const EdgeInsets.all(0),
                         title: Text(teams[index].name ?? ''),
                         subtitle: Text(teams[index].description ?? '',
                             maxLines: 3, overflow: TextOverflow.ellipsis),

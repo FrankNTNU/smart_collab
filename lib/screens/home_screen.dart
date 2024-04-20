@@ -6,6 +6,7 @@ import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/profile.dart';
 import 'package:smart_collab/widgets/teams.dart';
+import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/title_text.dart';
@@ -28,9 +29,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _isDarkModel = widget.isDarkMode;
   }
 
-  void _logout() {
+  void _logout() async {
     // confirm logout
-    showDialog(
+    await showDialog(
       context: context,
       builder: (context) {
         return ConfirmDialog(
@@ -43,6 +44,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         );
       },
     );
+    // pop
+    Navigator.of(context).pop();
   }
 
   @override
@@ -60,16 +63,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               showDialog(
                 context: context,
                 builder: (context) {
-                  // return MobileScanner(
-                  //   // fit: BoxFit.contain,
-                  //   onDetect: (capture) {
-                  //     final List<Barcode> barcodes = capture.barcodes;
-                  //     final Uint8List? image = capture.image;
-                  //     for (final barcode in barcodes) {
-                  //       debugPrint('Barcode found! ${barcode.rawValue}');
-                  //     }
-                  //   },
-                  // );
                   return const SizedBox();
                 },
               );
@@ -108,6 +101,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: TitleText('Welcome back, \n$username!'),
                 ),
               ),
+              UserAvatar(uid: ref.watch(authControllerProvider).user!.uid!),
               PopupMenuButton(
                 itemBuilder: (context) => [
                   PopupMenuItem(
@@ -135,10 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
-          // show profile information
-          const SizedBox(height: 20),
-          const Profile(),
-          const Divider(),
+          //const Profile(),
           const Teams(),
         ],
       ),

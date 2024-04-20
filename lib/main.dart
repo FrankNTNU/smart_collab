@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smart_collab/screens/home_screen.dart';
 import 'package:smart_collab/screens/login_screen.dart';
 
@@ -30,9 +31,24 @@ class MainApp extends ConsumerStatefulWidget {
 
 class _MainAppState extends ConsumerState<MainApp> {
   bool isDarkMode = false;
-  void _setIsDarkMode(bool value) {
+  @override
+  void initState() {
+    super.initState();
+    _getIsDarkMode();
+  }
+
+  void _setIsDarkMode(bool value) async {
     setState(() {
       isDarkMode = value;
+    });
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool('isDarkMode', value);
+  }
+
+  void _getIsDarkMode() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isDarkMode = prefs.getBool('isDarkMode') ?? false;
     });
   }
 
@@ -44,7 +60,11 @@ class _MainAppState extends ConsumerState<MainApp> {
 
     return MaterialApp(
       // theme
-      theme: isDarkMode ? ThemeData.dark() : ThemeData.light(),
+      theme: isDarkMode ? ThemeData.dark() : ThemeData.light()
+        .copyWith(
+          iconTheme:  IconThemeData(color: Colors.grey.shade600),
+          listTileTheme: ListTileThemeData(iconColor: Colors.grey.shade600),
+        ),
       // remove debug label
       debugShowCheckedModeBanner: false,
       home: !isAuthenicated

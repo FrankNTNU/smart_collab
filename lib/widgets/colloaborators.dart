@@ -25,9 +25,7 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
         .addCollaborator(issueId: widget.issueId, uid: uid);
     final profile = await ref.read(profileDataProvider(uid).future);
     final issueData = ref
-        .watch(issueProvider(widget.teamId).select((value) => value.issues
-            .where((issue) => issue.id == widget.issueId)
-            .firstOrNull));
+        .watch(issueProvider(widget.teamId).select((value) => value.issueMap[widget.issueId]));
     // add to activity
     await ref.read(activityProvider(widget.teamId).notifier).addActivity(
           recipientUid: profile.uid!,
@@ -43,9 +41,8 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
   Widget build(BuildContext context) {
     final issue = ref
         .watch(issueProvider(widget.teamId).select((value) =>
-            value.issues.where((issue) => issue.id == widget.issueId)))
-        .firstOrNull;
-    // all collaborators
+            value.issueMap[widget.issueId]))
+;    // all collaborators
     var collaborators = issue?.roles.entries
         .where((role) => role.value == 'collaborator')
         .toList();

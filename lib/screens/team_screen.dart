@@ -10,7 +10,6 @@ import 'package:smart_collab/widgets/team_members.dart';
 
 import '../services/issue_controller.dart';
 import '../services/team_controller.dart';
-import '../widgets/confirm_dialog.dart';
 import '../widgets/issues.dart';
 import '../widgets/title_text.dart';
 

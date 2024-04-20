@@ -93,7 +93,6 @@ class Issue {
 }
 
 class IssuesState {
-  final List<Issue> issues;
   final ApiStatus apiStatus;
   final String? errorMessage;
   final PerformedAction performedAction;
@@ -102,15 +101,17 @@ class IssuesState {
   // last document Ref
   final DocumentSnapshot? lastDoc;
   final String teamId;
+  // issue map
+  final Map<String, Issue> issueMap;
   // ctor
   IssuesState({
-    required this.issues,
     required this.apiStatus,
     this.errorMessage,
     this.performedAction = PerformedAction.fetch,
     this.userId = '',
     this.lastDoc,
     required this.teamId,
+    this.issueMap = const {},
   });
   // copyWith
   IssuesState copyWith({
@@ -121,22 +122,22 @@ class IssuesState {
     String? userId,
     DocumentSnapshot? lastDoc,
     String? teamId,
+    Map<String, Issue>? issueMap,
   }) {
     return IssuesState(
-      issues: issues ?? this.issues,
       apiStatus: apiStatus ?? this.apiStatus,
       errorMessage: errorMessage ?? this.errorMessage,
       performedAction: performedAction ?? this.performedAction,
       userId: userId ?? this.userId,
       lastDoc: lastDoc ?? this.lastDoc,
       teamId: teamId ?? this.teamId,
+      issueMap: issueMap ?? this.issueMap,
     );
   }
 
   // initial
   static IssuesState initial() {
     return IssuesState(
-        issues: [],
         apiStatus: ApiStatus.idle,
         errorMessage: '',
         performedAction: PerformedAction.fetch,
@@ -167,18 +168,13 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .update({
         'isClosed': isClosed,
       });
-      final updatedIssue =
-          state.issues.firstWhere((issue) => issue.id == issueId);
-      final updatedIssues = state.issues.map((issue) {
-        if (issue.id == issueId) {
-          return updatedIssue.copyWith(
-            isClosed: isClosed,
-          );
-        }
-        return issue;
-      }).toList();
-      state = state
-          .copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
+      // update the issueMap
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(isClosed: isClosed),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
     } catch (e) {
       print('Error occured in the setIsClosed method: $e');
       state = state.copyWith(
@@ -203,18 +199,14 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .update({
         'tags': FieldValue.arrayUnion([tag]),
       });
-      final updatedIssue =
-          state.issues.firstWhere((issue) => issue.id == issueId);
-      final updatedIssues = state.issues.map((issue) {
-        if (issue.id == issueId) {
-          return updatedIssue.copyWith(
-            tags: [...updatedIssue.tags, tag],
-          );
-        }
-        return issue;
-      }).toList();
-      state = state
-          .copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          tags: [...state.issueMap[issueId]!.tags, tag],
+        ),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
     } catch (e) {
       print('Error occured in the addTagToIssue method: $e');
       state = state.copyWith(
@@ -239,18 +231,14 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .update({
         'tags': FieldValue.arrayRemove([tag]),
       });
-      final updatedIssue =
-          state.issues.firstWhere((issue) => issue.id == issueId);
-      final updatedIssues = state.issues.map((issue) {
-        if (issue.id == issueId) {
-          return updatedIssue.copyWith(
-            tags: updatedIssue.tags.where((t) => t != tag).toList(),
-          );
-        }
-        return issue;
-      }).toList();
-      state = state
-          .copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          tags: state.issueMap[issueId]!.tags..remove(tag),
+        ),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
     } catch (e) {
       print('Error occured in the removeTagFromIssue method: $e');
       state = state.copyWith(
@@ -275,21 +263,14 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .update({
         'roles.$uid': FieldValue.delete(),
       });
-      final updatedIssue =
-          state.issues.firstWhere((issue) => issue.id == issueId);
-      final updatedIssues = state.issues.map((issue) {
-        if (issue.id == issueId) {
-          // remove the collaborator from the roles map
-          final updatedRoles = updatedIssue.roles;
-          updatedRoles.remove(uid);
-          return updatedIssue.copyWith(
-            roles: updatedRoles,
-          );
-        }
-        return issue;
-      }).toList();
-      state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          roles: state.issueMap[issueId]!.roles..remove(uid),
+        ),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
     } catch (e) {
       print('Error occured in the removeCollaborators method: $e');
       state = state.copyWith(
@@ -314,23 +295,73 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .update({
         'roles.$uid': 'collaborator',
       });
-      final updatedIssue =
-          state.issues.firstWhere((issue) => issue.id == issueId);
-      final updatedIssues = state.issues.map((issue) {
-        if (issue.id == issueId) {
-          return updatedIssue.copyWith(
-            roles: {
-              ...updatedIssue.roles,
-              uid: 'collaborator',
-            },
-          );
-        }
-        return issue;
-      }).toList();
-      state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          roles: {...state.issueMap[issueId]!.roles, uid: 'collaborator'},
+        ),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
     } catch (e) {
       print('Error occured in the addCollaborators method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  // fetch issues based on deadline's month and update the local state issues
+  Future<void> fetchIssuesByMonth(
+      {required int year, required int month}) async {
+    print('Fetching issues by month...');
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
+    try {
+      final start = DateTime(year, month);
+      final end = DateTime(year, month + 1);
+      final snapShot = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .where('teamId', isEqualTo: state.teamId)
+          .where('deadline', isGreaterThanOrEqualTo: start.toIso8601String())
+          .where('deadline', isLessThan: end.toIso8601String())
+          .get();
+      final fetchIssues = snapShot.docs.map((doc) {
+        return Issue.fromJson(doc.data()).copyWith(id: doc.id);
+      }).toList();
+      state = state.copyWith(apiStatus: ApiStatus.success);
+      mergeIssues(fetchIssues);
+    } catch (e, stackTrace) {
+      print('Error occurred in the fetchIssuesByMonth method: $e, $stackTrace');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  // merge fetched issues with state issues based on their id and update the local state issues
+  Future<void> mergeIssues(List<Issue> fetchedIssues) async {
+    print('Merging issues...');
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
+    try {
+      // turn the issue list to issue
+      final fetchedIssueMap =
+          fetchedIssues.fold<Map<String, Issue>>({}, (map, issue) {
+        return {...map, issue.id: issue};
+      });
+      // merged the state.issueMap with the fetched issueMap
+      final mergedIssueMap = {...state.issueMap, ...fetchedIssueMap};
+      state = state.copyWith(
+        apiStatus: ApiStatus.success,
+        issueMap: mergedIssueMap,
+      );
+    } catch (e, stackTrace) {
+      print('Error occurred in the mergeIssues method: $e, $stackTrace');
       state = state.copyWith(
         apiStatus: ApiStatus.error,
         errorMessage: e.toString(),
@@ -357,7 +388,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       }
       if (state.lastDoc != null &&
           state.lastDoc!.exists &&
-          state.issues.isNotEmpty) {
+          state.issueMap.isNotEmpty) {
+        print('Setting starting after document');
         query = query.startAfterDocument(state.lastDoc!);
       }
 
@@ -370,10 +402,8 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         return Issue.fromJson(doc.data() as Map<String, dynamic>)
             .copyWith(id: doc.id);
       }).toList();
-      print('Have fetched ${fetchIssues.length} issues');
-      state = state.copyWith(
-          issues: [...state.issues, ...fetchIssues],
-          apiStatus: ApiStatus.success);
+      state = state.copyWith(apiStatus: ApiStatus.success);
+      mergeIssues(fetchIssues);
     } catch (e, stackTrace) {
       print('Error occurred in the fetchIssues method: $e, $stackTrace');
       state = state.copyWith(
@@ -397,7 +427,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .delete();
       state = state.copyWith(
         apiStatus: ApiStatus.success,
-        issues: state.issues.where((issue) => issue.id != issueId).toList(),
+        issueMap: state.issueMap..remove(issueId),
       );
     } catch (e) {
       print('Error occured in the removeIssue method: $e');
@@ -435,23 +465,16 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
             ..addAll(deadline != null
                 ? {'deadline': deadline.toIso8601String()}
                 : {}));
-      final updatedIssue =
-          state.issues.firstWhere((issue) => issue.id == issueId);
-      final updatedIssues = state.issues.map((issue) {
-        if (issue.id == issueId) {
-          return updatedIssue.copyWith(
-            title: title,
-            description: description,
-            tags: tags,
-            updatedAt: DateTime.now(),
-            lastUpdatedBy: state.userId,
-            deadline: deadline ?? DateTime.now(),
-          );
-        }
-        return issue;
-      }).toList();
-      state =
-          state.copyWith(apiStatus: ApiStatus.success, issues: updatedIssues);
+      state = state.copyWith(apiStatus: ApiStatus.success, issueMap: {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          title: title,
+          description: description,
+          updatedAt: DateTime.now(),
+          tags: tags ?? state.issueMap[issueId]!.tags,
+          deadline: deadline ?? state.issueMap[issueId]!.deadline,
+        ),
+      });
     } catch (e) {
       print('Error occured in the updateIssue method: $e');
       state = state.copyWith(
@@ -498,10 +521,10 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         tags: [],
         teamId: state.teamId,
       );
-      state = state.copyWith(apiStatus: ApiStatus.success, issues: [
-        ...state.issues,
-        issue,
-      ]);
+      state = state.copyWith(apiStatus: ApiStatus.success, issueMap: {
+        ...state.issueMap,
+        issueRef.id: issue,
+      });
       return issueRef.id;
     } catch (e) {
       print('Error occured in the addIssue method: $e');

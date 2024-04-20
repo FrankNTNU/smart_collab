@@ -49,9 +49,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
         ref.read(authControllerProvider).user!.email!).future);
     // get issue data by issue id
     final issueData = ref.watch(issueProvider(widget.teamId).select(
-        (value) => value.issues
-            .where((issue) => issue.id == widget.issueId)
-            .firstOrNull));
+        (value) => value.issueMap[widget.issueId]));
     // add to activity
     ref.read(activityProvider(widget.teamId).notifier).addActivity(
           recipientUid: profile.uid!,
