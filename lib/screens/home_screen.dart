@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+//import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/profile.dart';
@@ -47,20 +49,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final username = ref.watch(authControllerProvider).user?.displayName;
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showModalBottomSheet(
-            isScrollControlled: true,
-            // show handle
-            enableDrag: true,
-            showDragHandle: true,
-            context: context,
-            builder: (context) => const AddTeamSheet(
-              addOrEdit: AddorEdit.add,
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: SpeedDial(
+        animatedIcon: AnimatedIcons.menu_close,
+        animatedIconTheme: const IconThemeData(size: 22.0),
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.group_add),
+            label: 'Join a team',
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  // return MobileScanner(
+                  //   // fit: BoxFit.contain,
+                  //   onDetect: (capture) {
+                  //     final List<Barcode> barcodes = capture.barcodes;
+                  //     final Uint8List? image = capture.image;
+                  //     for (final barcode in barcodes) {
+                  //       debugPrint('Barcode found! ${barcode.rawValue}');
+                  //     }
+                  //   },
+                  // );
+                  return const SizedBox();
+                },
+              );
+            },
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.add),
+            label: 'Create a team',
+            onTap: () {
+              showModalBottomSheet(
+                isScrollControlled: true,
+                // show handle
+                enableDrag: true,
+                showDragHandle: true,
+                context: context,
+                builder: (context) => const AddTeamSheet(
+                  addOrEdit: AddorEdit.add,
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: ListView(
         children: [

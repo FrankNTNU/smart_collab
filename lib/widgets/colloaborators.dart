@@ -33,7 +33,7 @@ class _CollaboratorsState extends ConsumerState<Collaborators> {
           recipientUid: profile.uid!,
           message:
               '${profile.displayName} have been added as collaborator in an issue ${issueData?.title ?? ''}',
-          activityType: ActivityyType.setAsCollaborator,
+          activityType: ActivityType.setAsCollaborator,
           teamId: widget.teamId,
           issueId: widget.issueId,
         );

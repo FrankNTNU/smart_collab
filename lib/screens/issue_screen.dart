@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/activity_controller.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/colloaborators.dart';
 import 'package:smart_collab/widgets/comment_field.dart';
 import 'package:smart_collab/widgets/comments.dart';
+import 'package:smart_collab/widgets/deadline_info.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
@@ -44,6 +46,49 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     }
   }
 
+  void _showDeletionDialog() async {
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return ConfirmDialog(
+          title: 'Delete',
+          content: 'Are you sure you want to delete this issue?',
+          onConfirm: () {
+            ref
+                .read(issueProvider(widget.issue.teamId).notifier)
+                .removeIssue(widget.issue.id);
+            Navigator.pop(context);
+          },
+          confirmText: 'Delete',
+        );
+      },
+    );
+    // pop
+    Navigator.pop(context);
+  }
+
+  void _toggleIsClosed(
+      {required Issue issueData, required bool isClosed}) async {
+    print('Toggling isClosed, isClosed: $isClosed');
+    await ref
+        .read(issueProvider(widget.issue.teamId).notifier)
+        .setIsClosed(issueId: widget.issue.id, isClosed: isClosed);
+    final uid = ref.watch(authControllerProvider).user!.uid;
+    final username = ref.watch(authControllerProvider).user!.displayName;
+    // add to activity
+    await ref.read(activityProvider(widget.issue.teamId).notifier).addActivity(
+          issueId: widget.issue.id,
+          teamId: widget.issue.teamId,
+          message:
+              '$username has ${isClosed ? 'closed' : 'opened'} the issue ${issueData.title}',
+          activityType:
+              isClosed ? ActivityType.closeIssue : ActivityType.openIssue,
+          recipientUid: uid!,
+        );
+    // pop
+    Navigator.pop(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     print('Rebuilding IssueScreen');
@@ -79,6 +124,13 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   const SizedBox(height: 20),
                   Row(
                     children: [
+                      // is open
+                      IsOpenChip(
+                        isOpen: !issueData.isClosed,
+                      ),
+                      const SizedBox(
+                        width: 8,
+                      ),
                       TitleText(
                         issueData.title,
                       ),
@@ -86,27 +138,72 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       const Spacer(),
                       if (isAuthorOrColloborator)
                         // edit button
-                        IconButton(
-                            onPressed: () {
-                              // open bottom sheet
-                              showModalBottomSheet(
-                                isScrollControlled: true,
-                                enableDrag: true,
-                                showDragHandle: true,
-                                context: context,
-                                builder: (context) => AddOrEditIssueSheet(
-                                  teamId: widget.issue.teamId,
-                                  addOrEdit: AddorEdit.update,
-                                  issue: issueData,
+                        PopupMenuButton(
+                          itemBuilder: (BuildContext context) => [
+                            PopupMenuItem(
+                              child: ListTile(
+                                leading: const Icon(Icons.edit),
+                                title: const Text('Edit Issue'),
+                                onTap: () {
+                                  showModalBottomSheet(
+                                    isScrollControlled: true,
+                                    enableDrag: true,
+                                    showDragHandle: true,
+                                    context: context,
+                                    builder: (context) => AddOrEditIssueSheet(
+                                      teamId: widget.issue.teamId,
+                                      addOrEdit: AddorEdit.update,
+                                      issue: issueData,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            if (isAuthorOrColloborator && !issueData.isClosed)
+                              // close issue
+                              PopupMenuItem(
+                                child: ListTile(
+                                  leading: const Icon(Icons.close),
+                                  title: const Text('Close Issue'),
+                                  onTap: () {
+                                    _toggleIsClosed(
+                                        isClosed: true, issueData: issueData);
+                                  },
                                 ),
-                              );
-                            },
-                            icon: const Icon(Icons.edit)),
+                              ),
+                            if (areYouTheOnwerOrAdmin && issueData.isClosed)
+                              // open issue
+                              PopupMenuItem(
+                                child: ListTile(
+                                  leading: const Icon(Icons.refresh),
+                                  title: const Text('Open Issue'),
+                                  onTap: () {
+                                    _toggleIsClosed(
+                                        isClosed: false, issueData: issueData);
+                                  },
+                                ),
+                              ),
+                            if (isAuthorOrColloborator)
+                              PopupMenuItem(
+                                child: ListTile(
+                                  leading: const Icon(Icons.delete),
+                                  title: const Text('Delete Issue'),
+                                  onTap: () {
+                                    _showDeletionDialog();
+                                  },
+                                ),
+                              ),
+                          ],
+                          child: const Icon(Icons.more_horiz),
+                        ),
                       const CloseButton(),
                     ],
                   ),
                   // last updated at information
                   LastUpdatedAtInfo(issueData: issueData),
+                  // deadline
+                  if (issueData.deadline != null)
+                    DeadlineInfo(issueData: issueData),
                   Text(
                     issueData.description,
                     style: const TextStyle(
@@ -140,30 +237,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           isEditable: isAuthorOrColloborator,
                         ),
                       )),
-                  // deadline
-                  if (issueData.deadline != null)
-                    InkWell(
 
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // calendar icon
-                            const Icon(
-                              Icons.calendar_today,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Deadline: ${issueData.deadline.toString().substring(0, 10)}',
-                              style: const TextStyle(
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   const Divider(),
                   const TitleText(
                     'Collaborators',
@@ -171,7 +245,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   // grey description
                   const GreyDescription(
                     'People who can edit this issue',
-                  
                   ),
                   Collaborators(
                       issueId: issueData.id, teamId: widget.issue.teamId),
@@ -182,35 +255,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   const TitleText('Comments'),
                   Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   const Divider(),
-                  if (areYouTheOnwerOrAdmin)
-                    // delete button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // use ConfirmDialog
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return ConfirmDialog(
-                                title: 'Delete',
-                                content:
-                                    'Are you sure you want to delete this issue?',
-                                onConfirm: () {
-                                  ref
-                                      .read(issueProvider(widget.issue.teamId)
-                                          .notifier)
-                                      .removeIssue(widget.issue.id);
-                                  Navigator.pop(context);
-                                },
-                                confirmText: 'Delete',
-                              );
-                            },
-                          );
-                        },
-                        child: const Text('Delete Issue'),
-                      ),
-                    ),
                   // created at information
                   GreyDescription(
                     'Created at ${issueData.createdAt}',
@@ -230,6 +274,35 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class IsOpenChip extends StatelessWidget {
+  const IsOpenChip({
+    super.key,
+    required this.isOpen,
+  });
+
+  final bool isOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isOpen
+            ? Colors.green.withOpacity(0.2)
+            : Colors.grey.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        isOpen ? 'Open' : 'Closed',
+        style: TextStyle(
+          color: isOpen ? Colors.green : Colors.grey,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

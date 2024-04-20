@@ -52,7 +52,8 @@ class _TeamImagePickerState extends State<TeamImagePicker> {
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: SizedBox(
+        child: Container(
+          color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
           width: double.infinity,
           height: 128,
           child: _pickedImage != null

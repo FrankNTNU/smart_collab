@@ -78,7 +78,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
       await ref.read(activityProvider(widget.teamId).notifier).addActivity(
             recipientUid: username,
             message: '$username updated an issue $_enteredTitle',
-            activityType: ActivityyType.updateIssue,
+            activityType: ActivityType.updateIssue,
             teamId: widget.teamId,
             issueId: widget.issue!.id,
           );
@@ -93,7 +93,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
       await ref.read(activityProvider(widget.teamId).notifier).addActivity(
             recipientUid: username,
             message: '$username added an issue $_enteredTitle',
-            activityType: ActivityyType.createIssue,
+            activityType: ActivityType.createIssue,
             teamId: widget.teamId,
             issueId: issueId,
           );

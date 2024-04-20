@@ -58,7 +58,7 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
     ref.read(activityProvider(widget.teamId).notifier).addActivity(
           message: message,
           recipientUid: profile.uid!,
-          activityType: ActivityyType.addToTeam,
+          activityType: ActivityType.addToTeam,
           teamId: widget.teamId,
         );
   }
@@ -180,7 +180,8 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                         const Wrap(
                           children: [
                             Text('Have the user click on the '),
-                            Text('(+) icon',
+                            Icon(Icons.menu, color: Colors.blue),
+                            Text(' icon',
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,
@@ -192,7 +193,8 @@ class _SetAdminSheetState extends ConsumerState<InviteToTeam> {
                                   fontWeight: FontWeight.bold,
                                 )),
                             Text(' and select '),
-                            Text('Join a team',
+                            Icon(Icons.group_add, color: Colors.blue),
+                            Text(' Join a team',
                                 style: TextStyle(
                                   color: Colors.blue,
                                   fontWeight: FontWeight.bold,

@@ -78,7 +78,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
       // add activity
       await ref.read(activityProvider(teamId).notifier).addActivity(
             message: '$username created a new team $_enteredName',
-            activityType: ActivityyType.addTeam,
+            activityType: ActivityType.addTeam,
             teamId: teamId,
             recipientUid: ref.watch(authControllerProvider).user!.uid ?? '',
           );
@@ -95,7 +95,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
       // add activity
       await ref.read(activityProvider(widget.team!.id!).notifier).addActivity(
             message: '$username updated team ${widget.team!.name}',
-            activityType: ActivityyType.updateTeam,
+            activityType: ActivityType.updateTeam,
             teamId: widget.team!.id,
             recipientUid: ref.watch(authControllerProvider).user!.uid ?? '',
           );
@@ -125,8 +125,8 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     TitleText(widget.addOrEdit == AddorEdit.add
-                        ? 'Add Team'
-                        : 'Update Team'),
+                        ? 'Create a team'
+                        : 'Update the team'),
                     IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () {

@@ -24,6 +24,8 @@ class Issue {
   final String teamId;
   // last updated by
   final String? lastUpdatedBy;
+  // isClosed
+  final bool isClosed;
   // ctor
   Issue({
     required this.title,
@@ -37,6 +39,7 @@ class Issue {
     required this.tags,
     required this.teamId,
     this.lastUpdatedBy,
+    this.isClosed = false,
   });
   // copyWith
   Issue copyWith({
@@ -51,6 +54,7 @@ class Issue {
     List<String>? tags,
     String? teamId,
     String? lastUpdatedBy,
+    bool? isClosed,
   }) {
     return Issue(
       title: title ?? this.title,
@@ -64,6 +68,7 @@ class Issue {
       tags: tags ?? this.tags,
       teamId: teamId ?? this.teamId,
       lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
+      isClosed: isClosed ?? this.isClosed,
     );
   }
 
@@ -82,6 +87,7 @@ class Issue {
       tags: List<String>.from(json['tags'] ?? []),
       teamId: json['teamId'],
       lastUpdatedBy: json['lastUpdatedBy'],
+      isClosed: json['isClosed'] ?? false,
     );
   }
 }
@@ -144,6 +150,42 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
+  }
+
+  // set is closed
+  Future<void> setIsClosed(
+      {required String issueId, required bool isClosed}) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'isClosed': isClosed,
+      });
+      final updatedIssue =
+          state.issues.firstWhere((issue) => issue.id == issueId);
+      final updatedIssues = state.issues.map((issue) {
+        if (issue.id == issueId) {
+          return updatedIssue.copyWith(
+            isClosed: isClosed,
+          );
+        }
+        return issue;
+      }).toList();
+      state = state
+          .copyWith(apiStatus: ApiStatus.success, issues: [...updatedIssues]);
+    } catch (e) {
+      print('Error occured in the setIsClosed method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   // add tag to an issue
@@ -313,8 +355,9 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       if (includedTags != null && includedTags.isNotEmpty) {
         query = query.where('tags', arrayContainsAny: includedTags);
       }
-      print('Last doc: ${state.lastDoc}, exisits? ${state.lastDoc?.exists}');
-      if (state.lastDoc != null && state.lastDoc!.exists && state.issues.isNotEmpty) {
+      if (state.lastDoc != null &&
+          state.lastDoc!.exists &&
+          state.issues.isNotEmpty) {
         query = query.startAfterDocument(state.lastDoc!);
       }
 
@@ -328,8 +371,9 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
             .copyWith(id: doc.id);
       }).toList();
       print('Have fetched ${fetchIssues.length} issues');
-      state = state
-          .copyWith(issues: [...state.issues, ...fetchIssues], apiStatus: ApiStatus.success);
+      state = state.copyWith(
+          issues: [...state.issues, ...fetchIssues],
+          apiStatus: ApiStatus.success);
     } catch (e, stackTrace) {
       print('Error occurred in the fetchIssues method: $e, $stackTrace');
       state = state.copyWith(

@@ -56,7 +56,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
     ref.read(activityProvider(widget.teamId).notifier).addActivity(
           recipientUid: profile.uid!,
           message: '${profile.displayName} commented on an issue ${issueData?.title ?? ''}',
-          activityType: ActivityyType.addComment,
+          activityType: ActivityType.addComment,
           teamId: widget.teamId,
           issueId: widget.issueId,
         );

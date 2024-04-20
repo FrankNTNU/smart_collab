@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
-import 'package:smart_collab/widgets/last_updated.dart';
-import 'package:smart_collab/widgets/user_avatar.dart';
+import 'package:smart_collab/widgets/issue_tabs.dart';
+import 'package:smart_collab/widgets/issue_tile.dart';
 
 import '../screens/filter_tags_selection_menu.dart';
 import 'add_or_edit_issue_sheet.dart';
@@ -26,6 +25,8 @@ class _IssuesState extends ConsumerState<Issues> {
   final List<String> _includedFilterTags = [];
   // search text edit controller
   final TextEditingController _searchController = TextEditingController();
+  // current tab index
+  int _currentTabIndex = 0;
   // search tags on selected
   void _searchTagsOnSelected(String tag) {
     setState(() {
@@ -98,8 +99,27 @@ class _IssuesState extends ConsumerState<Issues> {
               (tag) => _includedFilterTags.contains(tag),
             );
           }).toList();
-    // sort them
-    filteredIssues.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    // if upcoming tab is selected, then filter issues
+    filteredIssues = _currentTabIndex == 1
+        ? filteredIssues
+            .where((issue) =>
+                issue.deadline != null &&
+                issue.deadline!.isAfter(DateTime.now()))
+            .toList()
+        : filteredIssues;
+
+    // if first tab (open) is selected, then filter issues, if third tab (closed) is selected, then filter issues
+    filteredIssues = filteredIssues
+        .where(
+            (issue) => _currentTabIndex == 2 ? issue.isClosed : !issue.isClosed)
+        .toList();
+    if (_currentTabIndex == 1) {
+      // sort by deadline with upcoming first
+      filteredIssues.sort((a, b) => a.deadline!.compareTo(b.deadline!));
+    } else {
+      // sort by updated at
+      filteredIssues.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -129,7 +149,6 @@ class _IssuesState extends ConsumerState<Issues> {
             ),
           ],
         ),
-
         // search bar
         Row(
           children: [
@@ -202,7 +221,14 @@ class _IssuesState extends ConsumerState<Issues> {
             ),
           ),
         ),
+
         const Divider(),
+        // a tab for issues
+        IssueTabs(onTabChange: (index) {
+          setState(() {
+            _currentTabIndex = index;
+          });
+        }),
         if (filteredIssues.isEmpty)
           const Center(
             child: Text('No issues found'),
@@ -214,61 +240,9 @@ class _IssuesState extends ConsumerState<Issues> {
             physics: const ClampingScrollPhysics(),
             itemCount: filteredIssues.length,
             itemBuilder: (context, index) {
-              return Column(
-                children: [
-                  Container(
-                    // add a grey light bottom border
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Colors.grey,
-                          width: 0.5,
-                        ),
-                      ),
-                    ),
-                    child: ListTile(
-                      leading: UserAvatar(
-                          uid: filteredIssues[index].lastUpdatedBy ??
-                              filteredIssues[index]
-                                  .roles
-                                  .entries
-                                  .where((entry) => entry.value == 'owner')
-                                  .firstOrNull
-                                  ?.key ??
-                              ''),
-                      onTap: () {
-                        // open bottom sheet
-                        showModalBottomSheet(
-                          isScrollControlled: true,
-                          enableDrag: true,
-                          showDragHandle: true,
-                          context: context,
-                          builder: (context) => Padding(
-                            padding: MediaQuery.of(context).viewInsets,
-                            child: IssueScreen(
-                              issue: filteredIssues[index],
-                            ),
-                          ),
-                        );
-                      },
-                      title: Text(filteredIssues[index].title),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          IssueTags(
-                            tags: filteredIssues[index].tags,
-                            teamId: widget.teamId,
-                          ),
-                          LastUpdatedAtInfo(
-                            issueData: filteredIssues[index],
-                            isConcise: true,
-                          )
-                        ],
-                      ),
-                    ),
-                  ),
-                  //const Divider(),
-                ],
+              return IssueTile(
+                issueData: filteredIssues[index],
+                tabIndex: _currentTabIndex,
               );
             },
           ),

@@ -29,11 +29,12 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         .setAsRead(activity.id);
     print('Activity type: ${activity.activityType}');
 
-    switch (activity.activityType) {
-      case 'add_comment':
-      case 'set_as_collaborator':
-      case 'create_issue':
-      case 'update_issue':
+    switch (activityMapReverse[activity.activityType]) {
+      case ActivityType.addComment:
+      case ActivityType.openIssue:
+      case ActivityType.closeIssue:
+      case ActivityType.createIssue:
+      case ActivityType.updateIssue:
         _openIssueScreen(activity);
         break;
       default:
@@ -41,7 +42,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     }
   }
 
-  void _openIssueScreen(Activity activity) {
+  void  _openIssueScreen(Activity activity) {
     final teamId = activity.activityDetails['teamId'];
     final issueId = activity.activityDetails['issueId'];
     print('teamId: $teamId, issueId: $issueId');
@@ -80,9 +81,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TitleText(
-                    'Activities'
-                  ),
+                  TitleText('Activities'),
                   CloseButton(),
                 ],
               ),

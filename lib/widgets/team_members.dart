@@ -36,7 +36,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
           recipientUid: profile.uid!,
           message:
               '${profile.displayName} have been promoted to admin in a team',
-          activityType: ActivityyType.setAsAdmin,
+          activityType: ActivityType.setAsAdmin,
           teamId: widget.teamId,
         );
     Navigator.pop(context);

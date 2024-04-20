@@ -97,7 +97,7 @@ class ActivitiesState {
   }
 }
 
-enum ActivityyType {
+enum ActivityType {
   // when a member is invited to a team
   addToTeam,
   // when a member is set as an admin
@@ -114,18 +114,37 @@ enum ActivityyType {
   updateTeam,
   // add team
   addTeam,
+  // close issue
+  closeIssue,
+  // open issue
+  openIssue,
 }
 
 // activityMap
 final activityMap = {
-  ActivityyType.addToTeam: 'add_to_team',
-  ActivityyType.setAsAdmin: 'set_as_admin',
-  ActivityyType.addComment: 'add_comment',
-  ActivityyType.createIssue: 'create_issue',
-  ActivityyType.updateIssue: 'update_issue',
-  ActivityyType.setAsCollaborator: 'set_as_collaborator',
-  ActivityyType.updateTeam: 'update_team',
-  ActivityyType.addTeam: 'add_team',
+  ActivityType.addToTeam: 'add_to_team',
+  ActivityType.setAsAdmin: 'set_as_admin',
+  ActivityType.addComment: 'add_comment',
+  ActivityType.createIssue: 'create_issue',
+  ActivityType.updateIssue: 'update_issue',
+  ActivityType.setAsCollaborator: 'set_as_collaborator',
+  ActivityType.updateTeam: 'update_team',
+  ActivityType.addTeam: 'add_team',
+  ActivityType.closeIssue: 'close_issue',
+  ActivityType.openIssue: 'open_issue',
+};
+
+final activityMapReverse = {
+  'add_to_team': ActivityType.addToTeam,
+  'set_as_admin': ActivityType.setAsAdmin,
+  'add_comment': ActivityType.addComment,
+  'create_issue': ActivityType.createIssue,
+  'update_issue': ActivityType.updateIssue,
+  'set_as_collaborator': ActivityType.setAsCollaborator,
+  'update_team': ActivityType.updateTeam,
+  'add_team': ActivityType.addTeam,
+  'close_issue': ActivityType.closeIssue,
+  'open_issue': ActivityType.openIssue,
 };
 
 class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, String> {
@@ -143,7 +162,7 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
   // write to activities
   Future<void> addActivity(
       {required String recipientUid,
-      required ActivityyType activityType,
+      required ActivityType activityType,
       required String message,
       String? teamId,
       String? issueId,
