@@ -7,6 +7,8 @@ import 'package:smart_collab/widgets/issue_tile.dart';
 import 'package:smart_collab/widgets/tab_view_bar.dart';
 
 import '../screens/filter_tags_selection_menu.dart';
+import '../services/auth_controller.dart';
+import '../services/team_controller.dart';
 import '../utils/translation_keys.dart';
 import 'add_or_edit_issue_sheet.dart';
 import 'issue_tags.dart';
@@ -14,9 +16,10 @@ import 'issue_tags.dart';
 // tab enum
 class IssueTabEnum {
   static const open = 0;
+  static const upcoming = 1;
   // overdue
-  static const overdue = 1;
-  static const upcoming = 2;
+  static const overdue = 2;
+
   static const closed = 3;
 }
 
@@ -63,7 +66,7 @@ class _IssuesState extends ConsumerState<Issues> {
         showDragHandle: true,
         context: context,
         builder: (context) {
-          return FilterTagsSelectionMenu(
+          return TagsSelectionMenu(
             purpose: TagSelectionPurpose.filterSearch,
             initialTags: _includedFilterTags,
             onSelected: _searchTagsOnSelected,
@@ -98,10 +101,14 @@ class _IssuesState extends ConsumerState<Issues> {
 
   @override
   Widget build(BuildContext context) {
+    final isFetching = ref.watch(issueProvider(widget.teamId).select((value) =>
+        value.apiStatus == ApiStatus.loading &&
+        value.performedAction == PerformedAction.fetch));
     final sourceIssues = ref
         .watch(issueProvider(widget.teamId).select((value) => value.issueMap))
         .values
         .toList();
+
     print('Source issue length: ${sourceIssues.length}');
     var filteredIssues = sourceIssues.where((issue) {
       return (issue.title.toLowerCase().contains(_searchTerm.toLowerCase()) ||
@@ -255,7 +262,7 @@ class _IssuesState extends ConsumerState<Issues> {
             Icons.content_paste,
             Icons.hourglass_top_rounded,
             Icons.event_busy,
-            Icons.do_not_disturb_on
+            Icons.check
           ],
         ),
         if (filteredIssues.isEmpty)
@@ -279,6 +286,7 @@ class _IssuesState extends ConsumerState<Issues> {
               );
             },
           ),
+        if (isFetching) const Center(child: CircularProgressIndicator()),
         const SizedBox(
           height: 64,
         )

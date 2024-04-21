@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/utils/time_utils.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/issues.dart';
 import 'package:smart_collab/widgets/title_text.dart';
@@ -47,7 +48,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     final twoYearsAgo = DateTime.now().subtract(const Duration(days: 365 * 2));
     return TableCalendar(
       daysOfWeekHeight: 32,
-
+      locale: TimeUtils.getLocale(context),
       onPageChanged: (focusedDay) {
         setState(() {
           _selectedMonth = focusedDay.month;
@@ -102,7 +103,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
               ),
               // show the number of issues this month
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 decoration: BoxDecoration(
                   color: openIssueCount == 0
                       ? Colors.grey.shade300
@@ -170,67 +171,78 @@ class IssueCalendarCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isToday = dateTime.year == DateTime.now().year &&
+        dateTime.month == DateTime.now().month &&
+        dateTime.day == DateTime.now().day;
     return InkWell(
-      onTap: dayIssues.isEmpty ? null : () {
-        // open bottom sheet
-        showModalBottomSheet(
-          isScrollControlled: true,
-          enableDrag: true,
-          showDragHandle: true,
-          context: context,
-          builder: (context) => SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Padding(
-              padding: const EdgeInsets.all(0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    const SizedBox(width: 16),
-                    TitleText('${
-                        dayIssues.length
-                    } issues on ${dateTime.toString().substring(0, 10)}'),
-                    const Spacer(),
-                    const CloseButton(),
-                  ],),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: dayIssues.length,
-                      itemBuilder: (context, index) {
-                        return IssueTile(
-                          issueData: dayIssues[index],
-                          tabIndex: IssueTabEnum.open,
-
-                        );
-                      },
+      onTap: dayIssues.isEmpty
+          ? null
+          : () {
+              // open bottom sheet
+              showModalBottomSheet(
+                isScrollControlled: true,
+                enableDrag: true,
+                showDragHandle: true,
+                context: context,
+                builder: (context) => SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: Padding(
+                    padding: const EdgeInsets.all(0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const SizedBox(width: 16),
+                            TitleText(TranslationKeys.xIssuesOnY.tr(args: [
+                              dayIssues.length.toString(),
+                              dateTime.toString().substring(0, 10)
+                            ])),
+                            const Spacer(),
+                            const CloseButton(),
+                          ],
+                        ),
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: dayIssues.length,
+                            itemBuilder: (context, index) {
+                              return IssueTile(
+                                issueData: dayIssues[index],
+                                tabIndex: IssueTabEnum.open,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
+                ),
+              );
+            },
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Text(dateTime.day.toString()),
+          Text(
+            dateTime.day.toString(), // if it is today then red
+            style: TextStyle(
+              color: isToday ? Colors.red : null,
+              // today then bold
+              fontWeight: isToday ? FontWeight.bold : null,
+            ),
+          ),
           // show a badge
           if (dayIssues.isNotEmpty)
-            Container(
-              decoration: const BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  dayIssues.length.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
+            Row(
+              children: [
+                CircleBadge(
+                  count: dayIssues.where((issue) => !issue.isClosed).length,
+                  color: Colors.amber.shade300,
                 ),
-              ),
+                CircleBadge(
+                  count: dayIssues.where((issue) => issue.isClosed).length,
+                  color: Colors.green.shade200,
+                ),
+              ],
             ),
           if (dayIssues.isNotEmpty)
             Expanded(
@@ -242,6 +254,43 @@ class IssueCalendarCell extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class CircleBadge extends StatelessWidget {
+  const CircleBadge({
+    super.key,
+    required this.count,
+    required this.color,
+  });
+
+  final int count;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    if (count == 0) {
+      return const SizedBox();
+    }
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: Text(
+            count.toString(),
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 12,
+            ),
+          ),
+        ),
       ),
     );
   }

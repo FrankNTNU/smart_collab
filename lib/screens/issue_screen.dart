@@ -259,7 +259,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   showDragHandle: true,
                                   context: context,
                                   builder: (context) {
-                                    return FilterTagsSelectionMenu(
+                                    return TagsSelectionMenu(
                                       purpose: TagSelectionPurpose.editIssue,
                                       initialTags: issueData.tags,
                                       onSelected: _onTagToggle,

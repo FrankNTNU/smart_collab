@@ -85,10 +85,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     final isOwnerOrAdmin =
         teamData.roles[uid] == 'owner' || teamData.roles[uid] == 'admin';
 
-    final isFetching = ref.watch(issueProvider(widget.team.id!).select(
-        (value) =>
-            value.apiStatus == ApiStatus.loading &&
-            value.performedAction == PerformedAction.fetch));
     return Scaffold(
       appBar: AppBar(
         title: Tooltip(
@@ -270,7 +266,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 if (_mainFeatureTabIndex == MainFeatureTabIndex.home)
           Issues(teamId: teamData.id!),
           if (_mainFeatureTabIndex == MainFeatureTabIndex.home)
-          if (isFetching) const Center(child: CircularProgressIndicator()),
+          
           if (_mainFeatureTabIndex == MainFeatureTabIndex.activities)
           ActivityScreen(teamId: widget.team.id!, isModal: false,),
         ],

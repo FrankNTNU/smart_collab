@@ -1,8 +1,10 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/screens/filter_tags_selection_menu.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
+import 'package:smart_collab/widgets/issue_tags.dart';
 import 'package:smart_collab/widgets/title_text.dart';
 
 import '../services/activity_controller.dart';
@@ -31,6 +33,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   // enteredDeadline
   DateTime? _enteredDeadline;
   late double _distanceToField;
+  // enteredTags
+  final List<String> _enteredTags = [];
   // error message
   String? _errorMessage;
   // description editing controller
@@ -44,6 +48,15 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   @override
   void initState() {
     super.initState();
+    if ( //add
+        widget.addOrEdit == AddorEdit.add) {
+      setState(() {
+        _enteredDeadline = // 7 days from now
+            DateTime.now().add(
+          const Duration(days: 7),
+        );
+      });
+    }
     if (widget.addOrEdit == AddorEdit.edit) {
       setState(() {
         _enteredTitle = widget.issue!.title;
@@ -97,6 +110,10 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                 description: _enteredDescription,
                 deadline: _enteredDeadline,
               );
+      // add tags to isse
+      await ref.read(issueProvider(widget.teamId).notifier).addTagsToIssue(
+            issueId: issueId,
+            tags: _enteredTags,);
       final message = TranslationKeys.xAddedANewIssueY.tr(args: [
         username,
         _enteredTitle,
@@ -139,7 +156,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
           right: 16, // bottom viewinset
           bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.8,
         child: Form(
           key: _formKey,
           child: ListView(
@@ -158,7 +175,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               // title
               TextFormField(
                 initialValue: _enteredTitle,
-                decoration:  InputDecoration(labelText: TranslationKeys.title.tr()),
+                decoration:
+                    InputDecoration(labelText: TranslationKeys.title.tr()),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return TranslationKeys.pleaseEnterSomething.tr(args: [
@@ -198,7 +216,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               ),
               // height 8
               const SizedBox(height: 8),
-               Text(TranslationKeys.deadline.tr()),
+              Text(TranslationKeys.deadline.tr()),
               // deadline field
               InkWell(
                 onTap: () {
@@ -224,16 +242,60 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                   decoration: InputDecoration(
                     errorText: _errorMessage,
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(_enteredDeadline == null
-                        ? TranslationKeys.pleaseSelectSomething.tr(
-                            args: [TranslationKeys.deadline.tr()],
-                          )
-                        : _enteredDeadline.toString().substring(0, 10)),
+                  child: Row(
+                    children: [
+                      // event icon
+                      const Icon(Icons.event),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Text(_enteredDeadline == null
+                            ? TranslationKeys.pleaseSelectSomething.tr(
+                                args: [TranslationKeys.deadline.tr()],
+                              )
+                            : _enteredDeadline.toString().substring(0, 10)),
+                      ),
+                    ],
                   ),
                 ),
               ),
+              if (widget.addOrEdit == AddorEdit.add)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(TranslationKeys.tags.tr()),
+                ),
+              // tags field
+              if (widget.addOrEdit == AddorEdit.add)
+                InkWell(
+                  onTap: () {
+                    showModalBottomSheet(
+                      isScrollControlled: true,
+                      enableDrag: true,
+                      showDragHandle: true,
+                      context: context,
+                      builder: (context) {
+                        return TagsSelectionMenu(
+                            onSelected: (tag) {
+                              setState(() {
+                                if (_enteredTags.contains(tag)) {
+                                  _enteredTags.remove(tag);
+                                } else {
+                                  _enteredTags.add(tag);
+                                }
+                              });
+                            },
+                            initialTags: _enteredTags,
+                            teamId: widget.teamId,
+                            purpose: TagSelectionPurpose.editIssue);
+                      },
+                    );
+                  },
+                  child: IssueTags(
+                    tags: _enteredTags,
+                    teamId: widget.teamId,
+                    isEditable: true,
+                  ),
+                ),
               const SizedBox(
                 height: 16,
               ),

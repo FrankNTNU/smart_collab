@@ -108,8 +108,6 @@ class _TeamsState extends ConsumerState<Teams> {
             itemBuilder: (context, index) {
               return InkWell(
                 onTap: () {
-                  // go to team screen
-                  //Navigator.pushNamed(context, '/team', arguments: teams[index]);
                   Navigator.push(
                     context,
                     MaterialPageRoute(

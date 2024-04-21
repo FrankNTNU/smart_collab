@@ -1,5 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
+import '../utils/translation_keys.dart';
 import 'issue_tag_chip.dart';
 
 class IssueTags extends StatelessWidget {
@@ -30,12 +32,12 @@ class IssueTags extends StatelessWidget {
             ),
         if (isEditable && tags.isEmpty)
           // add tag chip
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+           Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                Icon(Icons.add),
-                Text('Add tag'),
+                const Icon(Icons.add),
+                Text(TranslationKeys.addTag.tr()),
               ],  
             ),
           ),

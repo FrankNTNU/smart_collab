@@ -185,7 +185,38 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       );
     }
   }
-
+  // add multiple tags to an issue
+  Future<void> addTagsToIssue(
+      {required String issueId, required List<String> tags}) async {
+    if (tags.isEmpty) return;
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'tags': FieldValue.arrayUnion(tags),
+      });
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          tags: {...state.issueMap[issueId]!.tags, ...tags}.toList(),
+        ),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+    } catch (e) {
+      print('Error occured in the addTagsToIssue method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
   // add tag to an issue
   Future<void> addTagToIssue(
       {required String issueId, required String tag}) async {

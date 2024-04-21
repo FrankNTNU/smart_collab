@@ -12,13 +12,13 @@ import '../widgets/title_text.dart';
 
 enum TagSelectionPurpose { filterSearch, editIssue, editTags }
 
-class FilterTagsSelectionMenu extends ConsumerStatefulWidget {
+class TagsSelectionMenu extends ConsumerStatefulWidget {
   final Function(String tag) onSelected;
   final List<String> initialTags;
   final String teamId;
   final String title;
   final TagSelectionPurpose purpose;
-  const FilterTagsSelectionMenu(
+  const TagsSelectionMenu(
       {super.key,
       required this.onSelected,
       required this.initialTags,
@@ -27,12 +27,12 @@ class FilterTagsSelectionMenu extends ConsumerStatefulWidget {
       required this.purpose});
 
   @override
-  ConsumerState<FilterTagsSelectionMenu> createState() =>
+  ConsumerState<TagsSelectionMenu> createState() =>
       _FilterTagsSelectionMenuState();
 }
 
 class _FilterTagsSelectionMenuState
-    extends ConsumerState<FilterTagsSelectionMenu> {
+    extends ConsumerState<TagsSelectionMenu> {
   // search term
   String _searchTerm = '';
   // selected tags
