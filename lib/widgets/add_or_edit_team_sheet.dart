@@ -12,6 +12,7 @@ import 'team_image_picker.dart';
 enum AddorEdit {
   add,
   edit,
+  duplicate,
 }
 
 class AddTeamSheet extends ConsumerStatefulWidget {

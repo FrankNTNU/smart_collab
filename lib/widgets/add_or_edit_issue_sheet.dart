@@ -7,6 +7,7 @@ import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/issue_tags.dart';
 import 'package:smart_collab/widgets/title_text.dart';
 
+import '../screens/issue_screen.dart';
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
 import '../utils/translation_keys.dart';
@@ -49,12 +50,22 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   void initState() {
     super.initState();
     if ( //add
-        widget.addOrEdit == AddorEdit.add) {
+        widget.addOrEdit == AddorEdit.add &&
+            widget.addOrEdit != AddorEdit.duplicate) {
       setState(() {
         _enteredDeadline = // 7 days from now
             DateTime.now().add(
           const Duration(days: 7),
         );
+      });
+    }
+    if (widget.addOrEdit == AddorEdit.duplicate && widget.issue != null) {
+      // copy properties
+      setState(() {
+        _enteredTitle = widget.issue!.title;
+        _enteredDescription = widget.issue!.description;
+        _descriptionController.text = widget.issue!.description;
+        _enteredTags.addAll(widget.issue!.tags);
       });
     }
     if (widget.addOrEdit == AddorEdit.edit) {
@@ -113,7 +124,8 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
       // add tags to isse
       await ref.read(issueProvider(widget.teamId).notifier).addTagsToIssue(
             issueId: issueId,
-            tags: _enteredTags,);
+            tags: _enteredTags,
+          );
       final message = TranslationKeys.xAddedANewIssueY.tr(args: [
         username,
         _enteredTitle,
@@ -166,7 +178,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               Row(
                 children: [
                   TitleText(
-                    '${widget.addOrEdit == AddorEdit.add ? TranslationKeys.add.tr() : TranslationKeys.edit.tr()} ${TranslationKeys.issue.tr()}',
+                    '${widget.addOrEdit == AddorEdit.add || widget.addOrEdit == AddorEdit.duplicate ? TranslationKeys.add.tr() : TranslationKeys.edit.tr()} ${TranslationKeys.issue.tr()}',
                   ),
                   const Spacer(),
                   const CloseButton()
@@ -259,13 +271,15 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                   ),
                 ),
               ),
-              if (widget.addOrEdit == AddorEdit.add)
+              if (widget.addOrEdit == AddorEdit.add ||
+                  widget.addOrEdit == AddorEdit.duplicate)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(TranslationKeys.tags.tr()),
                 ),
               // tags field
-              if (widget.addOrEdit == AddorEdit.add)
+              if (widget.addOrEdit == AddorEdit.add ||
+                  widget.addOrEdit == AddorEdit.duplicate)
                 InkWell(
                   onTap: () {
                     showModalBottomSheet(
@@ -308,7 +322,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                     _submit();
                   },
                   child: Text(
-                      '${widget.addOrEdit == AddorEdit.add ? TranslationKeys.add.tr() : TranslationKeys.update.tr()} ${TranslationKeys.issue.tr()}'),
+                      '${widget.addOrEdit == AddorEdit.add || widget.addOrEdit == AddorEdit.duplicate ? TranslationKeys.add.tr() : TranslationKeys.update.tr()} ${TranslationKeys.issue.tr()}'),
                 ),
               const SizedBox(height: 32),
             ],

@@ -98,5 +98,7 @@
     "home": "Home",
     "about": "About",
     "x_has_duplicate": "{} has duplicate",
-    "days": "days"
+    "days": "days",
+    "duplicate": "Duplicate",
+    "linkedIssues": "Linked issues"
 }

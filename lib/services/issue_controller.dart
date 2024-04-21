@@ -28,6 +28,8 @@ class Issue {
   final bool isClosed;
   // linked issue id
   String? linkedIssueId;
+  // linked issue ids
+  final List<String> linkedIssueIds;
   // ctor
   Issue({
     required this.title,
@@ -42,6 +44,7 @@ class Issue {
     required this.teamId,
     this.lastUpdatedBy,
     this.isClosed = false,
+    this.linkedIssueIds = const [],
   });
   // copyWith
   Issue copyWith({
@@ -57,6 +60,7 @@ class Issue {
     String? teamId,
     String? lastUpdatedBy,
     bool? isClosed,
+    List<String>? linkedIssueIds,
   }) {
     return Issue(
       title: title ?? this.title,
@@ -71,6 +75,7 @@ class Issue {
       teamId: teamId ?? this.teamId,
       lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
       isClosed: isClosed ?? this.isClosed,
+      linkedIssueIds: linkedIssueIds ?? this.linkedIssueIds,
     );
   }
 
@@ -90,6 +95,22 @@ class Issue {
       teamId: json['teamId'],
       lastUpdatedBy: json['lastUpdatedBy'],
       isClosed: json['isClosed'] ?? false,
+      linkedIssueIds: List<String>.from(json['linkedIssueIds'] ?? []),
+    );
+  }
+  // initial
+  static Issue initial() {
+    return Issue(
+      title: '',
+      description: '',
+      status: '',
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+      id: '',
+      roles: {},
+      deadline: DateTime.now(),
+      tags: [],
+      teamId: '',
     );
   }
 }
@@ -155,6 +176,66 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
   }
 
+  Future<void> updateLinkedIssueIds(
+      {required String issueId, required List<String> linkedIssueIds}) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update issue in firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'linkedIssueIds': linkedIssueIds,
+      });
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId:
+            state.issueMap[issueId]!.copyWith(linkedIssueIds: linkedIssueIds),
+      };
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+    } catch (e) {
+      print('Error occured in the updateLinkedIssueIds method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
+  Future<Issue?> fetchSingleIssueById(String issueId) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .get();
+      // if doc is empty then return null
+      if (!doc.exists) {
+        state = state.copyWith(apiStatus: ApiStatus.success);
+        return null;
+      }
+      final issue = Issue.fromJson(doc.data() as Map<String, dynamic>)
+          .copyWith(id: doc.id);
+      state = state.copyWith(apiStatus: ApiStatus.success);
+      mergeIssues([issue]);
+      return issue;
+    } catch (e) {
+      print('Error occured in the fetchSingleissueById method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+      return Issue.initial();
+    }
+  }
+
   // set is closed
   Future<void> setIsClosed(
       {required String issueId, required bool isClosed}) async {
@@ -185,6 +266,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       );
     }
   }
+
   // add multiple tags to an issue
   Future<void> addTagsToIssue(
       {required String issueId, required List<String> tags}) async {
@@ -217,6 +299,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       );
     }
   }
+
   // add tag to an issue
   Future<void> addTagToIssue(
       {required String issueId, required String tag}) async {
@@ -474,6 +557,22 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .collection('issues')
           .doc(issueId)
           .delete();
+      // traverse all issues and delete the issue from the linkedIssuesId array if exist
+      await Future.forEach(state.issueMap.entries, (entry) async {
+        final issue = entry.value;
+        if (issue.linkedIssueIds.contains(issueId)) {
+          final updatedIssue = issue.copyWith(
+            linkedIssueIds: issue.linkedIssueIds
+              ..removeWhere((linkedIssueId) => linkedIssueId == issueId),
+          );
+          await FirebaseFirestore.instance
+              .collection('teams')
+              .doc(state.teamId)
+              .collection('issues')
+              .doc(entry.key)
+              .update({'linkedIssueIds': updatedIssue.linkedIssueIds});
+        }
+      });
       state = state.copyWith(
         apiStatus: ApiStatus.success,
         issueMap: state.issueMap..remove(issueId),
@@ -567,7 +666,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
         deadline: deadline ?? DateTime.now(),
         id: issueRef.id,
         roles: {state.userId: 'owner'},
-        tags: [],
+        tags: tags ?? [],
         teamId: state.teamId,
       );
       state = state.copyWith(apiStatus: ApiStatus.success, issueMap: {

@@ -98,5 +98,7 @@
     "home": "首頁",
     "about": "關於",
     "x_has_duplicate": "{} 已經存在",
-    "days": "天"
+    "days": "天",
+    "duplicate": "重複",
+    "linkedIssues": "關聯問題"
 }

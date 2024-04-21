@@ -31,7 +31,11 @@ class IssueTabViewEnum {
 
 class Issues extends ConsumerStatefulWidget {
   final String teamId;
-  const Issues({super.key, required this.teamId});
+  // a on selected callback for linked issues selection
+  final Function(Issue)? onSelected;
+  // hidden issue ids
+  final List<String> hiddenIssueIds;
+  const Issues({super.key, required this.teamId, this.onSelected, this.hiddenIssueIds = const []});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
@@ -144,6 +148,11 @@ class _IssuesState extends ConsumerState<Issues> {
                 issue.deadline!.isBefore(DateTime.now()))
             .toList()
         : filteredIssues;
+    if (widget.hiddenIssueIds.isNotEmpty) {
+      filteredIssues = filteredIssues
+          .where((issue) => !widget.hiddenIssueIds.contains(issue.id))
+          .toList();
+    }
     // if first tab (open) is selected, then filter issues, if third tab (closed) is selected, then filter issues
     filteredIssues = filteredIssues
         .where((issue) => _currentTabIndex == IssueTabEnum.closed
@@ -283,6 +292,7 @@ class _IssuesState extends ConsumerState<Issues> {
               return IssueTile(
                 issueData: filteredIssues[index],
                 tabIndex: _currentTabIndex,
+                onSelected: widget.onSelected,
               );
             },
           ),

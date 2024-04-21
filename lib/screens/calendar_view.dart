@@ -228,6 +228,7 @@ class IssueCalendarCell extends StatelessWidget {
               color: isToday ? Colors.red : null,
               // today then bold
               fontWeight: isToday ? FontWeight.bold : null,
+              
             ),
           ),
           // show a badge

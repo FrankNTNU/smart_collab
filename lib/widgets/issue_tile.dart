@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
@@ -10,7 +11,15 @@ import 'package:smart_collab/widgets/user_avatar.dart';
 class IssueTile extends StatelessWidget {
   final Issue issueData;
   final int tabIndex;
-  const IssueTile({super.key, required this.issueData, required this.tabIndex});
+  final Function(Issue)? onSelected;
+  final Widget? trailing;
+  final bool isDensed;
+  const IssueTile(
+      {super.key,
+      required this.issueData,
+      this.tabIndex = IssueTabEnum.open,
+      this.onSelected,
+      this.trailing, this.isDensed = false});
 
   @override
   Widget build(BuildContext context) {
@@ -27,30 +36,35 @@ class IssueTile extends StatelessWidget {
             ),
           ),
           child: ListTile(
-            leading: UserAvatar(
+            contentPadding: isDensed
+                ? const EdgeInsets.all(0)
+                : null,
+            leading: isDensed ? null : UserAvatar(
                 uid: issueData.lastUpdatedBy ??
-                    issueData
-                        .roles
-                        .entries
+                    issueData.roles.entries
                         .where((entry) => entry.value == 'owner')
                         .firstOrNull
                         ?.key ??
                     ''),
-            onTap: () {
-              // open bottom sheet
-              showModalBottomSheet(
-                isScrollControlled: true,
-                enableDrag: true,
-                showDragHandle: true,
-                context: context,
-                builder: (context) => Padding(
-                  padding: MediaQuery.of(context).viewInsets,
-                  child: IssueScreen(
-                    issue: issueData,
-                  ),
-                ),
-              );
-            },
+            onTap: onSelected != null
+                ? () {
+                    onSelected!(issueData);
+                  }
+                : () {
+                    // open bottom sheet
+                    showModalBottomSheet(
+                      isScrollControlled: true,
+                      enableDrag: true,
+                      showDragHandle: true,
+                      context: context,
+                      builder: (context) => Padding(
+                        padding: MediaQuery.of(context).viewInsets,
+                        child: IssueScreen(
+                          issue: issueData,
+                        ),
+                      ),
+                    );
+                  },
             title: Text(issueData.title),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,6 +89,7 @@ class IssueTile extends StatelessWidget {
                   )
               ],
             ),
+            trailing: trailing,
           ),
         ),
       ],

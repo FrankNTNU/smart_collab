@@ -7,6 +7,8 @@ import 'package:smart_collab/widgets/colloaborators.dart';
 import 'package:smart_collab/widgets/comment_field.dart';
 import 'package:smart_collab/widgets/comments.dart';
 import 'package:smart_collab/widgets/deadline_info.dart';
+import 'package:smart_collab/widgets/issue_tile.dart';
+import 'package:smart_collab/widgets/issues.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
@@ -32,6 +34,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   final _scrollController = ScrollController();
   // isCloseToBottom
   bool _isNotAtTop = false;
+  // selected linked issues
+  final List<Issue> _selectedLinkedIssues = [];
   @override
   void initState() {
     super.initState();
@@ -44,6 +48,22 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
         });
       }
     });
+    // fetch all linked issued
+    Future.delayed(
+      Duration.zero,
+      () async {
+        for (final linkedIssueId in widget.issue.linkedIssueIds) {
+          final linkedIssue = await ref
+              .read(issueProvider(widget.issue.teamId).notifier)
+              .fetchSingleIssueById(linkedIssueId);
+          if (linkedIssue != null) {
+            setState(() {
+              _selectedLinkedIssues.add(linkedIssue);
+            });
+          }
+        }
+      },
+    );
   }
 
   void _onTagToggle(String tag) {
@@ -65,6 +85,12 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
           .read(issueProvider(widget.issue.teamId).notifier)
           .addTagToIssue(issueId: widget.issue.id, tag: tag);
     }
+  }
+
+  void _updateLinkedIssue() {
+    ref.read(issueProvider(widget.issue.teamId).notifier).updateLinkedIssueIds(
+        issueId: widget.issue.id,
+        linkedIssueIds: _selectedLinkedIssues.map((e) => e.id).toList());
   }
 
   void _showDeletionDialog() async {
@@ -223,6 +249,27 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   },
                                 ),
                               ),
+                            // to duplicate issue
+                            PopupMenuItem(
+                              child: ListTile(
+                                leading: const Icon(Icons.copy),
+                                title: Text(
+                                    '${TranslationKeys.duplicate.tr()} ${TranslationKeys.issue.tr()}'),
+                                onTap: () {
+                                  showModalBottomSheet(
+                                    isScrollControlled: true,
+                                    enableDrag: true,
+                                    showDragHandle: true,
+                                    context: context,
+                                    builder: (context) => AddOrEditIssueSheet(
+                                      teamId: widget.issue.teamId,
+                                      addOrEdit: AddorEdit.duplicate,
+                                      issue: issueData,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
                             if (isAuthor)
                               PopupMenuItem(
                                 child: ListTile(
@@ -286,6 +333,81 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   ),
                   Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TitleText(TranslationKeys.linkedIssues.tr()),
+                      TextButton.icon(
+                        icon: const Icon(Icons.link),
+                        onPressed: () {
+                          // show linked issues
+                          showModalBottomSheet(
+                            isScrollControlled: true,
+                            enableDrag: true,
+                            showDragHandle: true,
+                            context: context,
+                            builder: (context) => SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.6,
+                              child: SingleChildScrollView(
+                                child: Issues(
+                                  hiddenIssueIds: [issueData.id],
+                                  teamId: widget.issue.teamId,
+                                  onSelected: (issue) {
+                                    if (!_selectedLinkedIssues
+                                        .contains(issue)) {
+                                      setState(() {
+                                        _selectedLinkedIssues.add(issue);
+                                      });
+                                    }
+                                    _updateLinkedIssue();
+                                    // pop
+                                    Navigator.pop(context);
+                                  },
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                        label: Text(
+                          '${TranslationKeys.add.tr()} ${TranslationKeys.linkedIssues.tr()}',
+                        ),
+                      )
+                    ],
+                  ),
+                  // show linked issues
+                  if (_selectedLinkedIssues.isEmpty)
+                    Column(
+                      children: [
+                        Center(
+                          child: Text(
+                            TranslationKeys.somethingNotFound.tr(
+                              args: [TranslationKeys.linkedIssues.tr()],
+                            ),
+                          ),
+                        ),
+                        const Divider(),
+                      ],
+                    )
+                  else
+                    Wrap(
+                      children: _selectedLinkedIssues
+                          .map(
+                            (issue) => IssueTile(
+                                isDensed: true,
+                                issueData: issue,
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedLinkedIssues.remove(issue);
+                                    });
+                                    _updateLinkedIssue();
+                                  },
+                                )),
+                          )
+                          .toList(),
+                    ),
+
                   TitleText(
                     TranslationKeys.collaborators.tr(),
                   ),

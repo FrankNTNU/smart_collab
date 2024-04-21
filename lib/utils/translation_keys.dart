@@ -96,4 +96,8 @@ class TranslationKeys {
   static const String xHasDuplicate = 'x_has_duplicate';
   // day
   static const String days = 'days';
+  // duplicate
+  static const String duplicate = 'duplicate';
+  // linked issues
+  static const String linkedIssues = 'linked_issues';
 }
