@@ -1,16 +1,12 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:smart_collab/screens/team_screen.dart';
 //import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:smart_collab/services/auth_controller.dart';
-import 'package:smart_collab/utils/translation_keys.dart';
-import 'package:smart_collab/widgets/confirm_dialog.dart';
-import 'package:smart_collab/widgets/teams.dart';
-import 'package:smart_collab/widgets/user_avatar.dart';
 
-import '../widgets/add_or_edit_team_sheet.dart';
-import '../widgets/title_text.dart';
+import '../services/team_controller.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   final Function(bool) toggleTheme;
@@ -24,141 +20,59 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isDarkModel = false;
+  Team? _selectedTeam;
+  Future<void> storeTeamIdToSharedPrefs(String teamId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('lastVisitedTeamId', teamId);
+  }
+
+  Future<void> loadLastVisitedId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastVisitedTeamId = prefs.getString('lastVisitedTeamId');
+    if (lastVisitedTeamId != null) {
+      final teams = ref.watch(teamsProvider.select(
+        (value) => value.teams,
+      ));
+      final team =
+          teams.where((team) => team.id == lastVisitedTeamId).firstOrNull;
+      if (team != null) {
+        setState(() {
+          _selectedTeam = team;
+        });
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _isDarkModel = widget.isDarkMode;
-  }
-
-  void _logout() async {
-    // confirm logout
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return ConfirmDialog(
-          title: TranslationKeys.logout.tr(),
-          content: TranslationKeys.confirmSomething.tr(
-            args: [TranslationKeys.logout.tr()],
-          ),
-          onConfirm: () {
-            ref.read(authControllerProvider.notifier).signOut();
-          },
-          confirmText: TranslationKeys.logout.tr(),
-        );
+    Future.delayed(
+      Duration.zero,
+      () async {
+        await ref.read(teamsProvider.notifier).fetchTeams();
+        await loadLastVisitedId();
       },
     );
-    // pop
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final username = ref.watch(authControllerProvider).user?.displayName;
-    return Scaffold(
-      floatingActionButton: SpeedDial(
-        animatedIcon: AnimatedIcons.menu_close,
-        animatedIconTheme: const IconThemeData(size: 22.0),
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.group_add),
-            label: TranslationKeys.joinTeam.tr(),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (context) {
-                  return const SizedBox();
-                },
-              );
-            },
-          ),
-          SpeedDialChild(
-            child: const Icon(Icons.add),
-            label: TranslationKeys.createTeam.tr(),
-            onTap: () {
-              showModalBottomSheet(
-                isScrollControlled: true,
-                // show handle
-                enableDrag: true,
-                showDragHandle: true,
-                context: context,
-                builder: (context) => const AddTeamSheet(
-                  addOrEdit: AddorEdit.add,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        children: [
-          const SizedBox(
-            height: 32,
-          ),
-          // welcome text
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TitleText(
-                      TranslationKeys.greeting.tr(args: [username ?? 'User'])),
-                ),
-              ),
-              UserAvatar(uid: ref.watch(authControllerProvider).user!.uid!),
-              PopupMenuButton(
-                itemBuilder: (context) => [
-                  PopupMenuItem(
-                    child: StatefulBuilder(
-                      builder: (context, setState) => ListTile(
-                        leading: const Icon(Icons.brightness_2),
-                        title: Text(_isDarkModel
-                            ? TranslationKeys.lightMode.tr()
-                            : TranslationKeys.darkMode.tr()),
-                        onTap: () {
-                          setState(() {
-                            widget.toggleTheme(!_isDarkModel);
-                            _isDarkModel = !_isDarkModel;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  PopupMenuItem(
-                    child: ListTile(
-                      leading: const Icon(Icons.logout),
-                      title: Text(TranslationKeys.logout.tr()),
-                      onTap: _logout,
-                    ),
-                  ),
-                  // change language
-                  PopupMenuItem(
-                    child: ListTile(
-                      leading: const Icon(Icons.language),
-                      title: Text(context.locale == const Locale('en', 'US')
-                          ? '繁體中文'
-                          : 'English'),
-                      onTap: () {
-                        // supported language
-                        print(
-                            'current locale: ${context.locale}, supported languages: ${context.supportedLocales}');
-                        context.setLocale(
-                            context.locale == const Locale('en', 'US')
-                                ? const Locale('zh', 'TW')
-                                : const Locale('en', 'US'));
-                        // pop
-                        Navigator.of(context).pop();
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          //const Profile(),
-          const Teams(),
-        ],
-      ),
+    return TeamScreen(
+      team: _selectedTeam,
+      onTeamSelected: (team) {
+        setState(() {
+          _selectedTeam = team;
+          storeTeamIdToSharedPrefs(team.id!);
+        });
+      },
+      isDarkMode: _isDarkModel,
+      toggleTheme: (isDarkMode) {
+        setState(() {
+          _isDarkModel = isDarkMode;
+          widget.toggleTheme(isDarkMode);
+        });
+      },
     );
   }
 }

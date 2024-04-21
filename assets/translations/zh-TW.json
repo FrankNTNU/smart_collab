@@ -103,5 +103,6 @@
     "linked_issues": "關聯問題",
     "stats": "統計",
     "total_issues_created": "總問題數",
-    "top_x_mosed_used_tags": "{} 個最常使用的標籤"
+    "top_x_mosed_used_tags": "{} 個最常使用的標籤",
+    "collaborator_description": "合作夥伴可以查看和編輯問題"
 }

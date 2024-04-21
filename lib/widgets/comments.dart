@@ -64,74 +64,92 @@ class _CommentsState extends ConsumerState<Comments> {
               GreyDescription(
                 '${comments.length} ${TranslationKeys.comments.tr()}',
               ),
-            InkWell(
-              onLongPress: () {
-                // show bottom menu
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) {
-                    return Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
+                  child: UserAvatar(uid: comments[index].userId),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SelectableText(comments[index].content),
+                      Row(
                         children: [
-                          ListTile(
-                            leading: const Icon(Icons.delete),
-                            title:  Text(TranslationKeys.delete.tr()),
-                            onTap: () {
-                              //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return ConfirmDialog(
-                                    title: TranslationKeys.delete.tr(),
-                                    content:
-                                       TranslationKeys.confirmSomething.tr(args: [
-                                        TranslationKeys.comment.tr(),
-                                       ]),
-                                    onConfirm: () {
-                                      ref
-                                          .read(commentProvider((
-                                            issueId: widget.issueId,
-                                            teamId: widget.teamId
-                                          )).notifier)
-                                          .deleteComment(comments[index].id,
-                                              widget.issueId);
-                                      Navigator.pop(context);
-                                    },
-                                    confirmText: TranslationKeys.delete.tr(),
-                                  );
-                                },
-                              );
-                            },
+                          Expanded(
+                            child: GreyDescription(TimeUtils.getFuzzyTime(
+                                comments[index].createdAt,
+                                context: context)),
                           ),
+                          InkWell(
+                              onTap: () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  builder: (context) {
+                                    return Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          ListTile(
+                                            leading: const Icon(Icons.delete),
+                                            title: Text(
+                                                TranslationKeys.delete.tr()),
+                                            onTap: () {
+                                              //ref.read(teamsProvider.notifier).deleteTeam(teams[index]);
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) {
+                                                  return ConfirmDialog(
+                                                    title: TranslationKeys
+                                                        .delete
+                                                        .tr(),
+                                                    content: TranslationKeys
+                                                        .confirmSomething
+                                                        .tr(args: [
+                                                      TranslationKeys.comment
+                                                          .tr(),
+                                                    ]),
+                                                    onConfirm: () {
+                                                      ref
+                                                          .read(
+                                                              commentProvider((
+                                                            issueId:
+                                                                widget.issueId,
+                                                            teamId:
+                                                                widget.teamId
+                                                          )).notifier)
+                                                          .deleteComment(
+                                                              comments[index]
+                                                                  .id,
+                                                              widget.issueId);
+                                                      Navigator.pop(context);
+                                                    },
+                                                    confirmText: TranslationKeys
+                                                        .delete
+                                                        .tr(),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                              child: const Icon(Icons.more_horiz)),
                         ],
                       ),
-                    );
-                  },
-                );
-              },
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-                    child: UserAvatar(uid: comments[index].userId),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(comments[index].content),
-                        GreyDescription(
-                            TimeUtils.getFuzzyTime(comments[index].createdAt, context: context)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ],
         );

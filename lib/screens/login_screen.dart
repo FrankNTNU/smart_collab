@@ -34,6 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           Image.asset(
             'assets/images/office.jpg',
             width: double.infinity,
+            height: 300,
           ),
           // welcome text
           Padding(
@@ -58,8 +59,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
                           Image.network(
-                              'http://pngimg.com/uploads/google/google_PNG19635.png',
-                              fit: BoxFit.cover),
+                            'http://pngimg.com/uploads/google/google_PNG19635.png',
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) => loadingProgress == null
+                                ? child
+                                : const CircularProgressIndicator(),
+                            errorBuilder: (context, error, stackTrace) => const Icon(Icons.error),
+                          ),
                           const SizedBox(
                             width: 5.0,
                           ),

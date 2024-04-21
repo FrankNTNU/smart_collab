@@ -103,5 +103,6 @@
     "linked_issues": "Linked issues",
     "stats": "Stats",
     "total_issues_created": "Total issues created",
-    "top_x_mosed_used_tags": "Top {} most used tags"
+    "top_x_mosed_used_tags": "Top {} most used tags",
+    "collaborator_description": "Collaborators can view, comment, and edit issues"
 }

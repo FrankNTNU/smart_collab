@@ -247,7 +247,29 @@ class _IssuesState extends ConsumerState<Issues> {
             },
           ),
 
-        // include tags for search
+        // a tab for issues
+        Tabs(
+          initialTabIndex: _currentTabIndex,
+          onTabChange: (index) {
+            setState(() {
+              _currentTabIndex = index;
+            });
+          },
+          tabs: [
+            TranslationKeys.openIssues.tr(),
+            TranslationKeys.upcoming.tr(),
+            TranslationKeys.overdue.tr(),
+            TranslationKeys.closedIssues.tr(),
+          ],
+          icons: const [
+            Icons.content_paste,
+            Icons.hourglass_top_rounded,
+            Icons.event_busy,
+            Icons.check
+          ],
+        ),
+        const SizedBox(height: 8,),
+            // include tags for search
         InkWell(
           onTap: _openFilterTagsSelectionMenu,
           child: SizedBox(
@@ -273,29 +295,6 @@ class _IssuesState extends ConsumerState<Issues> {
               ],
             ),
           ),
-        ),
-        const Divider(),
-
-        // a tab for issues
-        Tabs(
-          initialTabIndex: _currentTabIndex,
-          onTabChange: (index) {
-            setState(() {
-              _currentTabIndex = index;
-            });
-          },
-          tabs: [
-            TranslationKeys.openIssues.tr(),
-            TranslationKeys.upcoming.tr(),
-            TranslationKeys.overdue.tr(),
-            TranslationKeys.closedIssues.tr(),
-          ],
-          icons: const [
-            Icons.content_paste,
-            Icons.hourglass_top_rounded,
-            Icons.event_busy,
-            Icons.check
-          ],
         ),
         if (filteredIssues.isEmpty)
           Padding(

@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
 import 'package:smart_collab/services/issue_controller.dart';
@@ -51,6 +52,7 @@ class IssueTile extends StatelessWidget {
                     onSelected!(issueData);
                   }
                 : () {
+                    if (kIsWeb) return;
                     // open bottom sheet
                     showModalBottomSheet(
                       isScrollControlled: true,

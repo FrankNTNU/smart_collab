@@ -165,7 +165,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
             'collaborator';
     return SizedBox(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.85,
+      height: MediaQuery.of(context).size.height * 0.8,
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -175,7 +175,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 20),
                   Row(
                     children: [
                       // is open
@@ -236,7 +235,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                   },
                                 ),
                               ),
-                            if (areYouTheOnwerOrAdmin && issueData.isClosed)
+                            // dnot allow closed issue to be re-opened
+                            if (areYouTheOnwerOrAdmin && issueData.isClosed && false)
                               // open issue
                               PopupMenuItem(
                                 child: ListTile(
@@ -289,7 +289,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   // deadline
                   if (issueData.deadline != null)
                     DeadlineInfo(issueData: issueData),
-                  Text(
+                  SelectableText(
                     issueData.description,
                     style: const TextStyle(
                       fontSize: 16,
@@ -324,9 +324,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           isEditable: isAuthorOrColloborator,
                         ),
                       )),
-
-                  // show a list of admins horizontally
-
+                  //const Divider(),
+                  //const TitleText('Files'),
                   const Divider(),
                   TitleText(
                     TranslationKeys.comments.tr(),

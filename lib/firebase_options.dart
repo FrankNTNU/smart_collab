@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -55,7 +52,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '914148944165',
     projectId: 'smart-collab-fd262',
     storageBucket: 'smart-collab-fd262.appspot.com',
-    iosClientId: '914148944165-obov15q0kukv3ibd2p0p3k8io8j6ppp6.apps.googleusercontent.com',
+    iosClientId:
+        '914148944165-obov15q0kukv3ibd2p0p3k8io8j6ppp6.apps.googleusercontent.com',
     iosBundleId: 'com.example.smartCollab',
   );
 
@@ -66,5 +64,12 @@ class DefaultFirebaseOptions {
     projectId: 'smart-collab-fd262',
     storageBucket: 'smart-collab-fd262.appspot.com',
   );
-
+  // web
+  static const FirebaseOptions web = FirebaseOptions(
+      apiKey: "AIzaSyDleyPLBGDAi6nWsfivtXmXz9wbeKJsAaw",
+      authDomain: "smart-collab-fd262.firebaseapp.com",
+      projectId: "smart-collab-fd262",
+      storageBucket: "smart-collab-fd262.appspot.com",
+      messagingSenderId: "914148944165",
+      appId: "1:914148944165:web:8d464c32cf7b4ff9a612cc");
 }

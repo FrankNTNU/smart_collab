@@ -121,7 +121,9 @@ class AuthController extends Notifier<AuthState> {
 
   Future<UserCredential> _signInWithGoogle() async {
     // Trigger the authentication flow
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    final GoogleSignInAccount? googleUser = await GoogleSignIn(
+      // clientId: '914148944165-ss3iva3ib6uma6obbjsiolc2fmkf89ac.apps.googleusercontent.com',
+    ).signIn();
 
     // Obtain the auth details from the request
     final GoogleSignInAuthentication? googleAuth =

@@ -228,22 +228,28 @@ class IssueCalendarCell extends StatelessWidget {
               color: isToday ? Colors.red : null,
               // today then bold
               fontWeight: isToday ? FontWeight.bold : null,
-              
             ),
           ),
           // show a badge
           if (dayIssues.isNotEmpty)
-            Row(
-              children: [
-                CircleBadge(
-                  count: dayIssues.where((issue) => !issue.isClosed).length,
-                  color: Colors.amber.shade300,
-                ),
-                CircleBadge(
-                  count: dayIssues.where((issue) => issue.isClosed).length,
-                  color: Colors.green.shade200,
-                ),
-              ],
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleBadge(
+                      count: dayIssues.where((issue) => !issue.isClosed).length,
+                      color: Colors.amber.shade300,
+                      maxWidth: constraints.maxWidth / 2,
+                    ),
+                    CircleBadge(
+                      count: dayIssues.where((issue) => issue.isClosed).length,
+                      color: Colors.green.shade200,
+                      maxWidth: constraints.maxWidth / 2,
+                    ),
+                  ],
+                );
+              },
             ),
           if (dayIssues.isNotEmpty)
             Expanded(
@@ -265,31 +271,32 @@ class CircleBadge extends StatelessWidget {
     super.key,
     required this.count,
     required this.color,
+    required this.maxWidth,
   });
 
   final int count;
   final Color color;
-
+  final double maxWidth;
   @override
   Widget build(BuildContext context) {
-    if (count == 0) {
-      return const SizedBox();
-    }
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Text(
-            count.toString(),
-            style: const TextStyle(
-              color: Colors.black,
-              fontSize: 12,
-            ),
+    if (count == 0) return const SizedBox();
+    return Container(
+      width: maxWidth - 4,
+      //width: constraints.minWidth / 2,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: color,
+        // rounded border
+        borderRadius: BorderRadius.circular(2),
+        //shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          count.toString(),
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 12,
           ),
         ),
       ),
