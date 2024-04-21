@@ -20,9 +20,22 @@ class ActivityScreen extends ConsumerStatefulWidget {
 }
 
 class _ActivityScreenState extends ConsumerState<ActivityScreen> {
+  // isAtTop
+  bool _isAtTop = false;
+  // scroll controller
+  final _scrollController = ScrollController();
   @override
   void initState() {
     super.initState();
+    // add listener
+    _scrollController.addListener(() {
+      final isAtTop = _scrollController.position.pixels == 0;
+      if (isAtTop != _isAtTop) {
+        setState(() {
+          _isAtTop = isAtTop;
+        });
+      }
+    });
   }
 
   void _activityOnTapped(Activity activity) async {
@@ -31,7 +44,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         .read(activityProvider(widget.teamId).notifier)
         .setAsRead(activity.id);
     print('Activity type: ${activity.activityType}');
-
+   
     switch (activityMapReverse[activity.activityType]) {
       case ActivityType.addComment:
       case ActivityType.openIssue:
@@ -46,12 +59,13 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
     }
   }
 
-  void _openIssueScreen(Activity activity) {
+  void _openIssueScreen(Activity activity) async {
     final teamId = activity.activityDetails['teamId'];
     final issueId = activity.activityDetails['issueId'];
     print('teamId: $teamId, issueId: $issueId');
-    final issue = ref.watch(
-        issueProvider(teamId).select((value) => value.issueMap[issueId]));
+    final issue = await ref
+        .read(issueProvider(teamId).notifier)
+        .fetchSingleIssueById(issueId);
     if (issue == null) {
       print('Issue not found');
       return;
@@ -73,64 +87,98 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var activities = ref.watch(
-        activityProvider(widget.teamId).select((value) => value.activities));
     return SizedBox(
       height: widget.isModal ? MediaQuery.of(context).size.height * 0.8 : null,
-      child: SingleChildScrollView(
-        child: Column(
-          children: [
-            if (widget.isModal)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TitleText(TranslationKeys.activities.tr()),
-                    const CloseButton(),
-                  ],
-                ),
-              )
-            else
-              const SizedBox(
-                height: 8,
-              ),
-            if (activities.isEmpty)
-              SizedBox(
-                height: 200,
-                child: Center(
-                  child: Text(TranslationKeys.somethingNotFound
-                      .tr(args: [TranslationKeys.activities.tr()])),
-                ),
-              )
-            else
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: activities.length,
-                itemBuilder: (context, index) {
-                  final activity = activities[index];
-                  return ListTile(
-                    // if teamId is not provided then show team name
-                    leading: UserAvatar(uid: activity.userId),
-                    trailing: // show a small red dot if it is unread,
-                        activity.read
-                            ? null
-                            : const CircleAvatar(
-                                radius: 5,
-                                backgroundColor: Colors.red,
-                              ),
-                    onTap: () {
-                      _activityOnTapped(activity);
-                    },
-                    title: Text(activity.message),
-                    subtitle: Text(TimeUtils.getFuzzyTime(
-                        DateTime.parse(activity.timestamp),context: context)),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            controller: _scrollController,
+            child: Column(
+              children: [
+                if (widget.isModal)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TitleText(TranslationKeys.activities.tr()),
+                        const CloseButton(),
+                      ],
+                    ),
+                  )
+                else
+                  const SizedBox(
+                    height: 8,
+                  ),
+                ref.watch(activityStreamProvider(widget.teamId)).when(
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (error, stackTrace) => Center(
+                        child: Text('Error: $error'),
+                      ),
+                      data: (_) {
+                        final activities = ref.watch(
+                            activityProvider(widget.teamId)
+                                .select((value) => value.activities));
+                        if (activities.isEmpty) {
+                          return SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: Text(TranslationKeys.somethingNotFound
+                                  .tr(args: [TranslationKeys.activities.tr()])),
+                            ),
+                          );
+                        } else {
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: activities.length,
+                            itemBuilder: (context, index) {
+                              final activity = activities[index];
+                              return ListTile(
+                                // if teamId is not provided then show team name
+                                leading: UserAvatar(uid: activity.userId),
+                                trailing: // show a small red dot if it is unread,
+                                    activity.read
+                                        ? null
+                                        : const CircleAvatar(
+                                            radius: 5,
+                                            backgroundColor: Colors.red,
+                                          ),
+                                onTap: () {
+                                  _activityOnTapped(activity);
+                                },
+                                title: Text(activity.message),
+                                subtitle: Text(TimeUtils.getFuzzyTime(
+                                    DateTime.parse(activity.timestamp),
+                                    context: context)),
+                              );
+                            },
+                          );
+                        }
+                      },
+                    ),
+              ],
+            ),
+          ),
+          // floating button scroll to top
+          if (!_isAtTop)
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: () {
+                  _scrollController.animateTo(
+                    0,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
                   );
                 },
+                child: const Icon(Icons.arrow_upward),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }

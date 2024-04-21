@@ -100,4 +100,12 @@ class TranslationKeys {
   static const String duplicate = 'duplicate';
   // linked issues
   static const String linkedIssues = 'linked_issues';
+  // collaborator description
+  static const String collaboratorDescription = 'collaborator_description';
+  // stats
+  static const String stats = 'stats';
+  // total issues created
+  static const String totalIssuesCreated = 'total_issues_created';
+  // top x mosed used tags
+  static const String topXMosedUsedTags = 'top_x_mosed_used_tags';
 }

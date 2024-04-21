@@ -68,15 +68,17 @@ class ActivitiesState {
   final String userId;
   // filter state
   final String teamId;
+  // unread count
+  final int unreadCount;
   // ctor
-  ActivitiesState({
-    required this.apiStatus,
-    required this.performedAction,
-    required this.activities,
-    this.error,
-    required this.userId,
-    required this.teamId,
-  });
+  ActivitiesState(
+      {required this.apiStatus,
+      required this.performedAction,
+      required this.activities,
+      this.error,
+      required this.userId,
+      required this.teamId,
+      this.unreadCount = 0});
   // copyWith
   ActivitiesState copyWith({
     ApiStatus? apiStatus,
@@ -85,6 +87,7 @@ class ActivitiesState {
     String? error,
     String? userId,
     String? teamId,
+    int? unreadCount,
   }) {
     return ActivitiesState(
       apiStatus: apiStatus ?? this.apiStatus,
@@ -93,6 +96,7 @@ class ActivitiesState {
       error: error ?? this.error,
       userId: userId ?? this.userId,
       teamId: teamId ?? this.teamId,
+      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }
@@ -147,7 +151,8 @@ final activityMapReverse = {
   'open_issue': ActivityType.openIssue,
 };
 
-class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, String> {
+class ActivityController
+    extends AutoDisposeFamilyNotifier<ActivitiesState, String> {
   @override
   ActivitiesState build(String arg) {
     return ActivitiesState(
@@ -172,8 +177,11 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
     try {
       // write to Firestore activities collection
-      final snapshotRef =
-          await FirebaseFirestore.instance.collection('teams').doc(state.teamId).collection('activities').add({
+      final snapshotRef = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('activities')
+          .add({
         'userId': state.userId,
         'message': message,
         'activityType': activityMap[activityType],
@@ -216,8 +224,11 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
     try {
       // fetch activities from Firestore
-      final snapshot = await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
-          .collection('activities').orderBy('timestamp', descending: true)
+      final snapshot = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('activities')
+          .orderBy('timestamp', descending: true)
           .get();
       // get read activities from shared_preferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -225,7 +236,8 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
       // update the state
       state = state.copyWith(
         activities: snapshot.docs
-            .map((doc) => Activity.fromJson(doc.data()).copyWith(id: doc.id, read: readActivities.contains(doc.id)))
+            .map((doc) => Activity.fromJson(doc.data())
+                .copyWith(id: doc.id, read: readActivities.contains(doc.id)))
             .toList(),
         apiStatus: ApiStatus.success,
       );
@@ -242,7 +254,9 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.delete);
     try {
       // delete activity from Firestore
-      await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('activities')
           .doc(activityId)
           .delete();
@@ -259,6 +273,21 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
     }
   }
 
+  // set has read count
+  Future<void> refreshUnreadCount() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final readActivities = prefs.getStringList('readActivities') ?? [];
+    final unreadCount = state.activities
+        .where((activity) => !readActivities.contains(activity.id))
+        .length;
+    // update the state
+    // for each activity in the state, update the read status
+    for (var activity in state.activities) {
+      activity.copyWith(read: readActivities.contains(activity.id));
+    }
+    state = state.copyWith(unreadCount: unreadCount);
+  }
+
   // set as read (store such activity id to shared_preferences)
   Future<void> setAsRead(String activityId) async {
     // set loading
@@ -273,10 +302,12 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
               : activity)
           .toList();
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('readActivities', activities
-          .where((activity) => activity.read)
-          .map((activity) => activity.id)
-          .toList());
+      await prefs.setStringList(
+          'readActivities',
+          activities
+              .where((activity) => activity.read)
+              .map((activity) => activity.id)
+              .toList());
       state = state.copyWith(
         activities: activities,
         apiStatus: ApiStatus.success,
@@ -286,8 +317,46 @@ class ActivityController extends AutoDisposeFamilyNotifier<ActivitiesState, Stri
       state = state.copyWith(error: e.toString(), apiStatus: ApiStatus.error);
     }
   }
+
+  // set activities
+  void setActivities(List<Activity> activities) async {
+    refreshUnreadCount();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final readActivitiesFromSharedPrefs =
+        prefs.getStringList('readActivities') ?? [];
+    // update has read for each activity
+    activities = activities
+        .map((activity) => activity.copyWith(
+              read: readActivitiesFromSharedPrefs.contains(activity.id),
+            ))
+        .toList();
+    state = state.copyWith(activities: activities);
+  }
 }
 
-final activityProvider = NotifierProvider.autoDispose.family<ActivityController, ActivitiesState, String>(
+final activityProvider = NotifierProvider.autoDispose
+    .family<ActivityController, ActivitiesState, String>(
   () => ActivityController(),
 );
+
+// activity stream provider
+final activityStreamProvider =
+    StreamProvider.autoDispose.family<List<Activity>, String>((ref, teamId) {
+  // fetch activities from Firestore
+  final snapshot = FirebaseFirestore.instance
+      .collection('teams')
+      .doc(teamId)
+      .collection('activities')
+      .orderBy('timestamp', descending: true)
+      .snapshots();
+  final activites = snapshot.map((snapshot) => snapshot.docs
+      .map((doc) => Activity.fromJson(doc.data()).copyWith(
+            id: doc.id,
+          ))
+      .toList());
+  // set activities
+  activites.first.then((activities) {
+    ref.read(activityProvider(teamId).notifier).setActivities(activities);
+  });
+  return activites;
+});

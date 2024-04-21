@@ -69,7 +69,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         CalendarFormat.month: 'Month',
       },
       availableGestures: AvailableGestures.horizontalSwipe,
-      rowHeight: MediaQuery.of(context).size.height / 9,
+      rowHeight: MediaQuery.of(context).size.height / 8,
       calendarStyle: const CalendarStyle(outsideDaysVisible: false),
       calendarBuilders: CalendarBuilders(
         headerTitleBuilder: (context, day) {
@@ -185,7 +185,7 @@ class IssueCalendarCell extends StatelessWidget {
                 showDragHandle: true,
                 context: context,
                 builder: (context) => SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.65,
                   child: Padding(
                     padding: const EdgeInsets.all(0),
                     child: Column(

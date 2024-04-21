@@ -10,12 +10,15 @@ class IssueTag {
   final String name;
   final String description;
   final String color;
+  // stats
+  final int usedCount;
 
   IssueTag(
       {required this.id,
       required this.name,
       required this.description,
-      required this.color});
+      required this.color,
+      this.usedCount = 0});
 
   factory IssueTag.fromJson(Map<String, dynamic> json) {
     return IssueTag(
@@ -23,6 +26,7 @@ class IssueTag {
       name: json['name'],
       description: json['description'] ?? '',
       color: json['color'],
+      usedCount: json['usedCount'] ?? 0,
     );
   }
   // copyWith
@@ -31,12 +35,14 @@ class IssueTag {
     String? name,
     String? description,
     String? color,
+    int? usedCount,
   }) {
     return IssueTag(
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
       color: color ?? this.color,
+      usedCount: usedCount ?? this.usedCount,
     );
   }
 }
@@ -191,6 +197,37 @@ class TagsController extends FamilyNotifier<TagsState, String> {
         .where('name', isEqualTo: tagName)
         .get();
     return snapshot.docs.isNotEmpty;
+  }
+
+  // increment or decrement usedCount of a tag
+  Future<void> updateTagUsedCount(
+      {required String tagName, required bool isIncrement}) async {
+    try {
+      final tag = state.tags.where((tag) => tag.name == tagName).firstOrNull;
+      if (tag == null) {
+        return;
+      }
+      var updatedCount = isIncrement ? tag.usedCount + 1 : tag.usedCount - 1;
+      if (updatedCount < 0) {
+        updatedCount = 0;
+      }
+      final updatedTag = tag.copyWith(usedCount: updatedCount);
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('tags')
+          .doc(tag.id)
+          .update({'usedCount': updatedTag.usedCount});
+      final tags = state.tags.map((intereatedTag) {
+        if (intereatedTag.id == tag.id) {
+          return updatedTag;
+        }
+        return intereatedTag;
+      }).toList();
+      state = state.copyWith(tags: tags);
+    } catch (e) {
+      print('Error updating tag used count: $e');
+    }
   }
 
   // add tag

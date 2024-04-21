@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/tag_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
 import 'auth_controller.dart';
@@ -168,12 +169,56 @@ class IssuesState {
   }
 }
 
-class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
+class IssueStats {
+  final List<(String, int)> topTenMostUsedTagsWithCount;
+  final List<String> topTenMostActiveUsers;
+  final int issuesSolvedCount;
+  final int totalIssuesCount;
+  // ctor
+  IssueStats({
+    required this.topTenMostUsedTagsWithCount,
+    required this.topTenMostActiveUsers,
+    required this.issuesSolvedCount,
+    required this.totalIssuesCount,
+  });
+  // copyWith
+  IssueStats copyWith({
+    List<(String, int)>? topTenMostUsedTagsWithCount,
+    List<String>? topTenMostActiveUsers,
+    int? issuesSolvedCount,
+    int? totalIssuesCount,
+  }) {
+    return IssueStats(
+      topTenMostUsedTagsWithCount:
+          topTenMostUsedTagsWithCount ?? this.topTenMostUsedTagsWithCount,
+      topTenMostActiveUsers:
+          topTenMostActiveUsers ?? this.topTenMostActiveUsers,
+      issuesSolvedCount: issuesSolvedCount ?? this.issuesSolvedCount,
+      totalIssuesCount: totalIssuesCount ?? this.totalIssuesCount,
+    );
+  }
+}
+
+class IssueController extends FamilyNotifier<IssuesState, String> {
   @override
   IssuesState build(String arg) {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
+  }
+
+  // fetch IssueStats
+  Future<int> fetchIssueStats() async {
+    print('Fetching issue stats...');
+    final snapshot = // fetch document count
+        await FirebaseFirestore.instance
+            .collection('teams')
+            .doc(state.teamId)
+            .collection('issues')
+            .count()
+            .get();
+    final totalIssuesCount = snapshot.count ?? 0;
+    return totalIssuesCount;
   }
 
   Future<void> updateLinkedIssueIds(
@@ -283,6 +328,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
           .update({
         'tags': FieldValue.arrayUnion(tags),
       });
+
       final updatedIssueMap = {
         ...state.issueMap,
         issueId: state.issueMap[issueId]!.copyWith(
@@ -291,6 +337,11 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       };
       state = state.copyWith(
           apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+      for (var tag in tags) {
+        ref
+            .read(tagProvider(state.teamId).notifier)
+            .updateTagUsedCount(tagName: tag, isIncrement: true);
+      }
     } catch (e) {
       print('Error occured in the addTagsToIssue method: $e');
       state = state.copyWith(
@@ -324,6 +375,10 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       };
       state = state.copyWith(
           apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+      // update tag count
+      ref
+          .read(tagProvider(state.teamId).notifier)
+          .updateTagUsedCount(tagName: tag, isIncrement: true);
     } catch (e) {
       print('Error occured in the addTagToIssue method: $e');
       state = state.copyWith(
@@ -371,6 +426,10 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
       };
       state = state.copyWith(
           apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+      // update tag count
+      ref
+          .read(tagProvider(state.teamId).notifier)
+          .updateTagUsedCount(tagName: tag, isIncrement: false);
     } catch (e) {
       print('Error occured in the removeTagFromIssue method: $e');
       state = state.copyWith(
@@ -685,7 +744,7 @@ class IssueController extends AutoDisposeFamilyNotifier<IssuesState, String> {
   }
 }
 
-final issueProvider = NotifierProvider.autoDispose
+final issueProvider = NotifierProvider
     .family<IssueController, IssuesState, String>(() {
   return IssueController();
 });

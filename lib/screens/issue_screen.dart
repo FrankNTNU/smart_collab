@@ -412,8 +412,8 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                     TranslationKeys.collaborators.tr(),
                   ),
                   // grey description
-                  const GreyDescription(
-                    'People who can edit this issue',
+                  GreyDescription(
+                    TranslationKeys.collaboratorDescription.tr(),
                   ),
                   Collaborators(
                       issueId: issueData.id, teamId: widget.issue.teamId),

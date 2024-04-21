@@ -100,5 +100,8 @@
     "x_has_duplicate": "{} 已經存在",
     "days": "天",
     "duplicate": "重複",
-    "linkedIssues": "關聯問題"
+    "linked_issues": "關聯問題",
+    "stats": "統計",
+    "total_issues_created": "總問題數",
+    "top_x_mosed_used_tags": "{} 個最常使用的標籤"
 }

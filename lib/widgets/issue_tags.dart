@@ -10,12 +10,14 @@ class IssueTags extends StatelessWidget {
   final String teamId;
   final bool isLoose;
   final bool isEditable;
+  final bool isShowUsedCount;
   const IssueTags(
       {super.key,
       required this.tags,
       required this.teamId,
       this.isLoose = false,
-      this.isEditable = false});
+      this.isEditable = false,
+      this.isShowUsedCount = false});
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +30,7 @@ class IssueTags extends StatelessWidget {
                 tagName: tag,
                 teamId: teamId,
                 isLoose: isLoose,
+                isShowUsedCount: isShowUsedCount,
               ),
             ),
         if (isEditable && tags.isEmpty)

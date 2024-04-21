@@ -16,12 +16,6 @@ class _NotificationBellState extends ConsumerState<NotificationBell> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(
-      Duration.zero,
-      () {
-        ref.read(activityProvider(widget.teamId).notifier).fetchActivities();
-      },
-    );
   }
 
   @override

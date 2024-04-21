@@ -35,7 +35,11 @@ class Issues extends ConsumerStatefulWidget {
   final Function(Issue)? onSelected;
   // hidden issue ids
   final List<String> hiddenIssueIds;
-  const Issues({super.key, required this.teamId, this.onSelected, this.hiddenIssueIds = const []});
+  const Issues(
+      {super.key,
+      required this.teamId,
+      this.onSelected,
+      this.hiddenIssueIds = const []});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
@@ -169,61 +173,80 @@ class _IssuesState extends ConsumerState<Issues> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextField(
-                  controller: _searchController,
-                  onTapOutside: (event) {
-                    // unfocus
-                    FocusScope.of(context).unfocus();
-                  },
-                  onChanged: (value) {
-                    setState(() {
-                      _searchTerm = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: TranslationKeys.searchSomething
-                        .tr(args: [TranslationKeys.issues.tr()]),
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? TextButton.icon(
-                            label: Text(TranslationKeys.clear.tr()),
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                                _searchTerm = '';
-                              });
-                            },
-                          )
-                        : null,
-                  ),
+        // Row(
+        //   children: [
+        //     Expanded(
+        //       child: Padding(
+        //         padding: const EdgeInsets.all(8.0),
+        //         child: TextField(
+        //           controller: _searchController,
+        //           onTapOutside: (event) {
+        //             // unfocus
+        //             FocusScope.of(context).unfocus();
+        //           },
+        //           onChanged: (value) {
+        //             setState(() {
+        //               _searchTerm = value;
+        //             });
+        //           },
+        //           decoration: InputDecoration(
+        //             hintText: TranslationKeys.searchSomething
+        //                 .tr(args: [TranslationKeys.issues.tr()]),
+        //             prefixIcon: const Icon(Icons.search),
+        //             suffixIcon: _searchController.text.isNotEmpty
+        //                 ? TextButton.icon(
+        //                     label: Text(TranslationKeys.clear.tr()),
+        //                     icon: const Icon(Icons.clear),
+        //                     onPressed: () {
+        //                       setState(() {
+        //                         _searchController.clear();
+        //                         _searchTerm = '';
+        //                       });
+        //                     },
+        //                   )
+        //                 : null,
+        //           ),
+        //         ),
+        //       ),
+        //     ),
+        //     // add issue button
+        //     TextButton.icon(
+        //       label: Text(TranslationKeys.newIssue.tr()),
+        //       icon: const Icon(Icons.add),
+        //       onPressed: () {
+        //         showModalBottomSheet(
+        //           isScrollControlled: true,
+        //           enableDrag: true,
+        //           showDragHandle: true,
+        //           context: context,
+        //           builder: (context) => AddOrEditIssueSheet(
+        //             teamId: widget.teamId,
+        //             addOrEdit: AddorEdit.add,
+        //           ),
+        //         );
+        //       },
+        //     ),
+        //   ],
+        // ),
+        // add issue button
+        if (widget.onSelected == null)
+          TextButton.icon(
+            label: Text(TranslationKeys.newIssue.tr()),
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              showModalBottomSheet(
+                isScrollControlled: true,
+                enableDrag: true,
+                showDragHandle: true,
+                context: context,
+                builder: (context) => AddOrEditIssueSheet(
+                  teamId: widget.teamId,
+                  addOrEdit: AddorEdit.add,
                 ),
-              ),
-            ),
-            // add issue button
-            TextButton.icon(
-              label: Text(TranslationKeys.newIssue.tr()),
-              icon: const Icon(Icons.add),
-              onPressed: () {
-                showModalBottomSheet(
-                  isScrollControlled: true,
-                  enableDrag: true,
-                  showDragHandle: true,
-                  context: context,
-                  builder: (context) => AddOrEditIssueSheet(
-                    teamId: widget.teamId,
-                    addOrEdit: AddorEdit.add,
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
+              );
+            },
+          ),
+
         // include tags for search
         InkWell(
           onTap: _openFilterTagsSelectionMenu,
@@ -235,6 +258,8 @@ class _IssuesState extends ConsumerState<Issues> {
                 const SizedBox(
                   width: 8,
                 ),
+                // search icon
+                const Icon(Icons.search),
                 Align(
                     alignment: Alignment.centerLeft,
                     child: Text('${TranslationKeys.includedTags.tr()}:')),
@@ -250,9 +275,7 @@ class _IssuesState extends ConsumerState<Issues> {
           ),
         ),
         const Divider(),
-        const SizedBox(
-          height: 8,
-        ),
+
         // a tab for issues
         Tabs(
           initialTabIndex: _currentTabIndex,
