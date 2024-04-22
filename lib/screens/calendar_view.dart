@@ -69,9 +69,18 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
         CalendarFormat.month: 'Month',
       },
       availableGestures: AvailableGestures.horizontalSwipe,
-      rowHeight: MediaQuery.of(context).size.height / 8,
-      calendarStyle: const CalendarStyle(outsideDaysVisible: false),
+      rowHeight: MediaQuery.of(context).size.height / 7.5,
+      calendarStyle: const CalendarStyle(
+        outsideDaysVisible: true,
+        tableBorder: TableBorder(
+          bottom: BorderSide(color: Colors.grey, width: 0.5),
+        ),
+      ),
       calendarBuilders: CalendarBuilders(
+        outsideBuilder: (context, day, focusedDay) => IssueCalendarCell(
+          dayIssues: const [],
+          dateTime: day,
+        ),
         headerTitleBuilder: (context, day) {
           // issue count this month
           final openIssueCount = issues
@@ -99,7 +108,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                 '${day.year}/${day.month}',
               ),
               const SizedBox(
-                width: 8,
+                width: 4,
               ),
               // show the number of issues this month
               Container(
@@ -122,7 +131,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
               ),
               // show the number of closed issues this month
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                 decoration: BoxDecoration(
                   color: closedIssueCount == 0
                       ? Colors.grey.shade300
@@ -219,48 +228,84 @@ class IssueCalendarCell extends StatelessWidget {
                 ),
               );
             },
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Text(
-            dateTime.day.toString(), // if it is today then red
-            style: TextStyle(
-              color: isToday ? Colors.red : null,
-              // today then bold
-              fontWeight: isToday ? FontWeight.bold : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        //color: Colors.blue.shade100,
+        // border
+        decoration: const BoxDecoration(
+          border: // left grey border
+              Border(
+            left: BorderSide(
+              color: Colors.grey,
+              width: 0.25,
+            ),
+            right: BorderSide(
+              color: Colors.grey,
+              width: 0.25,
+            ),
+            // top grey border
+            top: BorderSide(
+              color: Colors.grey,
+              width: 0.5,
             ),
           ),
-          // show a badge
-          if (dayIssues.isNotEmpty)
-            LayoutBuilder(
-              builder: (context, constraints) {
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircleBadge(
-                      count: dayIssues.where((issue) => !issue.isClosed).length,
-                      color: Colors.amber.shade300,
-                      maxWidth: constraints.maxWidth / 2,
-                    ),
-                    CircleBadge(
-                      count: dayIssues.where((issue) => issue.isClosed).length,
-                      color: Colors.green.shade200,
-                      maxWidth: constraints.maxWidth / 2,
-                    ),
-                  ],
-                );
-              },
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // date
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  dateTime.day.toString(), // if it is today then red
+                  style: TextStyle(
+                    color: isToday ? Colors.red : null,
+                    // today then bold
+                    fontWeight: isToday ? FontWeight.bold : null,
+                  ),
+                ),
+              ],
             ),
-          if (dayIssues.isNotEmpty)
-            Expanded(
-              child: Text(
-                dayIssues.first.title,
-                //oneline
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+            // show a badge for open and closed issues
+            if (dayIssues.isNotEmpty)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleBadge(
+                        count:
+                            dayIssues.where((issue) => !issue.isClosed).length,
+                        color: Colors.amber.shade300,
+                        maxWidth: constraints.maxWidth / 2,
+                      ),
+                      CircleBadge(
+                        count:
+                            dayIssues.where((issue) => issue.isClosed).length,
+                        color: Colors.green.shade200,
+                        maxWidth: constraints.maxWidth / 2,
+                      ),
+                    ],
+                  );
+                },
               ),
-            ),
-        ],
+            // show the first issue title
+            if (dayIssues.isNotEmpty)
+              Expanded(
+                child: Text(
+                  dayIssues.first.title,
+                  //oneline
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
+                  // small
+                  style: const TextStyle(
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
 
+import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
@@ -70,6 +71,10 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
             ),
           ),
           ...teams.map((team) {
+            final unreadActivities = ref.watch(
+              activityProvider(team.id!).select((value) =>
+                  value.activities.where((activity) => !activity.read)),
+            ).length;
             return InkWell(
               onTap: () {
                 if (widget.onTeamSelected != null) {
@@ -157,7 +162,9 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
                   child: const Icon(Icons.add)),
             ),
           ),
-          const SizedBox(height: 32,),
+          const SizedBox(
+            height: 32,
+          ),
           StatefulBuilder(
             builder: (context, setState) => DrawButton(
               onTapped: () {
@@ -210,13 +217,15 @@ class DrawButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16,vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: InkWell(
         onTap: onTapped,
         child: Row(
           children: [
             leading,
-            const SizedBox(width: 8,),
+            const SizedBox(
+              width: 8,
+            ),
             Expanded(child: Text(text)),
           ],
         ),

@@ -140,8 +140,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           actions: [
             // notification icon button
             if (teamData != null)
-              NotificationBell(
-                teamId: teamData.id!,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: NotificationBell(
+                  teamId: teamData.id!,
+                ),
               ),
           ],
         ),

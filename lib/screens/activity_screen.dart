@@ -138,7 +138,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                               final activity = activities[index];
                               return ListTile(
                                 // if teamId is not provided then show team name
-                                leading: UserAvatar(uid: activity.userId),
+                                leading: UserAvatar(uid: activity.userId, radius: 32,),
                                 trailing: // show a small red dot if it is unread,
                                     activity.read
                                         ? null

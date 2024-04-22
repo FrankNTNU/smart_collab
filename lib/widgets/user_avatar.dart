@@ -6,7 +6,8 @@ import '../services/profile_controller.dart';
 
 class UserAvatar extends ConsumerStatefulWidget {
   final String uid;
-  const UserAvatar({super.key, required this.uid});
+  final double radius;
+  const UserAvatar({super.key, required this.uid, this.radius = 50});
 
   @override
   ConsumerState<UserAvatar> createState() => _UserAvatarState();
@@ -26,16 +27,18 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
                 : CachedNetworkImage(
                     imageUrl: profileData.photoURL!,
                     imageBuilder: (context, imageProvider) => Container(
-                      width: 50.0,
-                      height: 50.0,
+                      width: widget.radius,
+                      height: widget.radius,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         image: DecorationImage(
                             image: imageProvider, fit: BoxFit.cover),
                       ),
                     ),
-                    placeholder: (context, url) => const CircularProgressIndicator(),
-                    errorWidget: (context, url, error) => const Icon(Icons.error),
+                    placeholder: (context, url) =>
+                        const CircularProgressIndicator(),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
                   )
 
             // child: CircleAvatar(

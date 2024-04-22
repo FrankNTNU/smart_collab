@@ -70,7 +70,7 @@ class _CommentsState extends ConsumerState<Comments> {
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
-                  child: UserAvatar(uid: comments[index].userId),
+                  child: UserAvatar(uid: comments[index].userId,radius: 30,),
                 ),
                 const SizedBox(width: 8),
                 Expanded(

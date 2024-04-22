@@ -230,21 +230,40 @@ class _IssuesState extends ConsumerState<Issues> {
         // ),
         // add issue button
         if (widget.onSelected == null)
-          TextButton.icon(
-            label: Text(TranslationKeys.newIssue.tr()),
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              showModalBottomSheet(
-                isScrollControlled: true,
-                enableDrag: true,
-                showDragHandle: true,
-                context: context,
-                builder: (context) => AddOrEditIssueSheet(
-                  teamId: widget.teamId,
-                  addOrEdit: AddorEdit.add,
-                ),
-              );
-            },
+          Row(
+            children: [
+              TextButton.icon(
+                label: Text(TranslationKeys.newIssue.tr()),
+                icon: const Icon(Icons.add),
+                onPressed: () {
+                  showModalBottomSheet(
+                    isScrollControlled: true,
+                    enableDrag: true,
+                    showDragHandle: true,
+                    context: context,
+                    builder: (context) => AddOrEditIssueSheet(
+                      teamId: widget.teamId,
+                      addOrEdit: AddorEdit.add,
+                    ),
+                  );
+                },
+              ),
+              const Spacer(),
+              // popup menu button
+              PopupMenuButton(
+                itemBuilder: (context) {
+                  return [
+                    const PopupMenuItem(
+                      child: ListTile(leading: Icon(Icons.upload), title: Text('Import')),
+                    ),
+                    PopupMenuItem(
+                      value: 'logout',
+                      child: Text(TranslationKeys.logout.tr()),
+                    ),
+                  ];
+                },
+                 ),
+            ],
           ),
 
         // a tab for issues
@@ -268,8 +287,10 @@ class _IssuesState extends ConsumerState<Issues> {
             Icons.check
           ],
         ),
-        const SizedBox(height: 8,),
-            // include tags for search
+        const SizedBox(
+          height: 8,
+        ),
+        // include tags for search
         InkWell(
           onTap: _openFilterTagsSelectionMenu,
           child: SizedBox(

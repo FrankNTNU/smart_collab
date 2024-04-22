@@ -1,4 +1,5 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
@@ -20,7 +21,8 @@ class IssueTile extends StatelessWidget {
       required this.issueData,
       this.tabIndex = IssueTabEnum.open,
       this.onSelected,
-      this.trailing, this.isDensed = false});
+      this.trailing,
+      this.isDensed = false});
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,7 @@ class IssueTile extends StatelessWidget {
                 ? const EdgeInsets.all(0)
                 : null,
             leading: isDensed ? null : UserAvatar(
+              radius: 32,
                 uid: issueData.lastUpdatedBy ??
                     issueData.roles.entries
                         .where((entry) => entry.value == 'owner')
@@ -71,9 +74,12 @@ class IssueTile extends StatelessWidget {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IssueTags(
-                  tags: issueData.tags,
-                  teamId: issueData.teamId,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: IssueTags(
+                    tags: issueData.tags,
+                    teamId: issueData.teamId,
+                  ),
                 ),
                 LastUpdatedAtInfo(
                   issueData: issueData,
