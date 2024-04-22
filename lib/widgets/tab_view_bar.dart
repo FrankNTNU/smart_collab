@@ -24,6 +24,17 @@ class Tabs extends StatefulWidget {
 class _TabsState extends State<Tabs> {
   int _currentTabIndex = 0;
   @override
+  // did update widget
+  void didUpdateWidget(covariant Tabs oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialTabIndex != widget.initialTabIndex) {
+      setState(() {
+        _currentTabIndex = widget.initialTabIndex;
+      });
+    }
+  }
+
+  @override
   void initState() {
     super.initState();
     _currentTabIndex = widget.initialTabIndex;
@@ -42,40 +53,50 @@ class _TabsState extends State<Tabs> {
           ),
         ),
       ),
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _currentTabIndex = index;
-          });
-          widget.onTabChange(index);
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Wrap(
-            children: [
-              if (canShowIcon)
-                Icon(
-                  widget.icons![index],
-                  color: _currentTabIndex == index
-                      ? Colors.blue
-                      : null
-                ),
-              if (canShowIcon)
-                const SizedBox(
-                  width: 8,
-                ),
-              Text(
-                label,
-                style: TextStyle(
-                  color: _currentTabIndex == index
-                      ? Colors.blue
-                      : Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: _currentTabIndex == index
-                      ? FontWeight.bold
-                      : FontWeight.normal,
+      child: Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              widget.onTabChange(index);
+            },
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                  minWidth: MediaQuery.of(context).size.width / 3),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Wrap(
+                    children: [
+                      if (canShowIcon)
+                        Icon(widget.icons![index],
+                            color:
+                                _currentTabIndex == index ? Colors.blue : null),
+                      if (canShowIcon)
+                        const SizedBox(
+                          width: 8,
+                        ),
+                      Text(
+                        label,
+                        style: TextStyle(
+                          color: _currentTabIndex == index
+                              ? Colors.blue
+                              : Theme.of(context)
+                                  .colorScheme
+                                  .onPrimaryContainer,
+                          fontWeight: _currentTabIndex == index
+                              ? FontWeight.bold
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),

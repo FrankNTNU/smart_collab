@@ -31,16 +31,13 @@ class TagsSelectionMenu extends ConsumerStatefulWidget {
       _FilterTagsSelectionMenuState();
 }
 
-class _FilterTagsSelectionMenuState
-    extends ConsumerState<TagsSelectionMenu> {
+class _FilterTagsSelectionMenuState extends ConsumerState<TagsSelectionMenu> {
   // search term
   String _searchTerm = '';
   // selected tags
   List<String> _selectedTags = [];
   // text edit controller
   final TextEditingController _searchController = TextEditingController();
-  // is edit mode
-  final bool _isEditMode = false;
   @override
   void initState() {
     super.initState();
@@ -73,7 +70,19 @@ class _FilterTagsSelectionMenuState
   @override
   Widget build(BuildContext context) {
     final sourceTags =
-        ref.watch(tagProvider(widget.teamId).select((value) => value.tags));
+        ref.watch(tagProvider(widget.teamId).select((value) => value.tags))
+          ..sort(
+            (a, b) => b.usedCount - a.usedCount,
+          )
+          ..sort(
+            (a, b) =>
+                // sort boolean value
+                a.isNewlyAdded == b.isNewlyAdded
+                    ? 0
+                    : a.isNewlyAdded
+                        ? -1
+                        : 1,
+          );
     print('Source tags: ${sourceTags.map((t) => t.name)}');
     // get tags
     final tags = sourceTags.where((tag) {
@@ -83,6 +92,7 @@ class _FilterTagsSelectionMenuState
     }).toList();
     final mergedTagNames =
         <String>{...tags.map((t) => t.name), ...widget.initialTags}.toList();
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       // padding bottoom viewinset
@@ -99,6 +109,14 @@ class _FilterTagsSelectionMenuState
                 TitleText(
                   widget.title.tr(),
                 ),
+                TextButton.icon(
+                  // add tags
+                  label: Text(TranslationKeys.addTag.tr()),
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    openAddTagForm();
+                  },
+                ),
                 const Spacer(),
                 const CloseButton(),
               ],
@@ -111,34 +129,34 @@ class _FilterTagsSelectionMenuState
           ),
           Row(
             children: [
-              const SizedBox(
-                width: 16,
-              ),
               Expanded(
-                child: TextField(
-                  controller: _searchController,
-                  onTapOutside: (event) {
-                    FocusScope.of(context).unfocus();
-                  },
-                  decoration: InputDecoration(
-                    hintText: TranslationKeys.searchSomething
-                        .tr(args: [TranslationKeys.tags.tr()]),
-                    suffix: // clear search term
-                        IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchTerm = '';
-                        });
-                      },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: TextField(
+                    controller: _searchController,
+                    onTapOutside: (event) {
+                      FocusScope.of(context).unfocus();
+                    },
+                    decoration: InputDecoration(
+                      hintText: TranslationKeys.searchSomething
+                          .tr(args: [TranslationKeys.tags.tr()]),
+                      suffix: // clear search term
+                          IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchTerm = '';
+                          });
+                        },
+                      ),
                     ),
+                    onChanged: (value) {
+                      setState(() {
+                        _searchTerm = value;
+                      });
+                    },
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchTerm = value;
-                    });
-                  },
                 ),
               ),
               // clear all button
@@ -173,7 +191,9 @@ class _FilterTagsSelectionMenuState
                           .contains(mergedTagNames[index]);
                       return CheckboxListTile(
                         secondary: !isTagExist
-                            ? const IconButton(onPressed: null, icon: Icon(Icons.do_not_disturb_on))
+                            ? const IconButton(
+                                onPressed: null,
+                                icon: Icon(Icons.do_not_disturb_on))
                             : IconButton(
                                 icon: const Icon(Icons.edit),
                                 onPressed: () {
@@ -221,14 +241,6 @@ class _FilterTagsSelectionMenuState
                       );
                     },
                   ),
-          ),
-          ListTile(
-            // add tags
-            title: Text(TranslationKeys.addTag.tr()),
-            leading: const Icon(Icons.add),
-            onTap: () {
-              openAddTagForm();
-            },
           ),
         ],
       ),

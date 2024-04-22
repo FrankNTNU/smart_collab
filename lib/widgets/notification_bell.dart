@@ -44,7 +44,7 @@ class _NotificationBellState extends ConsumerState<NotificationBell> {
         },
         icon: activityCount > 0
             ? Badge(
-                label: Text('$activityCount'),
+                label: Text('${activityCount > 99 ? '99+' : activityCount}'),
                 child: const Icon(
                   Icons.notifications_outlined,
                 ),

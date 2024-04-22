@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/activity_controller.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/utils/time_utils.dart';
+import 'package:smart_collab/widgets/grey_description.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
 import '../utils/translation_keys.dart';
@@ -44,7 +45,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
         .read(activityProvider(widget.teamId).notifier)
         .setAsRead(activity.id);
     print('Activity type: ${activity.activityType}');
-   
+
     switch (activityMapReverse[activity.activityType]) {
       case ActivityType.addComment:
       case ActivityType.openIssue:
@@ -99,9 +100,33 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TitleText(TranslationKeys.activities.tr()),
+                        Expanded(
+                            child: TitleText(TranslationKeys.activities.tr())),
+                        // pop up menu button showing mark all as read and delete
+                        PopupMenuButton(
+                          itemBuilder: (context) {
+                            return [
+                              const PopupMenuItem(
+                                value: 'markAllAsRead',
+                                child: Text('Mark all as read'),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Text('Delete'),
+                              ),
+                            ];
+                          },
+                          onSelected: (value) {
+                            print('Selected: $value');
+                            if (value == 'markAllAsRead') {
+                              ref
+                                  .read(activityProvider(widget.teamId).notifier)
+                                  .markAllAsRead();
+                            }
+                          },
+                        ),
+
                         const CloseButton(),
                       ],
                     ),
@@ -110,6 +135,13 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                   const SizedBox(
                     height: 8,
                   ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: GreyDescription(
+                          'Only the last 100 activities are shown')),
+                ),
                 ref.watch(activityStreamProvider(widget.teamId)).when(
                       loading: () => const Center(
                         child: CircularProgressIndicator(),
@@ -138,7 +170,10 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                               final activity = activities[index];
                               return ListTile(
                                 // if teamId is not provided then show team name
-                                leading: UserAvatar(uid: activity.userId, radius: 32,),
+                                leading: UserAvatar(
+                                  uid: activity.userId,
+                                  radius: 32,
+                                ),
                                 trailing: // show a small red dot if it is unread,
                                     activity.read
                                         ? null

@@ -216,10 +216,10 @@ class DrawButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: InkWell(
-        onTap: onTapped,
+    return InkWell(
+      onTap: onTapped,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
             leading,

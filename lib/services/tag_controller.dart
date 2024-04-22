@@ -12,13 +12,14 @@ class IssueTag {
   final String color;
   // stats
   final int usedCount;
-
+  // local state
+  final bool isNewlyAdded;
   IssueTag(
       {required this.id,
       required this.name,
       required this.description,
       required this.color,
-      this.usedCount = 0});
+      this.usedCount = 0, this.isNewlyAdded = false});
 
   factory IssueTag.fromJson(Map<String, dynamic> json) {
     return IssueTag(
@@ -27,6 +28,7 @@ class IssueTag {
       description: json['description'] ?? '',
       color: json['color'],
       usedCount: json['usedCount'] ?? 0,
+
     );
   }
   // copyWith
@@ -36,6 +38,7 @@ class IssueTag {
     String? description,
     String? color,
     int? usedCount,
+    bool? isNewlyAdded,
   }) {
     return IssueTag(
       id: id ?? this.id,
@@ -43,6 +46,7 @@ class IssueTag {
       description: description ?? this.description,
       color: color ?? this.color,
       usedCount: usedCount ?? this.usedCount,
+      isNewlyAdded: isNewlyAdded ?? this.isNewlyAdded,
     );
   }
 }
@@ -54,7 +58,7 @@ class TagsState {
   final String? errorMessage;
   // filter state
   final String teamId;
-
+  
   TagsState({
     required this.tags,
     required this.apiStatus,
@@ -234,7 +238,6 @@ class TagsController extends FamilyNotifier<TagsState, String> {
   Future<void> addTag({
     required String name,
     String? description,
-
     /// color in hex
     String? color,
   }) async {
@@ -255,7 +258,7 @@ class TagsController extends FamilyNotifier<TagsState, String> {
       // get the newly added tag
       final snapShot = await docRef.get();
       final data = snapShot.data()!;
-      final newTag = IssueTag.fromJson(data).copyWith(id: snapShot.id);
+      final newTag = IssueTag.fromJson(data).copyWith(id: snapShot.id, isNewlyAdded: true);
       state = state.copyWith(
         tags: [...state.tags, newTag],
         apiStatus: ApiStatus.success,

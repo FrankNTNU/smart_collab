@@ -19,7 +19,7 @@ import '../widgets/confirm_dialog.dart';
 import '../widgets/grey_description.dart';
 import '../widgets/issue_tags.dart';
 import '../widgets/title_text.dart';
-import 'filter_tags_selection_menu.dart';
+import 'tags_selection_menu.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
   const IssueScreen({super.key, required this.issue});
@@ -148,10 +148,13 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
         .select((value) => value.issueMap[widget.issue.id]));
     print('Tags in issue screen: ${issueData?.tags}');
     if (issueData == null) {
-      return Center(
-        child: Text(TranslationKeys.somethingNotFound.tr(
-          args: [TranslationKeys.issues.tr()],
-        )),
+      return SizedBox(
+        height: MediaQuery.of(context).size.height * 0.5,
+        child: Center(
+          child: Text(TranslationKeys.somethingNotFound.tr(
+            args: [TranslationKeys.issues.tr()],
+          )),
+        ),
       );
     }
     final areYouTheOnwerOrAdmin = issueData
@@ -195,60 +198,28 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   ),
                   // last updated at information
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      LastUpdatedAtInfo(issueData: issueData),
+                      Expanded(child: LastUpdatedAtInfo(issueData: issueData)),
+                      if (isAuthorOrColloborator)
+                        IconButton(
+                            onPressed: () {
+                              showModalBottomSheet(
+                                isScrollControlled: true,
+                                enableDrag: true,
+                                showDragHandle: true,
+                                context: context,
+                                builder: (context) => AddOrEditIssueSheet(
+                                  teamId: widget.issue.teamId,
+                                  addOrEdit: AddorEdit.edit,
+                                  issue: issueData,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.edit)),
                       if (isAuthorOrColloborator)
                         // edit button
                         PopupMenuButton(
                           itemBuilder: (BuildContext context) => [
-                            PopupMenuItem(
-                              child: ListTile(
-                                leading: const Icon(Icons.edit),
-                                title: Text(
-                                    '${TranslationKeys.edit.tr()} ${TranslationKeys.issue.tr()}'),
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    isScrollControlled: true,
-                                    enableDrag: true,
-                                    showDragHandle: true,
-                                    context: context,
-                                    builder: (context) => AddOrEditIssueSheet(
-                                      teamId: widget.issue.teamId,
-                                      addOrEdit: AddorEdit.edit,
-                                      issue: issueData,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            if (isAuthorOrColloborator && !issueData.isClosed)
-                              // close issue
-                              PopupMenuItem(
-                                child: ListTile(
-                                  leading: const Icon(Icons.close),
-                                  title: Text(
-                                      '${TranslationKeys.close.tr()} ${TranslationKeys.issue.tr()}'),
-                                  onTap: () {
-                                    _toggleIsClosed(
-                                        isClosed: true, issueData: issueData);
-                                  },
-                                ),
-                              ),
-                            // dnot allow closed issue to be re-opened
-                            if (areYouTheOnwerOrAdmin && issueData.isClosed && false)
-                              // open issue
-                              PopupMenuItem(
-                                child: ListTile(
-                                  leading: const Icon(Icons.refresh),
-                                  title: Text(
-                                      '${TranslationKeys.open.tr()} ${TranslationKeys.issue.tr()}'),
-                                  onTap: () {
-                                    _toggleIsClosed(
-                                        isClosed: false, issueData: issueData);
-                                  },
-                                ),
-                              ),
                             // to duplicate issue
                             PopupMenuItem(
                               child: ListTile(
@@ -270,6 +241,20 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                 },
                               ),
                             ),
+
+                            if (isAuthorOrColloborator && !issueData.isClosed)
+                              // close issue
+                              PopupMenuItem(
+                                child: ListTile(
+                                  leading: const Icon(Icons.close),
+                                  title: Text(
+                                      '${TranslationKeys.close.tr()} ${TranslationKeys.issue.tr()}'),
+                                  onTap: () {
+                                    _toggleIsClosed(
+                                        isClosed: true, issueData: issueData);
+                                  },
+                                ),
+                              ),
                             if (isAuthor)
                               PopupMenuItem(
                                 child: ListTile(
@@ -282,7 +267,10 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                 ),
                               ),
                           ],
-                          child: const Icon(Icons.more_horiz),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 8),
+                            child: Icon(Icons.more_horiz),
+                          ),
                         ),
                     ],
                   ),

@@ -632,9 +632,14 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
               .update({'linkedIssueIds': updatedIssue.linkedIssueIds});
         }
       });
+      // only by doing this will it trigger the rebuild
+      final updatedIssueMaps = {
+        ...state.issueMap,
+      }..remove(issueId);
+
       state = state.copyWith(
         apiStatus: ApiStatus.success,
-        issueMap: state.issueMap..remove(issueId),
+        issueMap: updatedIssueMaps,
       );
     } catch (e) {
       print('Error occured in the removeIssue method: $e');
@@ -744,7 +749,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
   }
 }
 
-final issueProvider = NotifierProvider
-    .family<IssueController, IssuesState, String>(() {
+final issueProvider =
+    NotifierProvider.family<IssueController, IssuesState, String>(() {
   return IssueController();
 });

@@ -68,8 +68,6 @@ class ActivitiesState {
   final String userId;
   // filter state
   final String teamId;
-  // unread count
-  final int unreadCount;
   // ctor
   ActivitiesState(
       {required this.apiStatus,
@@ -77,8 +75,7 @@ class ActivitiesState {
       required this.activities,
       this.error,
       required this.userId,
-      required this.teamId,
-      this.unreadCount = 0});
+      required this.teamId});
   // copyWith
   ActivitiesState copyWith({
     ApiStatus? apiStatus,
@@ -87,7 +84,6 @@ class ActivitiesState {
     String? error,
     String? userId,
     String? teamId,
-    int? unreadCount,
   }) {
     return ActivitiesState(
       apiStatus: apiStatus ?? this.apiStatus,
@@ -96,7 +92,6 @@ class ActivitiesState {
       error: error ?? this.error,
       userId: userId ?? this.userId,
       teamId: teamId ?? this.teamId,
-      unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }
@@ -216,7 +211,59 @@ class ActivityController
       state = state.copyWith(error: e.toString(), apiStatus: ApiStatus.error);
     }
   }
-
+  // delete all activities
+  Future<void> deleteAllActivities() async {
+    // set loading
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.delete);
+    try {
+      // delete all activities from Firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('activities')
+          .get()
+          .then((snapshot) {
+        for (var doc in snapshot.docs) {
+          doc.reference.delete();
+        }
+      });
+      // update the state
+      state = state.copyWith(
+        activities: [],
+        apiStatus: ApiStatus.success,
+      );
+    } catch (e) {
+      print('Error deleting all activities: $e');
+      state = state.copyWith(error: e.toString(), apiStatus: ApiStatus.error);
+    }
+  }
+  // mark all activities as read
+  Future<void> markAllAsRead() async {
+    // set loading
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      // update the state
+      final activities = state.activities
+          .map((activity) => activity.copyWith(read: true))
+          .toList();
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(
+          'readActivities',
+          activities
+              .where((activity) => activity.read)
+              .map((activity) => activity.id)
+              .toList());
+      state = state.copyWith(
+        activities: activities,
+        apiStatus: ApiStatus.success,
+      );
+    } catch (e) {
+      print('Error marking all as read: $e');
+      state = state.copyWith(error: e.toString(), apiStatus: ApiStatus.error);
+    }
+  }
   // fetch activities
   Future<void> fetchActivities() async {
     // set loading
@@ -229,6 +276,7 @@ class ActivityController
           .doc(state.teamId)
           .collection('activities')
           .orderBy('timestamp', descending: true)
+          .limit(100)
           .get();
       // get read activities from shared_preferences
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -273,21 +321,6 @@ class ActivityController
     }
   }
 
-  // set has read count
-  Future<void> refreshUnreadCount() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final readActivities = prefs.getStringList('readActivities') ?? [];
-    final unreadCount = state.activities
-        .where((activity) => !readActivities.contains(activity.id))
-        .length;
-    // update the state
-    // for each activity in the state, update the read status
-    for (var activity in state.activities) {
-      activity.copyWith(read: readActivities.contains(activity.id));
-    }
-    state = state.copyWith(unreadCount: unreadCount);
-  }
-
   // set as read (store such activity id to shared_preferences)
   Future<void> setAsRead(String activityId) async {
     // set loading
@@ -320,7 +353,6 @@ class ActivityController
 
   // set activities
   void setActivities(List<Activity> activities) async {
-    refreshUnreadCount();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     final readActivitiesFromSharedPrefs =
         prefs.getStringList('readActivities') ?? [];

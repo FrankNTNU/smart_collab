@@ -1,7 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/screens/filter_tags_selection_menu.dart';
+import 'package:smart_collab/screens/tags_selection_menu.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/issue_tags.dart';

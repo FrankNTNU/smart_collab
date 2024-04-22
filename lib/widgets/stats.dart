@@ -70,7 +70,7 @@ class _StatsInfoState extends ConsumerState<StatsInfo> {
           IssueTags(
             tags: tags.map((tag) => tag.name).toList(),
             teamId: widget.teamId,
-            isShowUsedCount: true,
+            // isShowUsedCount: true,
             isLoose: true,
           ),
           const SizedBox(

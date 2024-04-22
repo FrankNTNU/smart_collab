@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
+import 'package:smart_collab/widgets/confirm_dialog.dart';
 
 import '../services/tag_controller.dart';
 import '../utils/translation_keys.dart';
@@ -39,7 +40,6 @@ class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
     if (widget.addOrEdit == AddorEdit.edit && widget.initialTag != null) {
       _selectedHexColor = widget.initialTag!.color;
       _enteredTagName = widget.initialTag!.name;
-      
     }
   }
 
@@ -163,13 +163,38 @@ class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
         if (_errorMessage != null)
           Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
         // submit button
-        ElevatedButton(
-          onPressed: () {
-            _submit();
-          },
-          child: Text(widget.addOrEdit == AddorEdit.add
-              ? TranslationKeys.create.tr()
-              : TranslationKeys.update.tr()),
+        Row(
+          children: [
+            ElevatedButton(
+              onPressed: () {
+                _submit();
+              },
+              child: Text(widget.addOrEdit == AddorEdit.add
+                  ? TranslationKeys.create.tr()
+                  : TranslationKeys.update.tr()),
+            ),
+            const Spacer(),
+            IconButton(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => ConfirmDialog(
+                      confirmText: TranslationKeys.delete.tr(),
+                      title: TranslationKeys.delete.tr(),
+                      content: TranslationKeys.confirmSomething.tr(args: [
+                        TranslationKeys.delete.tr(),
+                      ]),
+                      onConfirm: () {
+                        ref
+                            .read(tagProvider(widget.teamId).notifier)
+                            .removeTag(widget.initialTag!.id);
+                        Navigator.pop(context);
+                      },
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.delete)),
+          ],
         )
       ],
     );

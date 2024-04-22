@@ -21,7 +21,6 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
     final issueData = widget.issueData;
 
     final daysLeft = issueData.deadline!.difference(DateTime.now()).inDays;
-    print('daysLeft: $daysLeft');
     final isToday = issueData.deadline!.year == DateTime.now().year &&
         issueData.deadline!.month == DateTime.now().month &&
         issueData.deadline!.day == DateTime.now().day;

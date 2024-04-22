@@ -39,17 +39,16 @@ class IssueTile extends StatelessWidget {
             ),
           ),
           child: ListTile(
-            contentPadding: isDensed
-                ? const EdgeInsets.all(0)
-                : null,
-            leading: isDensed ? null : UserAvatar(
-              radius: 32,
-                uid: issueData.lastUpdatedBy ??
-                    issueData.roles.entries
-                        .where((entry) => entry.value == 'owner')
-                        .firstOrNull
-                        ?.key ??
-                    ''),
+            contentPadding: isDensed ? const EdgeInsets.all(0) : null,
+            leading: isDensed
+                ? null
+                : UserAvatar(
+                    radius: 32,
+                    uid: issueData.roles.entries
+                            .where((entry) => entry.value == 'owner')
+                            .firstOrNull
+                            ?.key ??
+                        ''),
             onTap: onSelected != null
                 ? () {
                     onSelected!(issueData);

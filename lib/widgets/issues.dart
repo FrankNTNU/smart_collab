@@ -5,8 +5,9 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/issue_tile.dart';
 import 'package:smart_collab/widgets/tab_view_bar.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
-import '../screens/filter_tags_selection_menu.dart';
+import '../screens/tags_selection_menu.dart';
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
 import '../utils/translation_keys.dart';
@@ -35,11 +36,16 @@ class Issues extends ConsumerStatefulWidget {
   final Function(Issue)? onSelected;
   // hidden issue ids
   final List<String> hiddenIssueIds;
+  // is tabs visible on changed
+  final Function(bool)? isTabsVisibleOnChanged;
+  final int currentTabIndex;
   const Issues(
       {super.key,
       required this.teamId,
       this.onSelected,
-      this.hiddenIssueIds = const []});
+      this.hiddenIssueIds = const [],
+      this.isTabsVisibleOnChanged,
+      this.currentTabIndex = 0});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
@@ -54,8 +60,41 @@ class _IssuesState extends ConsumerState<Issues> {
   final TextEditingController _searchController = TextEditingController();
   // current tab index
   int _currentTabIndex = IssueTabEnum.open;
-  // view tab index
-  final int _currentTabViewIndex = IssueTabViewEnum.listView;
+  // is tabs visiblr
+  bool _isTabsVisible = false;
+  @override
+  // did update widget
+  void didUpdateWidget(covariant Issues oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentTabIndex != widget.currentTabIndex) {
+      print('Current tab index changed: ${widget.currentTabIndex}');
+      setState(() {
+        _currentTabIndex = widget.currentTabIndex;
+      });
+    }
+  }
+  @override
+  void initState() {
+    super.initState();
+    // set current index
+    _currentTabIndex = widget.currentTabIndex;
+    Future.delayed(
+      Duration.zero,
+      () {
+        // empty the error message
+        ref
+            .read(issueProvider(widget.teamId).notifier)
+            .fetchIssues(widget.teamId);
+      },
+    );
+    // listen to search controller changes
+    _searchController.addListener(() {
+      setState(() {
+        _searchTerm = _searchController.text;
+      });
+    });
+  }
+
   // search tags on selected
   void _searchTagsOnSelected(String tag) {
     setState(() {
@@ -88,26 +127,6 @@ class _IssuesState extends ConsumerState<Issues> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    Future.delayed(
-      Duration.zero,
-      () {
-        // empty the error message
-        ref
-            .read(issueProvider(widget.teamId).notifier)
-            .fetchIssues(widget.teamId);
-      },
-    );
-    // listen to search controller changes
-    _searchController.addListener(() {
-      setState(() {
-        _searchTerm = _searchController.text;
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isFetching = ref.watch(issueProvider(widget.teamId).select((value) =>
         value.apiStatus == ApiStatus.loading &&
@@ -118,6 +137,7 @@ class _IssuesState extends ConsumerState<Issues> {
         .toList();
 
     print('Source issue length: ${sourceIssues.length}');
+    print('Current filter tab index: $_currentTabIndex');
     var filteredIssues = sourceIssues.where((issue) {
       return (issue.title.toLowerCase().contains(_searchTerm.toLowerCase()) ||
           issue.description
@@ -248,44 +268,44 @@ class _IssuesState extends ConsumerState<Issues> {
                   );
                 },
               ),
-              const Spacer(),
-              // popup menu button
-              PopupMenuButton(
-                itemBuilder: (context) {
-                  return [
-                    const PopupMenuItem(
-                      child: ListTile(leading: Icon(Icons.upload), title: Text('Import')),
-                    ),
-                    PopupMenuItem(
-                      value: 'logout',
-                      child: Text(TranslationKeys.logout.tr()),
-                    ),
-                  ];
-                },
-                 ),
             ],
           ),
 
         // a tab for issues
-        Tabs(
-          initialTabIndex: _currentTabIndex,
-          onTabChange: (index) {
-            setState(() {
-              _currentTabIndex = index;
-            });
+        VisibilityDetector(
+          key: const Key('my-widget-key'),
+          onVisibilityChanged: (visibilityInfo) {
+            var visiblePercentage = visibilityInfo.visibleFraction * 100;
+            debugPrint(
+                'Widget ${visibilityInfo.key} is $visiblePercentage% visible');
+            final isVisible = visiblePercentage > 0;
+            if (_isTabsVisible != isVisible) {
+              _isTabsVisible = isVisible;
+              if (widget.isTabsVisibleOnChanged != null) {
+                widget.isTabsVisibleOnChanged!(_isTabsVisible);
+              }
+            }
           },
-          tabs: [
-            TranslationKeys.openIssues.tr(),
-            TranslationKeys.upcoming.tr(),
-            TranslationKeys.overdue.tr(),
-            TranslationKeys.closedIssues.tr(),
-          ],
-          icons: const [
-            Icons.content_paste,
-            Icons.hourglass_top_rounded,
-            Icons.event_busy,
-            Icons.check
-          ],
+          child: Tabs(
+            initialTabIndex: _currentTabIndex,
+            onTabChange: (index) {
+              setState(() {
+                _currentTabIndex = index;
+              });
+            },
+            tabs: [
+              TranslationKeys.openIssues.tr(),
+              TranslationKeys.upcoming.tr(),
+              TranslationKeys.overdue.tr(),
+              TranslationKeys.closedIssues.tr(),
+            ],
+            icons: const [
+              Icons.content_paste,
+              Icons.hourglass_top_rounded,
+              Icons.event_busy,
+              Icons.check
+            ],
+          ),
         ),
         const SizedBox(
           height: 8,
@@ -298,11 +318,11 @@ class _IssuesState extends ConsumerState<Issues> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                const SizedBox(
-                  width: 8,
-                ),
                 // search icon
-                const Icon(Icons.search),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(Icons.search),
+                ),
                 Align(
                     alignment: Alignment.centerLeft,
                     child: Text('${TranslationKeys.includedTags.tr()}:')),
@@ -317,6 +337,7 @@ class _IssuesState extends ConsumerState<Issues> {
             ),
           ),
         ),
+        const Divider(),
         if (filteredIssues.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 32),
