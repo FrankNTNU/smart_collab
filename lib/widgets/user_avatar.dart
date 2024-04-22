@@ -7,7 +7,12 @@ import '../services/profile_controller.dart';
 class UserAvatar extends ConsumerStatefulWidget {
   final String uid;
   final double radius;
-  const UserAvatar({super.key, required this.uid, this.radius = 50});
+  final bool showEmailWhenTapped;
+  const UserAvatar(
+      {super.key,
+      required this.uid,
+      this.radius = 50,
+      this.showEmailWhenTapped = false});
 
   @override
   ConsumerState<UserAvatar> createState() => _UserAvatarState();
@@ -20,7 +25,8 @@ class _UserAvatarState extends ConsumerState<UserAvatar> {
     return asyncProfilePicProvider.when(
       data: (profileData) {
         return Tooltip(
-            message: profileData.displayName,
+            message:
+                '${profileData.displayName}${widget.showEmailWhenTapped ? '\n${profileData.email}' : ''}',
             triggerMode: TooltipTriggerMode.tap,
             child: profileData.photoURL == null
                 ? const Icon(Icons.person)

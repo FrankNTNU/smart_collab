@@ -135,6 +135,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
                           );
                         },
                         child: UserAvatar(
+                          showEmailWhenTapped: true,
                           uid: profileData.uid!,
                         )
                       ),

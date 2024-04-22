@@ -5,6 +5,7 @@ import 'package:smart_collab/utils/time_utils.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/user_avatar.dart';
 
+import '../services/auth_controller.dart';
 import '../services/comment_controller.dart';
 import 'confirm_dialog.dart';
 import 'grey_description.dart';
@@ -56,6 +57,8 @@ class _CommentsState extends ConsumerState<Comments> {
       physics: const ClampingScrollPhysics(),
       itemCount: comments.length,
       itemBuilder: (context, index) {
+        final uid = ref.watch(authControllerProvider).user!.uid;
+        final isOwner = comments[index].roles?[uid] == 'owner';
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -85,6 +88,7 @@ class _CommentsState extends ConsumerState<Comments> {
                                 comments[index].createdAt,
                                 context: context)),
                           ),
+                          if (isOwner)
                           InkWell(
                               onTap: () {
                                 showModalBottomSheet(

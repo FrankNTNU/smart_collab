@@ -101,22 +101,25 @@ class _CommentFieldState extends ConsumerState<CommentField> {
         child: Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _textController,
-                // on tap outside unfocus
-                onTapOutside: (_) {
-                  FocusScope.of(context).unfocus();
-                },
-                decoration: InputDecoration(
-                  labelText: TranslationKeys.addComment.tr(),
-                  border: const OutlineInputBorder(),
-                  errorText: errorMessage,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: TextField(
+                  controller: _textController,
+                  // on tap outside unfocus
+                  onTapOutside: (_) {
+                    FocusScope.of(context).unfocus();
+                  },
+                  decoration: InputDecoration(
+                    hintText: TranslationKeys.addComment.tr(),
+                    border: const OutlineInputBorder(),
+                    errorText: errorMessage,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _enteredComment = value;
+                    });
+                  },
                 ),
-                onChanged: (value) {
-                  setState(() {
-                    _enteredComment = value;
-                  });
-                },
               ),
             ),
             if (isLoading)

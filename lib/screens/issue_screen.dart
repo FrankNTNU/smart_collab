@@ -141,6 +141,35 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     Navigator.pop(context);
   }
 
+  void _openLinkedIssuesSheet(Issue issueData) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      enableDrag: true,
+      showDragHandle: true,
+      context: context,
+      builder: (context) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.8,
+        child: SingleChildScrollView(
+          child: Issues(
+            modalHeader: 'Link "${issueData.title}" with...',
+            hiddenIssueIds: [issueData.id],
+            teamId: widget.issue.teamId,
+            onSelected: (issue) {
+              if (!_selectedLinkedIssues.contains(issue)) {
+                setState(() {
+                  _selectedLinkedIssues.add(issue);
+                });
+              }
+              _updateLinkedIssue();
+              // pop
+              Navigator.pop(context);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     print('Rebuilding IssueScreen');
@@ -157,15 +186,10 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
         ),
       );
     }
-    final areYouTheOnwerOrAdmin = issueData
-                .roles[ref.watch(authControllerProvider).user!.uid] ==
-            'owner' ||
-        issueData.roles[ref.watch(authControllerProvider).user!.uid] == 'admin';
-    final isAuthor =
-        issueData.roles[ref.watch(authControllerProvider).user!.uid] == 'owner';
-    final isAuthorOrColloborator = isAuthor ||
-        issueData.roles[ref.watch(authControllerProvider).user!.uid] ==
-            'collaborator';
+    final uid = ref.watch(authControllerProvider).user!.uid;
+    final isAuthor = issueData.roles[uid] == 'owner';
+    final isAuthorOrColloborator =
+        isAuthor || issueData.roles[uid] == 'collaborator';
     return SizedBox(
       width: double.infinity,
       height: MediaQuery.of(context).size.height * 0.8,
@@ -328,32 +352,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                         icon: const Icon(Icons.link),
                         onPressed: () {
                           // show linked issues
-                          showModalBottomSheet(
-                            isScrollControlled: true,
-                            enableDrag: true,
-                            showDragHandle: true,
-                            context: context,
-                            builder: (context) => SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.6,
-                              child: SingleChildScrollView(
-                                child: Issues(
-                                  hiddenIssueIds: [issueData.id],
-                                  teamId: widget.issue.teamId,
-                                  onSelected: (issue) {
-                                    if (!_selectedLinkedIssues
-                                        .contains(issue)) {
-                                      setState(() {
-                                        _selectedLinkedIssues.add(issue);
-                                      });
-                                    }
-                                    _updateLinkedIssue();
-                                    // pop
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ),
-                            ),
-                          );
+                          _openLinkedIssuesSheet(issueData);
                         },
                         label: Text(
                           '${TranslationKeys.add.tr()} ${TranslationKeys.linkedIssues.tr()}',
@@ -394,13 +393,18 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           )
                           .toList(),
                     ),
-
+                  const SizedBox(
+                    height: 4,
+                  ),
                   TitleText(
                     TranslationKeys.collaborators.tr(),
                   ),
                   // grey description
-                  GreyDescription(
-                    TranslationKeys.collaboratorDescription.tr(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: GreyDescription(
+                      TranslationKeys.collaboratorDescription.tr(),
+                    ),
                   ),
                   Collaborators(
                       issueId: issueData.id, teamId: widget.issue.teamId),

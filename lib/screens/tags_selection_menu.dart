@@ -54,10 +54,8 @@ class _FilterTagsSelectionMenuState extends ConsumerState<TagsSelectionMenu> {
       context: context,
       builder: (context) {
         return Padding(
-          padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 16,
-              right: 16),
+          padding:
+              EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
           child: AddOrEditTagForm(
             teamId: widget.teamId,
             addOrEdit: AddorEdit.add,
@@ -204,11 +202,10 @@ class _FilterTagsSelectionMenuState extends ConsumerState<TagsSelectionMenu> {
                                     context: context,
                                     builder: (context) => Padding(
                                       padding: EdgeInsets.only(
-                                          bottom: MediaQuery.of(context)
-                                              .viewInsets
-                                              .bottom,
-                                          left: 16,
-                                          right: 16),
+                                        bottom: MediaQuery.of(context)
+                                            .viewInsets
+                                            .bottom,
+                                      ),
                                       child: AddOrEditTagForm(
                                         teamId: widget.teamId,
                                         addOrEdit: AddorEdit.edit,

@@ -5,6 +5,7 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/issue_tile.dart';
 import 'package:smart_collab/widgets/tab_view_bar.dart';
+import 'package:smart_collab/widgets/title_text.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 import '../screens/tags_selection_menu.dart';
@@ -39,13 +40,15 @@ class Issues extends ConsumerStatefulWidget {
   // is tabs visible on changed
   final Function(bool)? isTabsVisibleOnChanged;
   final int currentTabIndex;
+  // modal header
+  final String? modalHeader;
   const Issues(
       {super.key,
       required this.teamId,
       this.onSelected,
       this.hiddenIssueIds = const [],
       this.isTabsVisibleOnChanged,
-      this.currentTabIndex = 0});
+      this.currentTabIndex = 0, this.modalHeader});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
@@ -193,6 +196,16 @@ class _IssuesState extends ConsumerState<Issues> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (widget.modalHeader != null) 
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                Expanded(child: TitleText(widget.modalHeader!)),
+                const CloseButton(),
+              ],
+            ),
+          ),
         // Row(
         //   children: [
         //     Expanded(

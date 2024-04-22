@@ -71,10 +71,6 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
             ),
           ),
           ...teams.map((team) {
-            final unreadActivities = ref.watch(
-              activityProvider(team.id!).select((value) =>
-                  value.activities.where((activity) => !activity.read)),
-            ).length;
             return InkWell(
               onTap: () {
                 if (widget.onTeamSelected != null) {
@@ -129,8 +125,11 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
                             const Icon(Icons.error),
                       ),
                     ),
-                  const SizedBox(width: 8),
-                  Text(team.name!),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(team.name!, maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                  ),
                 ],
               ),
             );

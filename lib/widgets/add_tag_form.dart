@@ -114,44 +114,52 @@ class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            TitleText(
-              widget.addOrEdit == AddorEdit.add
-                  ? '${TranslationKeys.add.tr()} ${TranslationKeys.tag.tr()}'
-                  : '${TranslationKeys.edit.tr()} ${TranslationKeys.tag.tr()}',
-            ),
-            const CloseButton(),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TitleText(
+                widget.addOrEdit == AddorEdit.add
+                    ? '${TranslationKeys.add.tr()} ${TranslationKeys.tag.tr()}'
+                    : '${TranslationKeys.edit.tr()} ${TranslationKeys.tag.tr()}',
+              ),
+              const CloseButton(),
+            ],
+          ),
         ),
         const SizedBox(
           height: 16,
         ),
-        Form(
-          key: _formKey,
-          child: TextFormField(
-            initialValue: _enteredTagName,
-            decoration: InputDecoration(
-              hintText: TranslationKeys.tagName.tr(),
+        Padding(
+padding: const EdgeInsets.symmetric(horizontal: 16),          child: Form(
+            key: _formKey,
+            child: TextFormField(
+              initialValue: _enteredTagName,
+              decoration: InputDecoration(
+                hintText: TranslationKeys.tagName.tr(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _enteredTagName = value;
+                  _formKey.currentState!.validate();
+                });
+              },
+              validator: (value) => value!.isEmpty
+                  ? TranslationKeys.pleaseEnterSomething.tr(args: [
+                      TranslationKeys.tagName.tr(),
+                    ])
+                  : null,
             ),
-            onChanged: (value) {
-              setState(() {
-                _enteredTagName = value;
-                _formKey.currentState!.validate();
-              });
-            },
-            validator: (value) => value!.isEmpty
-                ? TranslationKeys.pleaseEnterSomething.tr(args: [
-                    TranslationKeys.tagName.tr(),
-                  ])
-                : null,
           ),
         ),
         const SizedBox(
           height: 8,
         ),
-        Text(TranslationKeys.tagColor.tr()),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(TranslationKeys.tagColor.tr()),
+        ),
         ColorPallete(
           initialColor: _selectedHexColor,
           onSelected: (color) {
@@ -163,38 +171,42 @@ class _AddTagFormState extends ConsumerState<AddOrEditTagForm> {
         if (_errorMessage != null)
           Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
         // submit button
-        Row(
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                _submit();
-              },
-              child: Text(widget.addOrEdit == AddorEdit.add
-                  ? TranslationKeys.create.tr()
-                  : TranslationKeys.update.tr()),
-            ),
-            const Spacer(),
-            IconButton(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              ElevatedButton(
                 onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => ConfirmDialog(
-                      confirmText: TranslationKeys.delete.tr(),
-                      title: TranslationKeys.delete.tr(),
-                      content: TranslationKeys.confirmSomething.tr(args: [
-                        TranslationKeys.delete.tr(),
-                      ]),
-                      onConfirm: () {
-                        ref
-                            .read(tagProvider(widget.teamId).notifier)
-                            .removeTag(widget.initialTag!.id);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
+                  _submit();
                 },
-                icon: const Icon(Icons.delete)),
-          ],
+                child: Text(widget.addOrEdit == AddorEdit.add
+                    ? TranslationKeys.create.tr()
+                    : TranslationKeys.update.tr()),
+              ),
+              const Spacer(),
+              if (widget.addOrEdit == AddorEdit.edit)
+                IconButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => ConfirmDialog(
+                          confirmText: TranslationKeys.delete.tr(),
+                          title: TranslationKeys.delete.tr(),
+                          content: TranslationKeys.confirmSomething.tr(args: [
+                            TranslationKeys.delete.tr(),
+                          ]),
+                          onConfirm: () {
+                            ref
+                                .read(tagProvider(widget.teamId).notifier)
+                                .removeTag(widget.initialTag!.id);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.delete)),
+            ],
+          ),
         )
       ],
     );

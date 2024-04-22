@@ -64,13 +64,14 @@ class _ColorPalleteState extends State<ColorPallete> {
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: EdgeInsets.only(right: 8, left: index == 0 ? 16 : 0),
             child: InkWell(
               onTap: () {
                 setState(() {
                   _selectedHexColor = generatedHexColors[index];
                 });
-                widget.onSelected(generatedHexColors[index].replaceAll('#', ''));
+                widget
+                    .onSelected(generatedHexColors[index].replaceAll('#', ''));
               },
               child: CircleAvatar(
                   radius: MediaQuery.of(context).size.width * 0.06,
