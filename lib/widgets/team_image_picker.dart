@@ -21,6 +21,7 @@ class _TeamImagePickerState extends State<TeamImagePicker> {
   @override
   void initState() {
     super.initState();
+    print('Default image url: ${widget.defaultImageUrl}');
     if (widget.defaultImageUrl?.isNotEmpty == true) {
       setState(() {
         _pickedImage = File(widget.defaultImageUrl!);
@@ -31,47 +32,57 @@ class _TeamImagePickerState extends State<TeamImagePicker> {
   void _pickImage() async {
     final pickedImage = await ImagePicker().pickImage(
       source: ImageSource.gallery,
+      imageQuality: 0,
     );
     if (pickedImage == null) {
       return;
     }
+    final bytes = await pickedImage.length();
+    print('Picked image size: ${bytes ~/ 1024} KB');
     final pickedImageFile = File(pickedImage.path);
     widget.imageOnSelect(pickedImageFile);
     setState(() {
       _pickedImage = pickedImageFile;
     });
   }
-
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => _pickImage(),
-      child: ClipPath(
-        clipper: ShapeBorderClipper(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+    return Column(
+      children: [
+        // image size
+        // GreyDescription(
+        //   'Image size: ${_pickedImage?.lengthSync() ?? 0} bytes',
+        // ),
+        InkWell(
+          onTap: () => _pickImage(),
+          child: ClipPath(
+            clipper: ShapeBorderClipper(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Container(
+              color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
+              width: double.infinity,
+              height: 128,
+              child: _pickedImage != null
+                  ? widget.defaultImageUrl?.isNotEmpty == true &&
+                          _pickedImage!.path == widget.defaultImageUrl
+                      ? // network image
+                      CoverImage(imageUrl: widget.defaultImageUrl!)
+                      : Image.file(
+                          _pickedImage!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        )
+                  : // add image icon
+                  const Icon(
+                      Icons.image,
+                    ),
+            ),
           ),
         ),
-        child: Container(
-          color: Theme.of(context).colorScheme.secondary.withOpacity(0.5),
-          width: double.infinity,
-          height: 128,
-          child: _pickedImage != null
-              ? widget.defaultImageUrl?.isNotEmpty == true &&
-                      _pickedImage!.path == widget.defaultImageUrl
-                  ? // network image
-                  CoverImage(imageUrl: widget.defaultImageUrl!)
-                  : Image.file(
-                      _pickedImage!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    )
-              : // add image icon
-              const Icon(
-                  Icons.image,
-                ),
-        ),
-      ),
+      ],
     );
   }
 }

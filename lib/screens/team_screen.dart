@@ -154,6 +154,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
         floatingActionButton: _isNotAtTop && // when the keybaord is not open
                 MediaQuery.of(context).viewInsets.bottom == 0
             ? FloatingActionButton(
+                heroTag: 'team_screen',
                 onPressed: () {
                   _scrollController.animateTo(
                     0,

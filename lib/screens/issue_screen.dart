@@ -22,8 +22,9 @@ import '../widgets/title_text.dart';
 import 'tags_selection_menu.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
-  const IssueScreen({super.key, required this.issue});
+  const IssueScreen({super.key, required this.issue, this.isFullScreen = false});
   final Issue issue;
+  final bool isFullScreen;
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssueScreenState();
@@ -148,10 +149,10 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
       showDragHandle: true,
       context: context,
       builder: (context) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.8,
+        height: MediaQuery.of(context).size.height * 0.7,
         child: SingleChildScrollView(
           child: Issues(
-            modalHeader: 'Link "${issueData.title}" with...',
+            modalHeader: 'Link the issue with...',
             hiddenIssueIds: [issueData.id],
             teamId: widget.issue.teamId,
             onSelected: (issue) {
@@ -192,7 +193,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
         isAuthor || issueData.roles[uid] == 'collaborator';
     return SizedBox(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.8,
+      height: MediaQuery.of(context).size.height * (widget.isFullScreen ? 1 : 0.8),
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -336,8 +337,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           isEditable: isAuthorOrColloborator,
                         ),
                       )),
-                  //const Divider(),
-                  //const TitleText('Files'),
                   const Divider(),
                   TitleText(
                     TranslationKeys.comments.tr(),
@@ -375,7 +374,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       ],
                     )
                   else
-                    Wrap(
+                    Column(
                       children: _selectedLinkedIssues
                           .map(
                             (issue) => IssueTile(
@@ -436,6 +435,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
               bottom: 80,
               right: 16,
               child: FloatingActionButton(
+                heroTag: 'issue_screen',
                 onPressed: () {
                   _scrollController.animateTo(
                     0,

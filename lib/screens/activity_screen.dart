@@ -184,7 +184,7 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                                 onTap: () {
                                   _activityOnTapped(activity);
                                 },
-                                title: Text(activity.message),
+                                title: Text(activity.message, maxLines: 3, overflow: TextOverflow.ellipsis),
                                 subtitle: Text(TimeUtils.getFuzzyTime(
                                     DateTime.parse(activity.timestamp),
                                     context: context)),

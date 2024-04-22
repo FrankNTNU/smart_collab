@@ -16,13 +16,15 @@ class IssueTile extends StatelessWidget {
   final Function(Issue)? onSelected;
   final Widget? trailing;
   final bool isDensed;
+  final bool isFullScreenWhenTapped;
   const IssueTile(
       {super.key,
       required this.issueData,
       this.tabIndex = IssueTabEnum.open,
       this.onSelected,
       this.trailing,
-      this.isDensed = false});
+      this.isDensed = false,
+      this.isFullScreenWhenTapped = true});
 
   @override
   Widget build(BuildContext context) {
@@ -55,19 +57,33 @@ class IssueTile extends StatelessWidget {
                   }
                 : () {
                     if (kIsWeb) return;
-                    // open bottom sheet
-                    showModalBottomSheet(
-                      isScrollControlled: true,
-                      enableDrag: true,
-                      showDragHandle: true,
-                      context: context,
-                      builder: (context) => Padding(
-                        padding: MediaQuery.of(context).viewInsets,
-                        child: IssueScreen(
-                          issue: issueData,
+                    if (isFullScreenWhenTapped) {
+                      // navigate to issue screen
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => Scaffold(
+                            appBar: AppBar(
+                              title: Text(issueData.title),
+                            ),
+                            body: IssueScreen(issue: issueData),
+                          ),
                         ),
-                      ),
-                    );
+                      );
+                    } else {
+                      // open bottom sheet
+                      showModalBottomSheet(
+                        isScrollControlled: true,
+                        enableDrag: true,
+                        showDragHandle: true,
+                        context: context,
+                        builder: (context) => Padding(
+                          padding: MediaQuery.of(context).viewInsets,
+                          child: IssueScreen(
+                            issue: issueData,
+                          ),
+                        ),
+                      );
+                    }
                   },
             title: Text(issueData.title),
             subtitle: Column(

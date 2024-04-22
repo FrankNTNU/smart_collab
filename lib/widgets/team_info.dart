@@ -42,55 +42,57 @@ class _TeamInfoState extends ConsumerState<TeamInfo> {
             ),
             if (isOwnerOrAdmin)
               PopupMenuButton(
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    showModalBottomSheet(
+                      isScrollControlled: true,
+                      enableDrag: true,
+                      showDragHandle: true,
+                      context: context,
+                      builder: (context) {
+                        return AddTeamSheet(
+                          addOrEdit: AddorEdit.edit,
+                          team: teamData,
+                        );
+                      },
+                    );
+                  } else if (value == 'delete') {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return DeleteConfirmDialog(
+                          deleteValidationText:
+                              teamData.name ?? 'I want to delete this team',
+                          title: 'Delete Team',
+                          content: TranslationKeys.confirmDeleteTeam.tr(),
+                          onConfirm: () {
+                            // have the user enter the team name before deletion
+                            ref
+                                .read(teamsProvider.notifier)
+                                .deleteTeam(teamData.id!);
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                          },
+                          confirmText: TranslationKeys.delete.tr(),
+                        );
+                      },
+                    );
+                  }
+                },
                 itemBuilder: (context) => [
                   PopupMenuItem(
+                    value: 'edit',
                     child: ListTile(
                       leading: const Icon(Icons.edit),
                       title: Text(
                           '${TranslationKeys.edit.tr()} ${TranslationKeys.team.tr()}'),
-                      onTap: () {
-                        showModalBottomSheet(
-                          isScrollControlled: true,
-                          enableDrag: true,
-                          showDragHandle: true,
-                          context: context,
-                          builder: (context) {
-                            return AddTeamSheet(
-                              addOrEdit: AddorEdit.edit,
-                              team: teamData,
-                            );
-                          },
-                        );
-                      },
                     ),
                   ),
                   PopupMenuItem(
+                    value: 'delete',
                     child: ListTile(
                       leading: const Icon(Icons.delete),
                       title: Text(TranslationKeys.delete.tr()),
-                      onTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) {
-                            return DeleteConfirmDialog(
-                              deleteValidationText:
-                                  teamData.name ?? 'I want to delete this team',
-                              title: 'Delete Team',
-                              content: TranslationKeys.confirmDeleteTeam.tr(),
-                              onConfirm: () {
-                                // have the user enter the team name before deletion
-
-                                ref
-                                    .read(teamsProvider.notifier)
-                                    .deleteTeam(teamData.id!);
-                                Navigator.pop(context);
-                                Navigator.pop(context);
-                              },
-                              confirmText: TranslationKeys.delete.tr(),
-                            );
-                          },
-                        );
-                      },
                     ),
                   ),
                 ],

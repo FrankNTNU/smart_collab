@@ -9,6 +9,7 @@ import 'package:smart_collab/widgets/title_text.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../widgets/issue_tile.dart';
+import 'issue_screen.dart';
 
 class CalendarViewScreen extends ConsumerStatefulWidget {
   final String teamId;
@@ -187,6 +188,24 @@ class IssueCalendarCell extends StatelessWidget {
       onTap: dayIssues.isEmpty
           ? null
           : () {
+              // if there is only one issue then open it directly
+              if (dayIssues.length == 1) {
+                final issue = dayIssues.first;
+                // open bottom sheet
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  enableDrag: true,
+                  showDragHandle: true,
+                  context: context,
+                  builder: (context) => Padding(
+                    padding: MediaQuery.of(context).viewInsets,
+                    child: IssueScreen(
+                      issue: issue,
+                    ),
+                  ),
+                );
+                return;
+              }
               // open bottom sheet
               showModalBottomSheet(
                 isScrollControlled: true,
@@ -216,6 +235,7 @@ class IssueCalendarCell extends StatelessWidget {
                             itemCount: dayIssues.length,
                             itemBuilder: (context, index) {
                               return IssueTile(
+                                isFullScreenWhenTapped: false,
                                 issueData: dayIssues[index],
                                 tabIndex: IssueTabEnum.open,
                               );

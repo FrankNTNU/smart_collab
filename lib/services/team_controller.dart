@@ -284,8 +284,23 @@ class TeamsController extends Notifier<TeamsState> {
           apiStatus: ApiStatus.loading,
           performedAction: PerformedAction.update);
       if (image != null) {
+        // make the image size smaller
+        // delete the original image
+        if (team.imageUrl != null) {
+          // check if such image exists on Firebase Storage given the imageUrl
+          final isExist = await FirebaseStorage.instance
+              .refFromURL(team.imageUrl!)
+              .listAll()
+              .then((value) => true)
+              .catchError((e) => false);
+          if (!isExist) {
+            // delete the image from Firebase Storage if such image exists
+            await FirebaseStorage.instance.refFromURL(team.imageUrl!).delete();
+          }
+        }
+
         // store the new image in Firebase Storage
-        final ref = FirebaseStorage.instance.ref('teams/${team.id}');
+        final ref = FirebaseStorage.instance.ref('teams/${team.id}/cover');
         await ref.putFile(image);
         team = team.copyWith(imageUrl: await ref.getDownloadURL());
       }
@@ -326,7 +341,7 @@ class TeamsController extends Notifier<TeamsState> {
       });
       // store the image in Firebase Storage and use the document id as the image name
       if (image != null) {
-        final ref = FirebaseStorage.instance.ref('teams/${docRef.id}');
+        final ref = FirebaseStorage.instance.ref('teams/${docRef.id}/cover');
         await ref.putFile(image);
         team = team.copyWith(imageUrl: await ref.getDownloadURL());
       }

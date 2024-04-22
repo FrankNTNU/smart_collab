@@ -40,7 +40,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.addOrEdit == AddorEdit.edit) {
+    if (widget.addOrEdit == AddorEdit.edit && widget.team != null) {
       setState(() {
         _enteredName = widget.team!.name!;
         _enteredDescription = widget.team!.description!;
@@ -90,6 +90,7 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
               name: _enteredName,
               description: _enteredDescription,
               id: widget.team!.id,
+              imageUrl: widget.team!.imageUrl,
             ),
             _pickedImage,
           );
@@ -107,12 +108,13 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = ref.watch(teamsProvider.select((value) => value.apiStatus == ApiStatus.loading));
+    final isLoading = ref.watch(
+        teamsProvider.select((value) => value.apiStatus == ApiStatus.loading));
     return Padding(
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16, right: 16
-      ),
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16),
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.8,
         child: SingleChildScrollView(
@@ -182,12 +184,12 @@ class _AddTeamSheetState extends ConsumerState<AddTeamSheet> {
                 if (isLoading)
                   const Center(child: CircularProgressIndicator())
                 else
-                ElevatedButton(
-                  onPressed: _submit,
-                  child: Text(
-                    widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
+                  ElevatedButton(
+                    onPressed: _submit,
+                    child: Text(
+                      widget.addOrEdit == AddorEdit.add ? 'Add' : 'Update',
+                    ),
                   ),
-                ),
                 const SizedBox(height: 32),
               ],
             ),
