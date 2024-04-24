@@ -7,7 +7,6 @@ import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/issue_tags.dart';
 import 'package:smart_collab/widgets/title_text.dart';
 
-import '../screens/issue_screen.dart';
 import '../services/activity_controller.dart';
 import '../services/auth_controller.dart';
 import '../utils/translation_keys.dart';
@@ -40,6 +39,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
   String? _errorMessage;
   // description editing controller
   final _descriptionController = TextEditingController();
+  bool _isAutoClosed = false;
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -74,8 +74,12 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
         _enteredDescription = widget.issue!.description;
         _descriptionController.text = widget.issue!.description;
         _enteredDeadline = widget.issue!.deadline;
+        _enteredTags.addAll(widget.issue!.tags);
       });
     }
+    setState(() {
+      _isAutoClosed = widget.issue?.isAutoClosed == true;
+    });
   }
 
   void _submit() async {
@@ -101,7 +105,9 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
           title: _enteredTitle,
           description: _enteredDescription,
           deadline: _enteredDeadline,
-          issueId: widget.issue!.id);
+          tags: _enteredTags,
+          issueId: widget.issue!.id,
+          isAutoClosed: _isAutoClosed);
       final message = TranslationKeys.xUpdatedTheIssueY.tr(args: [
         username,
         _enteredTitle,
@@ -120,6 +126,7 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                 title: _enteredTitle,
                 description: _enteredDescription,
                 deadline: _enteredDeadline,
+                isAutoClosed: _isAutoClosed
               );
       // add tags to isse
       await ref.read(issueProvider(widget.teamId).notifier).addTagsToIssue(
@@ -178,7 +185,15 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               Row(
                 children: [
                   TitleText(
-                    '${widget.addOrEdit == AddorEdit.add || widget.addOrEdit == AddorEdit.duplicate ? TranslationKeys.add.tr() : TranslationKeys.edit.tr()} ${TranslationKeys.issue.tr()}',
+                    TranslationKeys.verbNoun.tr(
+                      args: [
+                        widget.addOrEdit == AddorEdit.add ||
+                                widget.addOrEdit == AddorEdit.duplicate
+                            ? TranslationKeys.add.tr()
+                            : TranslationKeys.edit.tr(),
+                        TranslationKeys.issue.tr(),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   const CloseButton()
@@ -228,88 +243,127 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
               ),
               // height 8
               const SizedBox(height: 8),
-              Text(TranslationKeys.deadline.tr()),
               // deadline field
-              InkWell(
-                onTap: () {
-                  final threeYearsFromNow = DateTime.now().add(
-                    const Duration(days: 365 * 3),
-                  );
-                  // date picker
-                  showDatePicker(
-                    context: context,
-                    initialDate: _enteredDeadline ?? DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: threeYearsFromNow,
-                  ).then((pickedDate) {
-                    if (pickedDate == null) {
-                      return;
-                    }
-                    setState(() {
-                      _enteredDeadline = pickedDate;
-                    });
-                  });
-                },
-                child: InputDecorator(
-                  decoration: InputDecoration(
-                    errorText: _errorMessage,
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(TranslationKeys.deadline.tr()),
+                        InkWell(
+                          onTap: () {
+                            final threeYearsFromNow = DateTime.now().add(
+                              const Duration(days: 365 * 3),
+                            );
+                            // date picker
+                            showDatePicker(
+                              context: context,
+                              initialDate: _enteredDeadline ?? DateTime.now(),
+                              firstDate: DateTime.now(),
+                              lastDate: threeYearsFromNow,
+                            ).then((pickedDate) {
+                              if (pickedDate == null) {
+                                return;
+                              }
+                              setState(() {
+                                _enteredDeadline = pickedDate;
+                              });
+                            });
+                          },
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              errorText: _errorMessage,
+                            ),
+                            child: Row(
+                              children: [
+                                // event icon
+                                const Icon(Icons.event),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
+                                  child: Text(_enteredDeadline == null
+                                      ? TranslationKeys.pleaseSelectSomething
+                                          .tr(
+                                          args: [TranslationKeys.deadline.tr()],
+                                        )
+                                      : _enteredDeadline
+                                          .toString()
+                                          .substring(0, 10)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Row(
-                    children: [
-                      // event icon
-                      const Icon(Icons.event),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Text(_enteredDeadline == null
-                            ? TranslationKeys.pleaseSelectSomething.tr(
-                                args: [TranslationKeys.deadline.tr()],
-                              )
-                            : _enteredDeadline.toString().substring(0, 10)),
-                      ),
-                    ],
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Closes itself after deadline'),
+                        Switch(
+                            value: _isAutoClosed,
+                            onChanged: (v) {
+                              setState(() {
+                                _isAutoClosed = v;
+                              });
+                            }),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
               if (widget.addOrEdit == AddorEdit.add ||
                   widget.addOrEdit == AddorEdit.duplicate)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Text(TranslationKeys.tags.tr()),
                 ),
               // tags field
-              if (widget.addOrEdit == AddorEdit.add ||
-                  widget.addOrEdit == AddorEdit.duplicate)
-                InkWell(
-                  onTap: () {
-                    showModalBottomSheet(
-                      isScrollControlled: true,
-                      enableDrag: true,
-                      showDragHandle: true,
-                      context: context,
-                      builder: (context) {
-                        return TagsSelectionMenu(
-                            onSelected: (tag) {
-                              setState(() {
-                                if (_enteredTags.contains(tag)) {
-                                  _enteredTags.remove(tag);
-                                } else {
-                                  _enteredTags.add(tag);
-                                }
-                              });
-                            },
-                            initialTags: _enteredTags,
-                            teamId: widget.teamId,
-                            purpose: TagSelectionPurpose.editIssue);
-                      },
-                    );
-                  },
+              InkWell(
+                onTap: () {
+                  showModalBottomSheet(
+                    isScrollControlled: true,
+                    enableDrag: true,
+                    showDragHandle: true,
+                    context: context,
+                    builder: (context) {
+                      return TagsSelectionMenu(
+                          onSelected: (tag) {
+                            setState(() {
+                              if (_enteredTags.contains(tag)) {
+                                _enteredTags.remove(tag);
+                              } else {
+                                _enteredTags.add(tag);
+                              }
+                            });
+                          },
+                          initialTags: _enteredTags,
+                          teamId: widget.teamId,
+                          title: TranslationKeys.verbNoun.tr(
+                            args: [
+                              TranslationKeys.edit.tr(),
+                              TranslationKeys.tags.tr(),
+                            ],
+                          ),
+                          purpose: TagSelectionPurpose.editIssue);
+                    },
+                  );
+                },
+                child: InputDecorator(
+                  decoration: const InputDecoration(),
                   child: IssueTags(
                     tags: _enteredTags,
                     teamId: widget.teamId,
                     isEditable: true,
                   ),
                 ),
+              ),
               const SizedBox(
                 height: 16,
               ),
@@ -322,7 +376,16 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
                     _submit();
                   },
                   child: Text(
-                      '${widget.addOrEdit == AddorEdit.add || widget.addOrEdit == AddorEdit.duplicate ? TranslationKeys.add.tr() : TranslationKeys.update.tr()} ${TranslationKeys.issue.tr()}'),
+                    TranslationKeys.verbNoun.tr(
+                      args: [
+                        widget.addOrEdit == AddorEdit.add ||
+                                widget.addOrEdit == AddorEdit.duplicate
+                            ? TranslationKeys.add.tr()
+                            : TranslationKeys.update.tr(),
+                        TranslationKeys.issue.tr(),
+                      ],
+                    ),
+                  ),
                 ),
               const SizedBox(height: 32),
             ],

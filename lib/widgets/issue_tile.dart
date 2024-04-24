@@ -1,5 +1,3 @@
-import 'package:easy_localization/easy_localization.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_collab/screens/issue_screen.dart';
@@ -58,6 +56,7 @@ class IssueTile extends StatelessWidget {
                 : () {
                     if (kIsWeb) return;
                     if (isFullScreenWhenTapped) {
+                      // fetch single issue
                       // navigate to issue screen
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -65,7 +64,7 @@ class IssueTile extends StatelessWidget {
                             appBar: AppBar(
                               title: Text(issueData.title),
                             ),
-                            body: IssueScreen(issue: issueData),
+                            body: IssueScreen(issue: issueData, isFullScreen: true,),
                           ),
                         ),
                       );
@@ -80,6 +79,7 @@ class IssueTile extends StatelessWidget {
                           padding: MediaQuery.of(context).viewInsets,
                           child: IssueScreen(
                             issue: issueData,
+                            isFullScreen: false,
                           ),
                         ),
                       );

@@ -1,12 +1,14 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/screens/settings_screen.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
 import '../services/auth_controller.dart';
 import '../utils/translation_keys.dart';
 import 'add_or_edit_team_sheet.dart';
 import 'delete_confirm_dialog.dart';
+import 'grey_description.dart';
 import 'invite_to_team.dart';
 import 'stats.dart';
 import 'team_members.dart';
@@ -64,14 +66,16 @@ class _TeamInfoState extends ConsumerState<TeamInfo> {
                           deleteValidationText:
                               teamData.name ?? 'I want to delete this team',
                           title: 'Delete Team',
+                          description:
+                              'The deleted team will be archived, but you can restore it later.',
                           content: TranslationKeys.confirmDeleteTeam.tr(),
                           onConfirm: () {
                             // have the user enter the team name before deletion
                             ref
                                 .read(teamsProvider.notifier)
-                                .deleteTeam(teamData.id!);
-                            Navigator.pop(context);
-                            Navigator.pop(context);
+                                .archieveTeam(teamData.id!);
+                            // pop
+                            Navigator.of(context).pop();
                           },
                           confirmText: TranslationKeys.delete.tr(),
                         );
@@ -82,17 +86,28 @@ class _TeamInfoState extends ConsumerState<TeamInfo> {
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'edit',
-                    child: ListTile(
-                      leading: const Icon(Icons.edit),
-                      title: Text(
-                          '${TranslationKeys.edit.tr()} ${TranslationKeys.team.tr()}'),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Text(
+                            '${TranslationKeys.edit.tr()} ${TranslationKeys.team.tr()}')
+                      ],
                     ),
                   ),
                   PopupMenuItem(
                     value: 'delete',
-                    child: ListTile(
-                      leading: const Icon(Icons.delete),
-                      title: Text(TranslationKeys.delete.tr()),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.delete),
+                        const SizedBox(
+                          width: 8,
+                        ),
+                        Text(
+                            '${TranslationKeys.delete.tr()} ${TranslationKeys.team.tr()}')
+                      ],
                     ),
                   ),
                 ],
@@ -130,13 +145,22 @@ class _TeamInfoState extends ConsumerState<TeamInfo> {
               ),
           ],
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: GreyDescription(
+              '${teamData.roles.entries.length} ${TranslationKeys.members.tr()}'),
+        ),
         TeamMembers(
           teamId: teamData.id!,
         ),
         const Divider(),
         StatsInfo(
           teamId: teamData.id!,
-        )
+        ),
+        const Divider(),
+        SettingsScreen(
+          teamId: teamData.id!,
+        ),
       ],
     );
   }

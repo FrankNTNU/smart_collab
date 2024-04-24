@@ -100,9 +100,11 @@
     "x_has_duplicate": "{} has duplicate",
     "days": "days",
     "duplicate": "Duplicate",
+    "copy": "Copy",
     "linked_issues": "Linked issues",
     "stats": "Stats",
     "total_issues_created": "Total issues created",
     "top_x_mosed_used_tags": "Top {} most used tags",
-    "collaborator_description": "Collaborators can view, comment, and edit issues"
+    "collaborator_description": "Collaborators can view, comment, and edit issues",
+    "verb_noun": "{} {}"
 }

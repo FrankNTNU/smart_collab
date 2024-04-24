@@ -31,6 +31,9 @@ class Issue {
   String? linkedIssueId;
   // linked issue ids
   final List<String> linkedIssueIds;
+  // is auto closed
+  bool isAutoClosed = false;
+
   // ctor
   Issue({
     required this.title,
@@ -46,6 +49,7 @@ class Issue {
     this.lastUpdatedBy,
     this.isClosed = false,
     this.linkedIssueIds = const [],
+    this.isAutoClosed = false,
   });
   // copyWith
   Issue copyWith({
@@ -62,6 +66,7 @@ class Issue {
     String? lastUpdatedBy,
     bool? isClosed,
     List<String>? linkedIssueIds,
+    bool? isAutoClosed,
   }) {
     return Issue(
       title: title ?? this.title,
@@ -77,6 +82,7 @@ class Issue {
       lastUpdatedBy: lastUpdatedBy ?? this.lastUpdatedBy,
       isClosed: isClosed ?? this.isClosed,
       linkedIssueIds: linkedIssueIds ?? this.linkedIssueIds,
+      isAutoClosed: isAutoClosed ?? this.isAutoClosed,
     );
   }
 
@@ -97,6 +103,7 @@ class Issue {
       lastUpdatedBy: json['lastUpdatedBy'],
       isClosed: json['isClosed'] ?? false,
       linkedIssueIds: List<String>.from(json['linkedIssueIds'] ?? []),
+      isAutoClosed: json['isAutoClosed'] ?? false,
     );
   }
   // initial
@@ -113,6 +120,24 @@ class Issue {
       tags: [],
       teamId: '',
     );
+  }
+
+  // toJson
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'status': status,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+      'roles': roles,
+      'deadline': deadline?.toIso8601String(),
+      'tags': tags,
+      'teamId': teamId,
+      'lastUpdatedBy': lastUpdatedBy,
+      'isClosed': isClosed,
+      'linkedIssueIds': linkedIssueIds,
+    };
   }
 }
 
@@ -205,6 +230,45 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
+  }
+
+  // fetch all open issues
+  Future<List<Issue>> fetchIssuesByIsOpen(bool isOpen) async {
+    print('Fetching all open issues..., isOpen: $isOpen');
+    // delay 3 seconds
+    await Future.delayed(const Duration(seconds: 3));
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading,
+        performedAction: PerformedAction.bulkFetch);
+    try {
+      var query = FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .where('teamId', isEqualTo: state.teamId);
+      final isClosed = !isOpen;
+      if (isClosed) {
+        query = query.where('isClosed', isEqualTo: true);
+      } else {
+        query = query.where('isClosed', isNotEqualTo: true);
+      }
+
+      final snapShot = await query.get();
+      final fetchIssues = snapShot.docs.map((doc) {
+        return Issue.fromJson(doc.data()).copyWith(id: doc.id);
+      }).toList();
+      print('Fetch issues count ${fetchIssues.length}');
+      state = state.copyWith(apiStatus: ApiStatus.success);
+      mergeIssues(fetchIssues);
+      return fetchIssues;
+    } catch (e) {
+      print('Error occurred in the fetchAllOpenIssues method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+      return [];
+    }
   }
 
   // fetch IssueStats
@@ -657,6 +721,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
     List<String>? tags,
     DateTime? deadline,
     required String issueId,
+    bool? isAutoClosed,
   }) async {
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
@@ -667,16 +732,22 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
           .doc(state.teamId)
           .collection('issues')
           .doc(issueId)
-          .update({
-            'title': title,
-            'description': description,
-            'updatedAt': DateTime.now().toIso8601String(),
-            'lastUpdatedBy': state.userId,
-          }
-            ..addAll(tags != null ? {'tags': tags} : {})
-            ..addAll(deadline != null
-                ? {'deadline': deadline.toIso8601String()}
-                : {}));
+          .update(
+            {
+              'title': title,
+              'description': description,
+              'updatedAt': DateTime.now().toIso8601String(),
+              'lastUpdatedBy': state.userId,
+            }
+              ..addAll(tags != null ? {'tags': tags} : {})
+              ..addAll(
+                deadline != null
+                    ? {'deadline': deadline.toIso8601String()}
+                    : {},
+              )
+              ..addAll(
+                  isAutoClosed != null ? {'isAutoClosed': isAutoClosed} : {}),
+          );
       state = state.copyWith(apiStatus: ApiStatus.success, issueMap: {
         ...state.issueMap,
         issueId: state.issueMap[issueId]!.copyWith(
@@ -685,6 +756,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
           updatedAt: DateTime.now(),
           tags: tags ?? state.issueMap[issueId]!.tags,
           deadline: deadline ?? state.issueMap[issueId]!.deadline,
+          isAutoClosed: isAutoClosed ?? state.issueMap[issueId]!.isAutoClosed,
         ),
       });
     } catch (e) {
@@ -702,6 +774,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
     required String description,
     List<String>? tags,
     DateTime? deadline,
+    bool? isAutoClosed,
   }) async {
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
@@ -719,20 +792,22 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
             'deadline':
                 deadline?.toIso8601String() ?? DateTime.now().toIso8601String(),
             'teamId': state.teamId,
+            'isClosed': false,
             'roles': {state.userId: 'owner'},
+            'isAutoClosed': isAutoClosed ?? false,
           }..addAll(tags != null ? {'tags': tags} : {}));
       final issue = Issue(
-        title: title,
-        description: description,
-        status: '',
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        deadline: deadline ?? DateTime.now(),
-        id: issueRef.id,
-        roles: {state.userId: 'owner'},
-        tags: tags ?? [],
-        teamId: state.teamId,
-      );
+          title: title,
+          description: description,
+          status: '',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          deadline: deadline ?? DateTime.now(),
+          id: issueRef.id,
+          roles: {state.userId: 'owner'},
+          tags: tags ?? [],
+          teamId: state.teamId,
+          isClosed: false);
       state = state.copyWith(apiStatus: ApiStatus.success, issueMap: {
         ...state.issueMap,
         issueRef.id: issue,

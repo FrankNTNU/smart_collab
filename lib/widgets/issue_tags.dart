@@ -35,13 +35,13 @@ class IssueTags extends StatelessWidget {
             ),
         if (isEditable && tags.isEmpty)
           // add tag chip
-           Padding(
+          Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
                 const Icon(Icons.add),
                 Text(TranslationKeys.addTag.tr()),
-              ],  
+              ],
             ),
           ),
         if (isEditable && tags.isNotEmpty)

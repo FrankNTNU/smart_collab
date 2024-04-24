@@ -2,7 +2,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
-import 'package:smart_collab/widgets/add_or_edit_team_sheet.dart';
 import 'package:smart_collab/widgets/issue_tile.dart';
 import 'package:smart_collab/widgets/tab_view_bar.dart';
 import 'package:smart_collab/widgets/title_text.dart';
@@ -12,7 +11,6 @@ import '../screens/tags_selection_menu.dart';
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
 import '../utils/translation_keys.dart';
-import 'add_or_edit_issue_sheet.dart';
 import 'issue_tags.dart';
 
 // tab enum
@@ -48,7 +46,8 @@ class Issues extends ConsumerStatefulWidget {
       this.onSelected,
       this.hiddenIssueIds = const [],
       this.isTabsVisibleOnChanged,
-      this.currentTabIndex = 0, this.modalHeader});
+      this.currentTabIndex = 0,
+      this.modalHeader});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
@@ -76,6 +75,7 @@ class _IssuesState extends ConsumerState<Issues> {
       });
     }
   }
+
   @override
   void initState() {
     super.initState();
@@ -138,7 +138,6 @@ class _IssuesState extends ConsumerState<Issues> {
         .watch(issueProvider(widget.teamId).select((value) => value.issueMap))
         .values
         .toList();
-
     print('Source issue length: ${sourceIssues.length}');
     print('Current filter tab index: $_currentTabIndex');
     var filteredIssues = sourceIssues.where((issue) {
@@ -196,7 +195,7 @@ class _IssuesState extends ConsumerState<Issues> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.modalHeader != null) 
+        if (widget.modalHeader != null)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
@@ -262,28 +261,6 @@ class _IssuesState extends ConsumerState<Issues> {
         //   ],
         // ),
         // add issue button
-        if (widget.onSelected == null)
-          Row(
-            children: [
-              TextButton.icon(
-                label: Text(TranslationKeys.newIssue.tr()),
-                icon: const Icon(Icons.add),
-                onPressed: () {
-                  showModalBottomSheet(
-                    isScrollControlled: true,
-                    enableDrag: true,
-                    showDragHandle: true,
-                    context: context,
-                    builder: (context) => AddOrEditIssueSheet(
-                      teamId: widget.teamId,
-                      addOrEdit: AddorEdit.add,
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
-
         // a tab for issues
         VisibilityDetector(
           key: const Key('my-widget-key'),

@@ -12,6 +12,7 @@ import 'package:smart_collab/widgets/issues.dart';
 import 'package:smart_collab/widgets/last_updated.dart';
 
 import '../services/auth_controller.dart';
+import '../services/team_controller.dart';
 import '../utils/translation_keys.dart';
 import '../widgets/add_or_edit_issue_sheet.dart';
 import '../widgets/add_or_edit_team_sheet.dart';
@@ -22,7 +23,8 @@ import '../widgets/title_text.dart';
 import 'tags_selection_menu.dart';
 
 class IssueScreen extends ConsumerStatefulWidget {
-  const IssueScreen({super.key, required this.issue, this.isFullScreen = false});
+  const IssueScreen(
+      {super.key, required this.issue, this.isFullScreen = false});
   final Issue issue;
   final bool isFullScreen;
 
@@ -53,6 +55,11 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     Future.delayed(
       Duration.zero,
       () async {
+        // refresh current issue
+        await ref
+            .read(issueProvider(widget.issue.teamId).notifier)
+            .fetchSingleIssueById(widget.issue.id);
+        // fetch linked issues
         for (final linkedIssueId in widget.issue.linkedIssueIds) {
           final linkedIssue = await ref
               .read(issueProvider(widget.issue.teamId).notifier)
@@ -113,8 +120,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
         );
       },
     );
-    // pop
-    Navigator.pop(context);
   }
 
   void _toggleIsClosed(
@@ -138,8 +143,6 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
               isClosed ? ActivityType.closeIssue : ActivityType.openIssue,
           recipientUid: uid!,
         );
-    // pop
-    Navigator.pop(context);
   }
 
   void _openLinkedIssuesSheet(Issue issueData) {
@@ -191,9 +194,15 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     final isAuthor = issueData.roles[uid] == 'owner';
     final isAuthorOrColloborator =
         isAuthor || issueData.roles[uid] == 'collaborator';
+    final isOwnerOfTheTeam = ref.watch(teamsProvider).teams.where((team) {
+          return team.id == widget.issue.teamId;
+        }).first.roles[uid] ==
+        'owner';
+    print('isFullScreen: ${widget.isFullScreen}');
     return SizedBox(
       width: double.infinity,
-      height: MediaQuery.of(context).size.height * (widget.isFullScreen ? 1 : 0.8),
+      height:
+          MediaQuery.of(context).size.height * (widget.isFullScreen ? 1 : 0.8),
       child: Stack(
         children: [
           SingleChildScrollView(
@@ -218,7 +227,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                         ),
                       ),
 
-                      const CloseButton(),
+                      //const CloseButton(),
                     ],
                   ),
                   // last updated at information
@@ -241,56 +250,83 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                               );
                             },
                             icon: const Icon(Icons.edit)),
-                      if (isAuthorOrColloborator)
+                      
                         // edit button
                         PopupMenuButton(
+                          onSelected: (value) {
+                            if (value == 'duplicate') {
+                              showModalBottomSheet(
+                                isScrollControlled: true,
+                                enableDrag: true,
+                                showDragHandle: true,
+                                context: context,
+                                builder: (context) => AddOrEditIssueSheet(
+                                  teamId: widget.issue.teamId,
+                                  addOrEdit: AddorEdit.duplicate,
+                                  issue: issueData,
+                                ),
+                              );
+                            } else if (value == 'close') {
+                              _toggleIsClosed(
+                                  isClosed: true, issueData: issueData);
+                            } else if (value == 'delete') {
+                              _showDeletionDialog();
+                            }
+                          },
                           itemBuilder: (BuildContext context) => [
                             // to duplicate issue
                             PopupMenuItem(
-                              child: ListTile(
-                                leading: const Icon(Icons.copy),
-                                title: Text(
-                                    '${TranslationKeys.duplicate.tr()} ${TranslationKeys.issue.tr()}'),
-                                onTap: () {
-                                  showModalBottomSheet(
-                                    isScrollControlled: true,
-                                    enableDrag: true,
-                                    showDragHandle: true,
-                                    context: context,
-                                    builder: (context) => AddOrEditIssueSheet(
-                                      teamId: widget.issue.teamId,
-                                      addOrEdit: AddorEdit.duplicate,
-                                      issue: issueData,
+                                value: 'duplicate',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.copy),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      TranslationKeys.verbNoun.tr(
+                                        args: [
+                                          TranslationKeys.copy.tr(),
+                                          TranslationKeys.issue.tr(),
+                                        ],
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
-                            ),
+                                  ],
+                                )),
 
-                            if (isAuthorOrColloborator && !issueData.isClosed)
+                            if ((isAuthorOrColloborator) && !issueData.isClosed)
                               // close issue
                               PopupMenuItem(
-                                child: ListTile(
-                                  leading: const Icon(Icons.close),
-                                  title: Text(
-                                      '${TranslationKeys.close.tr()} ${TranslationKeys.issue.tr()}'),
-                                  onTap: () {
-                                    _toggleIsClosed(
-                                        isClosed: true, issueData: issueData);
-                                  },
-                                ),
-                              ),
+                                  value: 'close',
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.close),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        TranslationKeys.verbNoun.tr(
+                                          args: [
+                                            TranslationKeys.close.tr(),
+                                            TranslationKeys.issue.tr(),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )),
                             if (isAuthor)
                               PopupMenuItem(
-                                child: ListTile(
-                                  leading: const Icon(Icons.delete),
-                                  title: Text(
-                                      '${TranslationKeys.delete.tr()} ${TranslationKeys.issue.tr()}'),
-                                  onTap: () {
-                                    _showDeletionDialog();
-                                  },
-                                ),
-                              ),
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.delete),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        TranslationKeys.verbNoun.tr(
+                                          args: [
+                                            TranslationKeys.delete.tr(),
+                                            TranslationKeys.issue.tr(),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )),
                           ],
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 8),
@@ -324,8 +360,10 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                                       initialTags: issueData.tags,
                                       onSelected: _onTagToggle,
                                       teamId: widget.issue.teamId,
-                                      title:
-                                          '${TranslationKeys.edit.tr()} ${TranslationKeys.tags.tr()}',
+                                      title: TranslationKeys.verbNoun.tr(args: [
+                                        TranslationKeys.edit.tr(),
+                                        TranslationKeys.tags.tr(),
+                                      ]),
                                     );
                                   });
                             },
@@ -354,7 +392,12 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           _openLinkedIssuesSheet(issueData);
                         },
                         label: Text(
-                          '${TranslationKeys.add.tr()} ${TranslationKeys.linkedIssues.tr()}',
+                          TranslationKeys.verbNoun.tr(
+                            args: [
+                              TranslationKeys.add.tr(),
+                              TranslationKeys.linkedIssues.tr(),
+                            ],
+                          ),
                         ),
                       )
                     ],

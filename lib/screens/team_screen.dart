@@ -7,13 +7,19 @@ import 'package:smart_collab/screens/teams_drawer.dart';
 import 'package:smart_collab/services/activity_controller.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
+import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
+import 'package:smart_collab/widgets/grey_description.dart';
 import 'package:smart_collab/widgets/notification_bell.dart';
 import 'package:smart_collab/widgets/profile_greeting_tile.dart';
 import 'package:smart_collab/widgets/team_info.dart';
+import 'package:smart_collab/widgets/title_text.dart';
 
 import '../services/issue_controller.dart';
 import '../services/team_controller.dart';
+import '../widgets/add_or_edit_issue_sheet.dart';
+import '../widgets/add_or_edit_team_sheet.dart';
+import '../widgets/data_import_export_button.dart';
 import '../widgets/issues.dart';
 import '../widgets/tab_view_bar.dart';
 
@@ -27,14 +33,7 @@ class MainFeatureTabIndex {
 class TeamScreen extends ConsumerStatefulWidget {
   final Team? team;
   final Function(Team team)? onTeamSelected;
-  final Function(bool) toggleTheme;
-  final bool isDarkMode;
-  const TeamScreen(
-      {super.key,
-      required this.team,
-      this.onTeamSelected,
-      required this.toggleTheme,
-      required this.isDarkMode});
+  const TeamScreen({super.key, required this.team, this.onTeamSelected});
 
   @override
   ConsumerState<TeamScreen> createState() => _TeamScreenState();
@@ -49,7 +48,15 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
   int _mainFeatureTabIndex = MainFeatureTabIndex.home;
   bool _isIssueTabsVisible = true;
   int _currentTabIndex = 0;
-
+  // did update widget
+  @override
+  void didUpdateWidget(covariant TeamScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.team != widget.team) {
+      _mainFeatureTabIndex = MainFeatureTabIndex.home;
+      _currentTabIndex = 0;
+    }
+  }
   @override
   void initState() {
     super.initState();
@@ -80,6 +87,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print('Rebuilding team screen...');
     final uid =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     final teamData = ref.watch(teamsProvider.select((value) =>
@@ -103,8 +111,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       child: Scaffold(
         drawer: TeamsDrawer(
           onTeamSelected: widget.onTeamSelected,
-          toggleTheme: widget.toggleTheme,
-          isDarkMode: widget.isDarkMode,
         ),
         appBar: AppBar(
           title: Tooltip(
@@ -113,7 +119,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
           ),
           actions: [
             // notification icon button
-            if (teamData != null)
+            if (teamData != null && !teamData.isArchieved)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: NotificationBell(
@@ -122,7 +128,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               ),
           ],
         ),
-        bottomNavigationBar: kIsWeb
+        bottomNavigationBar: kIsWeb || teamData?.isArchieved == true
             ? null
             : BottomNavigationBar(
                 currentIndex: _mainFeatureTabIndex,
@@ -152,7 +158,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
               ),
         // scroll tp top button
         floatingActionButton: _isNotAtTop && // when the keybaord is not open
-                MediaQuery.of(context).viewInsets.bottom == 0
+                MediaQuery.of(context).viewInsets.bottom == 0 && teamData?.isArchieved == false
             ? FloatingActionButton(
                 heroTag: 'team_screen',
                 onPressed: () {
@@ -169,112 +175,180 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
             ? const Center(
                 child: Text('Select a team from the left drawer'),
               )
-            : Stack(
-                children: [
-                  RefreshIndicator(
-                    onRefresh: () async {
-                      ref
-                          .read(issueProvider(widget.team!.id!).notifier)
-                          .fetchIssues(widget.team!.id!);
-                    },
-                    child: ListView(
-                      // make sure refresh indicator works
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      controller: _scrollController,
-                      children: [
-                        const ProfileGreetingTile(), // show cover image
-                        if (teamData.imageUrl != null)
-                          // network image
-                          CoverImage(
-                            imageUrl: teamData.imageUrl!,
-                            isRoundedBorder: false,
-                            // height: _coverImageHeight,
-                          ),
-                        // tabs
-                        if (kIsWeb)
-                          Tabs(
-                            initialTabIndex: _mainFeatureTabIndex,
-                            tabs: [
-                              TranslationKeys.home.tr(),
-                              TranslationKeys.calendar.tr(),
-                              TranslationKeys.about.tr(),
-                              //TranslationKeys.activities.tr(),
-                            ],
-                            icons: const [
-                              Icons.home,
-                              Icons.event,
-                              Icons.group,
-                              //Icons.notifications,
-                            ],
-                            onTabChange: (index) {
-                              setState(() {
-                                _mainFeatureTabIndex = index;
-                              });
-                            },
-                          ),
-                        // calendar
-                        if (_mainFeatureTabIndex ==
-                            MainFeatureTabIndex.calendar)
-                          Column(
-                            children: [
-                              CalendarViewScreen(
-                                teamId: widget.team!.id!,
+            : teamData.isArchieved
+                ?  Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.archive,
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 16,
+                      ),
+                      const TitleText(
+                        'This team has been archived',
+                      ),
+                      // red text
+                      const Text(
+                        'Archieved teams will be removed after 7 days.',
+                        style: TextStyle(
+                          color: Colors.red,
+                        ),
+                      ),
+                      // restore button
+                      TextButton.icon(onPressed: () {
+                        showDialog(context: context, builder:(context) => ConfirmDialog(
+                          confirmText: 'Restore',
+                          title: 'Restore Team',
+                          content: 'Are you sure you want to restore this team?',
+                          onConfirm: () {
+                            ref.read(teamsProvider.notifier).restoreTeam(teamData.id!);
+                          },
+                        ),);
+                      }, icon: const Icon(Icons.restore), label: const Text('Restore')),
+                    ],
+                  )
+                : Stack(
+                    children: [
+                      RefreshIndicator(
+                        onRefresh: () async {
+                          ref
+                              .read(issueProvider(widget.team!.id!).notifier)
+                              .fetchIssues(widget.team!.id!);
+                        },
+                        child: ListView(
+                          // make sure refresh indicator works
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          controller: _scrollController,
+                          children: [
+                            const ProfileGreetingTile(), // show cover image
+                            if (teamData.imageUrl != null)
+                              // network image
+                              CoverImage(
+                                imageUrl: teamData.imageUrl!,
+                                isRoundedBorder: false,
+                                // height: _coverImageHeight,
                               ),
-                              const SizedBox(
-                                height: 32,
-                              )
-                            ],
-                          ),
-                        // team info
-                        if (_mainFeatureTabIndex == MainFeatureTabIndex.about)
-                          TeamInfo(team: teamData),
-                        // issues
-                        if (_mainFeatureTabIndex == MainFeatureTabIndex.home)
-                          Issues(
-                            currentTabIndex: _currentTabIndex,
-                            teamId: teamData.id!,
-                            isTabsVisibleOnChanged: (visible) {
-                              setState(() {
-                                _isIssueTabsVisible = visible;
-                              });
-                            },
-                          ),
-                      ],
-                    ),
-                  ),
-                  // position top
-                  if (!_isIssueTabsVisible &&
-                      _mainFeatureTabIndex == MainFeatureTabIndex.home)
-                    _isIssueTabsVisible
-                        ? const SizedBox.shrink()
-                        : Positioned(
-                            top: 0,
-                            child: SizedBox(
-                              width: MediaQuery.of(context).size.width,
-                              child: Tabs(
-                                initialTabIndex: _currentTabIndex,
-                                onTabChange: (index) {
-                                  setState(() {
-                                    _currentTabIndex = index;
-                                  });
-                                },
+                            // tabs
+                            if (kIsWeb)
+                              Tabs(
+                                initialTabIndex: _mainFeatureTabIndex,
                                 tabs: [
-                                  TranslationKeys.openIssues.tr(),
-                                  TranslationKeys.upcoming.tr(),
-                                  TranslationKeys.overdue.tr(),
-                                  TranslationKeys.closedIssues.tr(),
+                                  TranslationKeys.home.tr(),
+                                  TranslationKeys.calendar.tr(),
+                                  TranslationKeys.about.tr(),
+                                  //TranslationKeys.activities.tr(),
                                 ],
                                 icons: const [
-                                  Icons.content_paste,
-                                  Icons.hourglass_top_rounded,
-                                  Icons.event_busy,
-                                  Icons.check
+                                  Icons.home,
+                                  Icons.event,
+                                  Icons.group,
+                                  //Icons.notifications,
+                                ],
+                                onTabChange: (index) {
+                                  setState(() {
+                                    _mainFeatureTabIndex = index;
+                                  });
+                                },
+                              ),
+                            // calendar
+                            if (_mainFeatureTabIndex ==
+                                MainFeatureTabIndex.calendar)
+                              Column(
+                                children: [
+                                  CalendarViewScreen(
+                                    teamId: widget.team!.id!,
+                                  ),
+                                  const SizedBox(
+                                    height: 32,
+                                  )
                                 ],
                               ),
-                            ),
-                          ),
-                ],
-              ),
+                            // team info
+                            if (_mainFeatureTabIndex ==
+                                MainFeatureTabIndex.about)
+                              TeamInfo(team: teamData),
+                            if (_mainFeatureTabIndex ==
+                                MainFeatureTabIndex.home)
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton.icon(
+                                    label: Text(TranslationKeys.newIssue.tr()),
+                                    icon: const Icon(Icons.add),
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        isScrollControlled: true,
+                                        enableDrag: true,
+                                        showDragHandle: true,
+                                        context: context,
+                                        builder: (context) =>
+                                            AddOrEditIssueSheet(
+                                          teamId: widget.team!.id!,
+                                          addOrEdit: AddorEdit.add,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                  if (isOwnerOrAdmin)
+                                    DataImportExportButton(
+                                      teamId: widget.team!.id!,
+                                    ),
+                                ],
+                              ),
+
+                            // issues
+                            if (_mainFeatureTabIndex ==
+                                MainFeatureTabIndex.home)
+                              Issues(
+                                currentTabIndex: _currentTabIndex,
+                                teamId: teamData.id!,
+                                isTabsVisibleOnChanged: (visible) {
+                                  setState(() {
+                                    _isIssueTabsVisible = visible;
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                      // position top
+                      if (!_isIssueTabsVisible &&
+                          _mainFeatureTabIndex == MainFeatureTabIndex.home)
+                        _isIssueTabsVisible
+                            ? const SizedBox.shrink()
+                            : Positioned(
+                                top: 0,
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  child: Tabs(
+                                    initialTabIndex: _currentTabIndex,
+                                    onTabChange: (index) {
+                                      setState(() {
+                                        _currentTabIndex = index;
+                                      });
+                                    },
+                                    tabs: [
+                                      TranslationKeys.openIssues.tr(),
+                                      TranslationKeys.upcoming.tr(),
+                                      TranslationKeys.overdue.tr(),
+                                      TranslationKeys.closedIssues.tr(),
+                                    ],
+                                    icons: const [
+                                      Icons.content_paste,
+                                      Icons.hourglass_top_rounded,
+                                      Icons.event_busy,
+                                      Icons.check
+                                    ],
+                                  ),
+                                ),
+                              ),
+                    ],
+                  ),
       ),
     );
   }

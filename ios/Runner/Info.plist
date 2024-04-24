@@ -76,5 +76,9 @@
 		<string>en-US</string>
 		<string>zh-TW</string>
 	</array>	
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+	<key>UIFileSharingEnabled</key>
+	<true/>
 </dict>
 </plist>

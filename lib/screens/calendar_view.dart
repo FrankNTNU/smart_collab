@@ -192,15 +192,17 @@ class IssueCalendarCell extends StatelessWidget {
               if (dayIssues.length == 1) {
                 final issue = dayIssues.first;
                 // open bottom sheet
-                showModalBottomSheet(
-                  isScrollControlled: true,
-                  enableDrag: true,
-                  showDragHandle: true,
-                  context: context,
-                  builder: (context) => Padding(
-                    padding: MediaQuery.of(context).viewInsets,
-                    child: IssueScreen(
-                      issue: issue,
+                // navigate to issue screen
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(
+                        title: Text(issue.title),
+                      ),
+                      body: IssueScreen(
+                        issue: issue,
+                        isFullScreen: true,
+                      ),
                     ),
                   ),
                 );
@@ -235,7 +237,7 @@ class IssueCalendarCell extends StatelessWidget {
                             itemCount: dayIssues.length,
                             itemBuilder: (context, index) {
                               return IssueTile(
-                                isFullScreenWhenTapped: false,
+                                isFullScreenWhenTapped: true,
                                 issueData: dayIssues[index],
                                 tabIndex: IssueTabEnum.open,
                               );

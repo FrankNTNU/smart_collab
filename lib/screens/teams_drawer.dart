@@ -2,6 +2,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/screens/config_screen.dart';
+import 'package:smart_collab/screens/home_screen.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
 
 import '../services/auth_controller.dart';
@@ -12,24 +14,19 @@ import '../widgets/title_text.dart';
 
 class TeamsDrawer extends ConsumerStatefulWidget {
   final Function(Team team)? onTeamSelected;
-  final Function(bool) toggleTheme;
-  final bool isDarkMode;
-  const TeamsDrawer(
-      {super.key,
-      this.onTeamSelected,
-      required this.toggleTheme,
-      required this.isDarkMode});
+  const TeamsDrawer({
+    super.key,
+    this.onTeamSelected,
+  });
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _TeamsDrawerState();
 }
 
 class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
-  bool _isDarkModel = false;
   @override
   void initState() {
     super.initState();
-    _isDarkModel = widget.isDarkMode;
   }
 
   void _logout() async {
@@ -81,7 +78,7 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
               },
               child: Column(
                 children: [
-                  if (team.imageUrl == null)
+                  if (team.imageUrl == null || team.isArchieved)
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: Container(
@@ -93,9 +90,11 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
                           // circle
                           shape: BoxShape.circle,
                         ),
-                        child: Center(
+                        child: team.isArchieved ? 
+                        const Icon(Icons.archive, color: Colors.white,)
+                        : Expanded(
                           child: Text(
-                            team.name![0].toUpperCase(),
+                             team.name![0].toUpperCase(),
                             style: const TextStyle(
                               fontSize: 32,
                               color: Colors.white,
@@ -126,8 +125,8 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
                     ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(team.name!, maxLines: 2,
-                        overflow: TextOverflow.ellipsis),
+                    child: Text(team.name!,
+                        maxLines: 2, overflow: TextOverflow.ellipsis),
                   ),
                 ],
               ),
@@ -163,39 +162,15 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
           const SizedBox(
             height: 32,
           ),
-          StatefulBuilder(
-            builder: (context, setState) => DrawButton(
-              onTapped: () {
-                setState(() {
-                  widget.toggleTheme(!_isDarkModel);
-                  _isDarkModel = !_isDarkModel;
-                });
+          IconButton(
+              onPressed: () {
+                // push to
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => const ConfigurationScreen()),
+                );
               },
-              leading: const Icon(Icons.brightness_2),
-              text: _isDarkModel
-                  ? TranslationKeys.lightMode.tr()
-                  : TranslationKeys.darkMode.tr(),
-            ),
-          ),
-          DrawButton(
-              onTapped: _logout,
-              leading: const Icon(Icons.logout),
-              text: TranslationKeys.logout.tr()),
-          DrawButton(
-              onTapped: () {
-                // supported language
-                print(
-                    'current locale: ${context.locale}, supported languages: ${context.supportedLocales}');
-                context.setLocale(context.locale == const Locale('en', 'US')
-                    ? const Locale('zh', 'TW')
-                    : const Locale('en', 'US'));
-                // pop
-                Navigator.of(context).pop();
-              },
-              leading: const Icon(Icons.language),
-              text: context.locale == const Locale('en', 'US')
-                  ? '繁體中文'
-                  : 'English'),
+              icon: const Icon(Icons.settings)),
         ],
       ),
     );

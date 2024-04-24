@@ -31,8 +31,7 @@ class _DeadlineInfoState extends ConsumerState<DeadlineInfo> {
     return InkWell(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: Wrap(
           children: [
             if (!widget.isConcise)
               Wrap(

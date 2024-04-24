@@ -98,6 +98,8 @@ class TranslationKeys {
   static const String days = 'days';
   // duplicate
   static const String duplicate = 'duplicate';
+  // copy
+  static const String copy = 'copy';
   // linked issues
   static const String linkedIssues = 'linked_issues';
   // collaborator description
@@ -108,4 +110,6 @@ class TranslationKeys {
   static const String totalIssuesCreated = 'total_issues_created';
   // top x mosed used tags
   static const String topXMosedUsedTags = 'top_x_mosed_used_tags';
+  // verb_noun
+  static const String verbNoun = 'verb_noun';
 }

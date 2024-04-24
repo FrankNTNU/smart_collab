@@ -64,6 +64,7 @@ class _TeamMembersState extends ConsumerState<TeamMembers> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
+          
           ...teamData.roles.entries.map((role) {
             final asyncProfilePicProvider =
                 ref.watch(profileDataProvider(role.key));

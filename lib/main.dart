@@ -46,26 +46,9 @@ class MainApp extends ConsumerStatefulWidget {
 }
 
 class _MainAppState extends ConsumerState<MainApp> {
-  bool isDarkMode = false;
   @override
   void initState() {
     super.initState();
-    _getIsDarkMode();
-  }
-
-  void _setIsDarkMode(bool value) async {
-    setState(() {
-      isDarkMode = value;
-    });
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isDarkMode', value);
-  }
-
-  void _getIsDarkMode() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
   }
 
   @override
@@ -73,7 +56,7 @@ class _MainAppState extends ConsumerState<MainApp> {
     final isAuthenicated = ref.watch(authControllerProvider.select(
       (value) => value.isAuthenicated,
     ));
-
+    final isDarkMode = ref.watch(isDarkModeProvider).asData?.value ?? false;
     return MaterialApp(
       // for i18n
       localizationsDelegates: context.localizationDelegates,
@@ -88,14 +71,7 @@ class _MainAppState extends ConsumerState<MainApp> {
             ),
       // remove debug label
       debugShowCheckedModeBanner: false,
-      home: !isAuthenicated
-          ? const LoginScreen()
-          : HomeScreen(
-              toggleTheme: _setIsDarkMode,
-              isDarkMode: isDarkMode,
-            ),
+      home: !isAuthenicated ? const LoginScreen() : const HomeScreen(),
     );
   }
 }
-
-

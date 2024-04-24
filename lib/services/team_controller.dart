@@ -5,11 +5,14 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 
+import 'profile_controller.dart';
+
 enum PerformedAction {
   fetch,
   add,
   update,
   delete,
+  bulkFetch,
 }
 
 class Team {
@@ -18,6 +21,8 @@ class Team {
   final String? description;
   final String? imageUrl;
   final Map<String, String> roles;
+  final bool isArchieved;
+  final DateTime? archievedDate;
   // ctor
   Team({
     this.id,
@@ -25,6 +30,8 @@ class Team {
     this.description,
     this.imageUrl,
     this.roles = const {},
+    this.isArchieved = false,
+    this.archievedDate,
   });
   // copyWith
   Team copyWith({
@@ -33,6 +40,8 @@ class Team {
     String? description,
     String? imageUrl,
     Map<String, String>? roles,
+    bool? isArchieved,
+    DateTime? archievedDate,
   }) {
     return Team(
       id: id ?? this.id,
@@ -40,6 +49,8 @@ class Team {
       description: description ?? this.description,
       imageUrl: imageUrl ?? this.imageUrl,
       roles: roles ?? this.roles,
+      isArchieved: isArchieved ?? this.isArchieved,
+      archievedDate: archievedDate ?? this.archievedDate,
     );
   }
 
@@ -51,6 +62,10 @@ class Team {
       description: json['description'],
       imageUrl: json['imageUrl'],
       roles: Map<String, String>.from(json['roles']),
+      isArchieved: json['isArchieved'] ?? false,
+      archievedDate: json['archievedDate'] != null
+          ? (json['archievedDate'] as Timestamp).toDate()
+          : null,
     );
   }
   // initial
@@ -61,6 +76,7 @@ class Team {
       description: null,
       imageUrl: null,
       roles: {},
+      isArchieved: false,
     );
   }
 }
@@ -120,17 +136,22 @@ class TeamsController extends Notifier<TeamsState> {
   }
 
   // get all members of a team
-  Future<List<String>> fetchTeamMembers(String teamId) async {
+  Future<List<SmartCollabUser>> fetchTeamMembers(String teamId) async {
     try {
-      state = state.copyWith(
-          apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
+      // state = state.copyWith(
+      //     apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
       final snapshot = await FirebaseFirestore.instance
           .collection('teams')
           .doc(teamId)
           .get();
       final team = Team.fromJson(snapshot.data()!);
-      state = state.copyWith(apiStatus: ApiStatus.success);
-      return team.roles.keys.toList();
+      List<SmartCollabUser> members = [];
+      for (String uid in team.roles.keys) {
+        final profileData = await ref.read(profileDataProvider(uid).future);
+        members.add(profileData);
+      }
+      //state = state.copyWith(apiStatus: ApiStatus.success);
+      return members;
     } catch (e) {
       print('Error occured in the fetchTeamMembers method: $e');
       state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
@@ -361,71 +382,52 @@ class TeamsController extends Notifier<TeamsState> {
     }
   }
 
-  Future<void> deleteTeam(String teamId) async {
+  // restore team
+  Future<void> restoreTeam(String teamId) async {
+    try {
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading,
+          performedAction: PerformedAction.update);
+      // set isArchieved to false
+      await FirebaseFirestore.instance.collection('teams').doc(teamId).update({
+        'isArchieved': false,
+        'archievedDate': null,
+      });
+      state = state.copyWith(
+        apiStatus: ApiStatus.success,
+        teams: state.teams.map((team) {
+          if (team.id == teamId) {
+            return team.copyWith(isArchieved: false, archievedDate: null);
+          }
+          return team;
+        }).toList(),
+      );
+    } catch (e) {
+      print('Error occured in the restoreTeam method: $e');
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+    }
+  }
+
+  Future<void> archieveTeam(String teamId) async {
     try {
       state = state.copyWith(
           apiStatus: ApiStatus.loading,
           performedAction: PerformedAction.delete);
-      // delete the image from Firebase Storage
-      final team = state.teams.firstWhere((team) => team.id == teamId);
-      if (team.imageUrl != null) {
-        // check if such image exists on Firebase Storage given the imageUrl
-        final isExist = await FirebaseStorage.instance
-            .refFromURL(team.imageUrl!)
-            .listAll()
-            .then((value) => true)
-            .catchError((e) => false);
-        if (!isExist) {
-          // delete the image from Firebase Storage if such image exists
-          await FirebaseStorage.instance.refFromURL(team.imageUrl!).delete();
-        }
-      }
-      // deletion order is important!
-      // delete activites of the team
-      await FirebaseFirestore.instance
-          .collection('teams')
-          .doc(teamId)
-          .collection('activities')
-          .get()
-          .then((snapshot) {
-        for (DocumentSnapshot doc in snapshot.docs) {
-          doc.reference.delete();
-        }
+      // set isArchieved to true and archievedDate to the current date
+      await FirebaseFirestore.instance.collection('teams').doc(teamId).update({
+        'isArchieved': true,
+        'archievedDate': FieldValue.serverTimestamp(),
       });
-      // delete tags of the team
-      final tagsSnapshot = await FirebaseFirestore.instance
-          .collection('teams')
-          .doc(teamId)
-          .collection('tags')
-          .get();
-      for (DocumentSnapshot doc in tagsSnapshot.docs) {
-        await doc.reference.delete();
-      }
-      // delete issues of the team
-      final issuesSnapshot = await FirebaseFirestore.instance
-          .collection('teams')
-          .doc(teamId)
-          .collection('issues')
-          .get();
-      for (DocumentSnapshot doc in issuesSnapshot.docs) {
-        await doc.reference.delete();
-      }
-      // delete issues/comments of the team
-      final commentsSnapshot = await FirebaseFirestore.instance
-          .collection('teams')
-          .doc(teamId)
-          .collection('issues')
-          .doc('comments')
-          .get();
-      if (commentsSnapshot.exists) {
-        await commentsSnapshot.reference.delete();
-      }
-      // finally delete the team document
-      await FirebaseFirestore.instance.collection('teams').doc(teamId).delete();
-      state = state.copyWith(
-        apiStatus: ApiStatus.success,
-        teams: state.teams.where((team) => team.id != teamId).toList(),
-      );
+      final updatedTeams = state.teams
+          .map((team) => team.id == teamId
+              ? team.copyWith(
+                  isArchieved: true,
+                  archievedDate: DateTime.now(),
+                )
+              : team)
+          .toList();
+      state = state
+          .copyWith(apiStatus: ApiStatus.success, teams: [...updatedTeams]);
       // delete all subcollections of the team
     } catch (e) {
       print('Error occured in the deleteTeam method: $e');

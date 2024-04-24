@@ -45,6 +45,7 @@ class _TeamImagePickerState extends State<TeamImagePicker> {
       _pickedImage = pickedImageFile;
     });
   }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -69,7 +70,10 @@ class _TeamImagePickerState extends State<TeamImagePicker> {
                   ? widget.defaultImageUrl?.isNotEmpty == true &&
                           _pickedImage!.path == widget.defaultImageUrl
                       ? // network image
-                      CoverImage(imageUrl: widget.defaultImageUrl!)
+                      CoverImage(
+                          imageUrl: widget.defaultImageUrl!,
+                          canViewFullImage: false,
+                        )
                       : Image.file(
                           _pickedImage!,
                           fit: BoxFit.cover,
