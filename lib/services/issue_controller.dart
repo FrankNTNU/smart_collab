@@ -250,6 +250,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
       if (isClosed) {
         query = query.where('isClosed', isEqualTo: true);
       } else {
+        // fetch only open issues
         query = query.where('isClosed', isNotEqualTo: true);
       }
 
@@ -626,7 +627,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
 
   // fetchIssues
   Future<void> fetchIssues(String teamId, {List<String>? includedTags}) async {
-    const limit = 5;
+    const limit = 10;
     print('Fetching issues...');
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);

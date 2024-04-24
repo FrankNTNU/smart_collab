@@ -63,7 +63,7 @@ class _TabsState extends State<Tabs> {
             },
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                  minWidth: MediaQuery.of(context).size.width / 3),
+                  minWidth: MediaQuery.of(context).size.width / 4),
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

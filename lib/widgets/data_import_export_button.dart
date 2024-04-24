@@ -5,6 +5,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:open_file/open_file.dart';
+import 'package:smart_collab/screens/import_screen.dart';
 import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
@@ -161,6 +162,13 @@ class _DataImportExportButtonState
           _confirimExportType(context);
         } else if (value == 'import') {
           // Import
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) {
+                return const ImportScreeen();
+              },
+            ),  
+          );
         }
       },
       itemBuilder: (context) {

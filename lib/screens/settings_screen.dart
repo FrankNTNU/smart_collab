@@ -56,17 +56,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
         ),
-        // ListTile(
-        //   contentPadding:
-        //       const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-        //   title: const Text('Trigger auto close issues'),
-        //   leading: _isLoading
-        //       ? const CircularProgressIndicator()
-        //       : const Icon(Icons.timer),
-        //   onTap: () async {
-        //     await _triggerAutoClosing();
-        //   },
-        // ),
+        ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          title: const Text('Trigger auto close issues'),
+          leading: _isLoading
+              ? const CircularProgressIndicator()
+              : const Icon(Icons.timer),
+          onTap: () async {
+            await _triggerAutoClosing();
+          },
+        ),
      
       ],
     );

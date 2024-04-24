@@ -11,6 +11,7 @@ dependencies:
   cloud_firestore: ^4.16.1
   cloud_functions: ^4.7.2
   easy_localization: ^3.0.5
+  file_picker: ^8.0.2
   file_saver: ^0.2.12
   firebase_auth: ^4.19.1
   firebase_core: ^2.29.0

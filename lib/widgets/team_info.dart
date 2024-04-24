@@ -158,9 +158,6 @@ class _TeamInfoState extends ConsumerState<TeamInfo> {
           teamId: teamData.id!,
         ),
         const Divider(),
-        SettingsScreen(
-          teamId: teamData.id!,
-        ),
       ],
     );
   }
