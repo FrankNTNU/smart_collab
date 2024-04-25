@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -121,7 +122,8 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                             print('Selected: $value');
                             if (value == 'markAllAsRead') {
                               ref
-                                  .read(activityProvider(widget.teamId).notifier)
+                                  .read(
+                                      activityProvider(widget.teamId).notifier)
                                   .markAllAsRead();
                             }
                           },
@@ -162,32 +164,62 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                             ),
                           );
                         } else {
+                          // Group activities by time
+                          final groupedActivities = groupBy(
+                            activities,
+                            (Activity activity) => TimeUtils.getFuzzyTime(
+                              DateTime.parse(activity.timestamp),
+                              context: context,
+                            ),
+                          ).entries.toList();
                           return ListView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            itemCount: activities.length,
+                            itemCount: groupedActivities.length,
                             itemBuilder: (context, index) {
-                              final activity = activities[index];
-                              return ListTile(
-                                // if teamId is not provided then show team name
-                                leading: UserAvatar(
-                                  uid: activity.userId,
-                                  radius: 32,
-                                ),
-                                trailing: // show a small red dot if it is unread,
-                                    activity.read
-                                        ? null
-                                        : const CircleAvatar(
-                                            radius: 5,
-                                            backgroundColor: Colors.red,
-                                          ),
-                                onTap: () {
-                                  _activityOnTapped(activity);
-                                },
-                                title: Text(activity.message, maxLines: 3, overflow: TextOverflow.ellipsis),
-                                subtitle: Text(TimeUtils.getFuzzyTime(
-                                    DateTime.parse(activity.timestamp),
-                                    context: context)),
+                              final group = groupedActivities[index];
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 8),
+                                    child: TitleText(
+                                      group.key,
+                                    ),
+                                  ),
+                                  ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: group.value.length,
+                                    itemBuilder: (context, index) {
+                                      final activity = group.value[index];
+                                      return ListTile(
+                                        // if teamId is not provided then show team name
+                                        leading: UserAvatar(
+                                          uid: activity.userId,
+                                          radius: 32,
+                                        ),
+                                        trailing: activity.read
+                                            ? null
+                                            : const CircleAvatar(
+                                                radius: 5,
+                                                backgroundColor: Colors.red,
+                                              ),
+                                        onTap: () {
+                                          _activityOnTapped(activity);
+                                        },
+                                        title: Text(activity.message,
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis),
+                                        subtitle: Text(TimeUtils.getFuzzyTime(
+                                            DateTime.parse(activity.timestamp),
+                                            context: context)),
+                                      );
+                                    },
+                                  ),
+                                ],
                               );
                             },
                           );
