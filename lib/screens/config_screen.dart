@@ -61,6 +61,8 @@ class _ConfigurationScreenState extends ConsumerState<ConfigurationScreen> {
           ),
           onConfirm: () {
             ref.read(authControllerProvider.notifier).signOut();
+            // pop
+            Navigator.of(context).pop();
           },
           confirmText: TranslationKeys.logout.tr(),
         );

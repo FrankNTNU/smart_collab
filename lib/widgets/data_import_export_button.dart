@@ -34,7 +34,7 @@ class _DataImportExportButtonState
 
   Future<void> _confirimExportType(BuildContext context) async {
     await showDialog(
-      barrierDismissible: false,      
+      barrierDismissible: false,
       context: context,
       builder: (context) {
         return StatefulBuilder(
@@ -165,9 +165,11 @@ class _DataImportExportButtonState
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) {
-                return const ImportScreeen();
+                return ImportScreeen(
+                  teamId: widget.teamId,
+                );
               },
-            ),  
+            ),
           );
         }
       },

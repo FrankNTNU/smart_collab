@@ -2,7 +2,9 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/activity_controller.dart';
+import 'package:smart_collab/services/file_controller.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/widgets/attachments.dart';
 import 'package:smart_collab/widgets/colloaborators.dart';
 import 'package:smart_collab/widgets/comment_field.dart';
 import 'package:smart_collab/widgets/comments.dart';
@@ -194,9 +196,14 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
     final isAuthor = issueData.roles[uid] == 'owner';
     final isAuthorOrColloborator =
         isAuthor || issueData.roles[uid] == 'collaborator';
-    final isOwnerOfTheTeam = ref.watch(teamsProvider).teams.where((team) {
-          return team.id == widget.issue.teamId;
-        }).first.roles[uid] ==
+    final isOwnerOfTheTeam = ref
+            .watch(teamsProvider)
+            .teams
+            .where((team) {
+              return team.id == widget.issue.teamId;
+            })
+            .first
+            .roles[uid] ==
         'owner';
     print('isFullScreen: ${widget.isFullScreen}');
     return SizedBox(
@@ -250,89 +257,89 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                               );
                             },
                             icon: const Icon(Icons.edit)),
-                      
-                        // edit button
-                        PopupMenuButton(
-                          onSelected: (value) {
-                            if (value == 'duplicate') {
-                              showModalBottomSheet(
-                                isScrollControlled: true,
-                                enableDrag: true,
-                                showDragHandle: true,
-                                context: context,
-                                builder: (context) => AddOrEditIssueSheet(
-                                  teamId: widget.issue.teamId,
-                                  addOrEdit: AddorEdit.duplicate,
-                                  issue: issueData,
-                                ),
-                              );
-                            } else if (value == 'close') {
-                              _toggleIsClosed(
-                                  isClosed: true, issueData: issueData);
-                            } else if (value == 'delete') {
-                              _showDeletionDialog();
-                            }
-                          },
-                          itemBuilder: (BuildContext context) => [
-                            // to duplicate issue
+
+                      // edit button
+                      PopupMenuButton(
+                        onSelected: (value) {
+                          if (value == 'duplicate') {
+                            showModalBottomSheet(
+                              isScrollControlled: true,
+                              enableDrag: true,
+                              showDragHandle: true,
+                              context: context,
+                              builder: (context) => AddOrEditIssueSheet(
+                                teamId: widget.issue.teamId,
+                                addOrEdit: AddorEdit.duplicate,
+                                issue: issueData,
+                              ),
+                            );
+                          } else if (value == 'close') {
+                            _toggleIsClosed(
+                                isClosed: true, issueData: issueData);
+                          } else if (value == 'delete') {
+                            _showDeletionDialog();
+                          }
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          // to duplicate issue
+                          PopupMenuItem(
+                              value: 'duplicate',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.copy),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    TranslationKeys.verbNoun.tr(
+                                      args: [
+                                        TranslationKeys.copy.tr(),
+                                        TranslationKeys.issue.tr(),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )),
+
+                          if ((isAuthorOrColloborator) && !issueData.isClosed)
+                            // close issue
                             PopupMenuItem(
-                                value: 'duplicate',
+                                value: 'close',
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.copy),
+                                    const Icon(Icons.close),
                                     const SizedBox(width: 8),
                                     Text(
                                       TranslationKeys.verbNoun.tr(
                                         args: [
-                                          TranslationKeys.copy.tr(),
+                                          TranslationKeys.close.tr(),
                                           TranslationKeys.issue.tr(),
                                         ],
                                       ),
                                     ),
                                   ],
                                 )),
-
-                            if ((isAuthorOrColloborator) && !issueData.isClosed)
-                              // close issue
-                              PopupMenuItem(
-                                  value: 'close',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.close),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        TranslationKeys.verbNoun.tr(
-                                          args: [
-                                            TranslationKeys.close.tr(),
-                                            TranslationKeys.issue.tr(),
-                                          ],
-                                        ),
+                          if (isAuthor)
+                            PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.delete),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      TranslationKeys.verbNoun.tr(
+                                        args: [
+                                          TranslationKeys.delete.tr(),
+                                          TranslationKeys.issue.tr(),
+                                        ],
                                       ),
-                                    ],
-                                  )),
-                            if (isAuthor)
-                              PopupMenuItem(
-                                  value: 'delete',
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.delete),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        TranslationKeys.verbNoun.tr(
-                                          args: [
-                                            TranslationKeys.delete.tr(),
-                                            TranslationKeys.issue.tr(),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  )),
-                          ],
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 8),
-                            child: Icon(Icons.more_horiz),
-                          ),
+                                    ),
+                                  ],
+                                )),
+                        ],
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 8),
+                          child: Icon(Icons.more_horiz),
                         ),
+                      ),
                     ],
                   ),
                   // deadline
@@ -376,6 +383,45 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                         ),
                       )),
                   const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const TitleText('Files'),
+                      IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            showModalBottomSheet(
+                              isScrollControlled: true,
+                              enableDrag: true,
+                              showDragHandle: true,
+                              context: context,
+                              builder: (context) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.7,
+                                  child: Attachments(
+                                    teamId: widget.issue.teamId,
+                                    issueId: issueData.id,
+                                  ),
+                                );
+                              },
+                            );
+                          })
+                    ],
+                  ),
+                  issueData.files.isEmpty == true
+                      ? const Center(child: Text('No files attached'))
+                      : Column(
+                          children: [
+                            ...issueData.files.map((file) => ListTile(
+                                contentPadding: const EdgeInsets.all(0),
+                                leading: const Icon(Icons.attachment),
+                                title: Text(file.fileName)))
+                          ],
+                        ),
+                  const Divider(),
                   TitleText(
                     TranslationKeys.comments.tr(),
                   ),
@@ -385,21 +431,22 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TitleText(TranslationKeys.linkedIssues.tr()),
-                      TextButton.icon(
-                        icon: const Icon(Icons.link),
-                        onPressed: () {
-                          // show linked issues
-                          _openLinkedIssuesSheet(issueData);
-                        },
-                        label: Text(
-                          TranslationKeys.verbNoun.tr(
-                            args: [
-                              TranslationKeys.add.tr(),
-                              TranslationKeys.linkedIssues.tr(),
-                            ],
+                      if (isAuthorOrColloborator)
+                        TextButton.icon(
+                          icon: const Icon(Icons.link),
+                          onPressed: () {
+                            // show linked issues
+                            _openLinkedIssuesSheet(issueData);
+                          },
+                          label: Text(
+                            TranslationKeys.verbNoun.tr(
+                              args: [
+                                TranslationKeys.add.tr(),
+                                TranslationKeys.linkedIssues.tr(),
+                              ],
+                            ),
                           ),
-                        ),
-                      )
+                        )
                     ],
                   ),
                   // show linked issues

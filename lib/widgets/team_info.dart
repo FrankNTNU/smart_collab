@@ -1,7 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smart_collab/screens/settings_screen.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
 import '../services/auth_controller.dart';

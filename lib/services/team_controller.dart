@@ -13,6 +13,7 @@ enum PerformedAction {
   update,
   delete,
   bulkFetch,
+  bulkAdd,
 }
 
 class Team {

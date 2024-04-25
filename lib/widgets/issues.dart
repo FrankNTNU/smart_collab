@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/issue_controller.dart';
+import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/issue_tile.dart';
 import 'package:smart_collab/widgets/tab_view_bar.dart';
 import 'package:smart_collab/widgets/title_text.dart';
@@ -11,6 +12,9 @@ import '../screens/tags_selection_menu.dart';
 import '../services/auth_controller.dart';
 import '../services/team_controller.dart';
 import '../utils/translation_keys.dart';
+import 'add_or_edit_issue_sheet.dart';
+import 'add_or_edit_team_sheet.dart';
+import 'data_import_export_button.dart';
 import 'issue_tags.dart';
 
 // tab enum
@@ -40,6 +44,7 @@ class Issues extends ConsumerStatefulWidget {
   final int currentTabIndex;
   // modal header
   final String? modalHeader;
+  final bool isOwnerOrAdmin;
   const Issues(
       {super.key,
       required this.teamId,
@@ -47,13 +52,15 @@ class Issues extends ConsumerStatefulWidget {
       this.hiddenIssueIds = const [],
       this.isTabsVisibleOnChanged,
       this.currentTabIndex = 0,
-      this.modalHeader});
+      this.modalHeader,
+      this.isOwnerOrAdmin = false});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
 }
 
 class _IssuesState extends ConsumerState<Issues> {
+  bool _isSelectionMode = false;
   // searchTerm
   String _searchTerm = '';
   // include tags
@@ -64,6 +71,8 @@ class _IssuesState extends ConsumerState<Issues> {
   int _currentTabIndex = IssueTabEnum.open;
   // is tabs visiblr
   bool _isTabsVisible = false;
+  // checked issue ids
+  List<String> checkedIssueIds = [];
   @override
   // did update widget
   void didUpdateWidget(covariant Issues oldWidget) {
@@ -95,6 +104,25 @@ class _IssuesState extends ConsumerState<Issues> {
       setState(() {
         _searchTerm = _searchController.text;
       });
+    });
+  }
+
+  void _bulkDelete() async {
+    // delete issues
+    await ref
+        .read(issueProvider(widget.teamId).notifier)
+        .batchDeleteIssues(checkedIssueIds);
+    // show snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Deleted ${checkedIssueIds.length} issues successfully'),
+      ),
+    );
+    // clear checked issue ids
+    checkedIssueIds.clear();
+    // toggle selection mode
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
     });
   }
 
@@ -205,63 +233,33 @@ class _IssuesState extends ConsumerState<Issues> {
               ],
             ),
           ),
-        // Row(
-        //   children: [
-        //     Expanded(
-        //       child: Padding(
-        //         padding: const EdgeInsets.all(8.0),
-        //         child: TextField(
-        //           controller: _searchController,
-        //           onTapOutside: (event) {
-        //             // unfocus
-        //             FocusScope.of(context).unfocus();
-        //           },
-        //           onChanged: (value) {
-        //             setState(() {
-        //               _searchTerm = value;
-        //             });
-        //           },
-        //           decoration: InputDecoration(
-        //             hintText: TranslationKeys.searchSomething
-        //                 .tr(args: [TranslationKeys.issues.tr()]),
-        //             prefixIcon: const Icon(Icons.search),
-        //             suffixIcon: _searchController.text.isNotEmpty
-        //                 ? TextButton.icon(
-        //                     label: Text(TranslationKeys.clear.tr()),
-        //                     icon: const Icon(Icons.clear),
-        //                     onPressed: () {
-        //                       setState(() {
-        //                         _searchController.clear();
-        //                         _searchTerm = '';
-        //                       });
-        //                     },
-        //                   )
-        //                 : null,
-        //           ),
-        //         ),
-        //       ),
-        //     ),
-        //     // add issue button
-        //     TextButton.icon(
-        //       label: Text(TranslationKeys.newIssue.tr()),
-        //       icon: const Icon(Icons.add),
-        //       onPressed: () {
-        //         showModalBottomSheet(
-        //           isScrollControlled: true,
-        //           enableDrag: true,
-        //           showDragHandle: true,
-        //           context: context,
-        //           builder: (context) => AddOrEditIssueSheet(
-        //             teamId: widget.teamId,
-        //             addOrEdit: AddorEdit.add,
-        //           ),
-        //         );
-        //       },
-        //     ),
-        //   ],
-        // ),
-        // add issue button
-        // a tab for issues
+
+        Row(
+          children: [
+            TextButton.icon(
+              label: Text(TranslationKeys.newIssue.tr()),
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                showModalBottomSheet(
+                  isScrollControlled: true,
+                  enableDrag: true,
+                  showDragHandle: true,
+                  context: context,
+                  builder: (context) => AddOrEditIssueSheet(
+                    teamId: widget.teamId,
+                    addOrEdit: AddorEdit.add,
+                  ),
+                );
+              },
+            ),
+            const Spacer(),
+            if (widget.isOwnerOrAdmin)
+              DataImportExportButton(
+                teamId: widget.teamId,
+              ),
+          ],
+        ),
+
         VisibilityDetector(
           key: const Key('my-widget-key'),
           onVisibilityChanged: (visibilityInfo) {
@@ -298,8 +296,42 @@ class _IssuesState extends ConsumerState<Issues> {
           ),
         ),
         const SizedBox(
-          height: 8,
+          height: 2,
         ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: TextField(
+            controller: _searchController,
+            onTapOutside: (event) {
+              // unfocus
+              FocusScope.of(context).unfocus();
+            },
+            onChanged: (value) {
+              setState(() {
+                _searchTerm = value;
+              });
+            },
+            decoration: InputDecoration(
+              // outlined
+              hintText: TranslationKeys.searchSomething
+                  .tr(args: [TranslationKeys.issues.tr()]),
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? TextButton.icon(
+                      label: Text(TranslationKeys.clear.tr()),
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        setState(() {
+                          _searchController.clear();
+                          _searchTerm = '';
+                        });
+                      },
+                    )
+                  : null,
+            ),
+          ),
+        ),
+
         // include tags for search
         InkWell(
           onTap: _openFilterTagsSelectionMenu,
@@ -308,10 +340,8 @@ class _IssuesState extends ConsumerState<Issues> {
             child: ListView(
               scrollDirection: Axis.horizontal,
               children: [
-                // search icon
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(Icons.search),
+                const SizedBox(
+                  width: 8,
                 ),
                 Align(
                     alignment: Alignment.centerLeft,
@@ -327,6 +357,42 @@ class _IssuesState extends ConsumerState<Issues> {
             ),
           ),
         ),
+        if (_isSelectionMode) const Divider(),
+        // toggle selection mode
+        if (_isSelectionMode)
+          Wrap(
+            children: [
+              TextButton.icon(
+                label: const Text('Exit selection'),
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    // clear checked issue ids
+                    checkedIssueIds.clear();
+                    // toggle selection mode
+                    _isSelectionMode = !_isSelectionMode;
+                  });
+                },
+              ),
+              // delete button
+              TextButton.icon(
+                label: Text('Delete ${checkedIssueIds.length} issues'),
+                icon: const Icon(Icons.delete),
+                onPressed: () async {
+                  showDialog(
+                    context: context,
+                    builder: (context) => ConfirmDialog(
+                      title: 'Delete Issues',
+                      content:
+                          'Are you sure you want to delete ${checkedIssueIds.length} issues?',
+                      onConfirm: _bulkDelete,
+                      confirmText: 'Delete',
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         const Divider(),
         if (filteredIssues.isEmpty)
           Padding(
@@ -343,10 +409,37 @@ class _IssuesState extends ConsumerState<Issues> {
             physics: const ClampingScrollPhysics(),
             itemCount: filteredIssues.length,
             itemBuilder: (context, index) {
-              return IssueTile(
-                issueData: filteredIssues[index],
-                tabIndex: _currentTabIndex,
-                onSelected: widget.onSelected,
+              return Row(
+                children: [
+                  if (_isSelectionMode)
+                    Checkbox(
+                      value: checkedIssueIds.contains(filteredIssues[index].id),
+                      onChanged: (value) {
+                        setState(() {
+                          if (value!) {
+                            checkedIssueIds.add(filteredIssues[index].id);
+                          } else {
+                            checkedIssueIds.remove(filteredIssues[index].id);
+                          }
+                        });
+                      },
+                    ),
+                  Expanded(
+                    child: IssueTile(
+                      issueData: filteredIssues[index],
+                      tabIndex: _currentTabIndex,
+                      onSelected: widget.onSelected,
+                      onLongPressed: () {
+                        setState(() {
+                          // toggle selection mode
+                          _isSelectionMode = !_isSelectionMode;
+                          // add issue id to checked issue ids
+                          checkedIssueIds.add(filteredIssues[index].id);
+                        });
+                      },
+                    ),
+                  ),
+                ],
               );
             },
           ),

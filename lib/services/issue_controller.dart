@@ -1,14 +1,17 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_collab/services/file_controller.dart';
 import 'package:smart_collab/services/tag_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 
+import '../screens/import_screen.dart';
 import 'auth_controller.dart';
 
 class Issue {
   final String title;
   final String description;
-  final String status;
   // createdAt
   final DateTime createdAt;
   // updatedAt
@@ -33,12 +36,11 @@ class Issue {
   final List<String> linkedIssueIds;
   // is auto closed
   bool isAutoClosed = false;
-
+  final List<FileItem> files;
   // ctor
   Issue({
     required this.title,
     required this.description,
-    required this.status,
     required this.createdAt,
     required this.updatedAt,
     required this.id,
@@ -50,12 +52,12 @@ class Issue {
     this.isClosed = false,
     this.linkedIssueIds = const [],
     this.isAutoClosed = false,
+    this.files = const [],
   });
   // copyWith
   Issue copyWith({
     String? title,
     String? description,
-    String? status,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? id,
@@ -67,11 +69,11 @@ class Issue {
     bool? isClosed,
     List<String>? linkedIssueIds,
     bool? isAutoClosed,
+    List<FileItem>? files,
   }) {
     return Issue(
       title: title ?? this.title,
       description: description ?? this.description,
-      status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       id: id ?? this.id,
@@ -83,6 +85,7 @@ class Issue {
       isClosed: isClosed ?? this.isClosed,
       linkedIssueIds: linkedIssueIds ?? this.linkedIssueIds,
       isAutoClosed: isAutoClosed ?? this.isAutoClosed,
+      files: files ?? this.files,
     );
   }
 
@@ -92,7 +95,6 @@ class Issue {
       id: json['id'] ?? '',
       title: json['title'],
       description: json['description'] ?? '',
-      status: json['status'] ?? '',
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
       roles: Map<String, String>.from(json['roles']),
@@ -104,6 +106,14 @@ class Issue {
       isClosed: json['isClosed'] ?? false,
       linkedIssueIds: List<String>.from(json['linkedIssueIds'] ?? []),
       isAutoClosed: json['isAutoClosed'] ?? false,
+      // files: [{fileName: "60266-212658-1...}, {fileName: "MainPaper-Incl...}, {fileName: "Screenshot 202...}]
+      files: (json['files'] as List<dynamic>?)
+              ?.map((file) => FileItem(
+                    fileName: file['fileName'],
+                    url: file['url'] ?? '',
+                  ))
+              .toList() ??
+          [],
     );
   }
   // initial
@@ -111,7 +121,6 @@ class Issue {
     return Issue(
       title: '',
       description: '',
-      status: '',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
       id: '',
@@ -127,7 +136,6 @@ class Issue {
     return {
       'title': title,
       'description': description,
-      'status': status,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'roles': roles,
@@ -230,6 +238,162 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
+  }
+  // upload file
+  Future<void> uploadFiles(List<File> files, String issueId) async {
+    state = state.copyWith(apiStatus: ApiStatus.loading);
+    try {
+      // upload files
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'files': FieldValue.arrayUnion(files.map((file) {
+          return {
+            'fileName': file.path.split('/').last,
+            'url': '',
+            'size': file.lengthSync(),
+          };
+        }).toList())
+      });
+      // update local issues state
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          files: [
+            ...state.issueMap[issueId]!.files,
+            ...files.map((file) {
+              return FileItem(
+                fileName: file.path.split('/').last,
+                url: '',
+                size: file.lengthSync(),
+              );
+            }),
+          ],
+        ),
+      };
+      state = state.copyWith(apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+    } catch (e) {
+      print('Error occured in the uploadFile method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+    
+  }
+  // remove file
+  Future<void> removeFile(String fileName, String issueId) async {
+    state = state.copyWith(apiStatus: ApiStatus.loading);
+    try {
+      // remove file from firestore
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'files': FieldValue.arrayRemove([
+          {'fileName': fileName}
+        ]),
+      });
+      // remove file from the local state
+      final updatedIssueMap = {
+        ...state.issueMap,
+        issueId: state.issueMap[issueId]!.copyWith(
+          files: state.issueMap[issueId]!.files
+            ..removeWhere((file) => file.fileName == fileName),
+        ),
+      };
+      state = state.copyWith(
+        apiStatus: ApiStatus.success,
+        issueMap: updatedIssueMap,
+      );
+    } catch (e) {
+      print('Error occured in the removeFile method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+  // batch delete
+  Future<void> batchDeleteIssues(List<String> issueIds) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.delete);
+    try {
+      // batch delete issues
+      final batch = FirebaseFirestore.instance.batch();
+      for (var issueId in issueIds) {
+        batch.delete(FirebaseFirestore.instance
+            .collection('teams')
+            .doc(state.teamId)
+            .collection('issues')
+            .doc(issueId));
+      }
+      await batch.commit();
+      // remove the issues from the issueMap
+      final updatedIssueMap = {
+        ...state.issueMap,
+      }..removeWhere((key, value) => issueIds.contains(key));
+      state = state.copyWith(
+        apiStatus: ApiStatus.success,
+        issueMap: updatedIssueMap,
+      );
+    } catch (e) {
+      print('Error occured in the batchDeleteIssues method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+  // import issues
+  Future<void> importIssues(List<ImportedData> importedData) async {
+    print('Importing issues...');
+
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.bulkAdd);
+    // wait 3 seconds
+    await Future.delayed(const Duration(seconds: 3));
+    try {
+      List<String> issueIds = [];
+      for (ImportedData data in importedData) {
+        var id = await addIssue(
+            title: data.title,
+            description: data.description,
+            tags: data.tags,
+            deadline: data.deadline,
+            isAutoClosed: data.closesWhenExpired,
+            isBatch: true);
+        issueIds.add(id);
+      }
+      var addedIssues = importedData.map((data) {
+        return Issue(
+          title: data.title,
+          description: data.description,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          id: issueIds.removeAt(0),
+          roles: {state.userId: 'owner'},
+          tags: data.tags,
+          teamId: state.teamId,
+          isClosed: false,
+        );
+      }).toList();
+      mergeIssues(addedIssues);
+      state = state.copyWith(
+          apiStatus: ApiStatus.success,
+          performedAction: PerformedAction.bulkAdd);
+    } catch (e) {
+      print('Error occured in the importIssues method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
   }
 
   // fetch all open issues
@@ -602,8 +766,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
   // merge fetched issues with state issues based on their id and update the local state issues
   Future<void> mergeIssues(List<Issue> fetchedIssues) async {
     print('Merging issues...');
-    state = state.copyWith(
-        apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
+    state = state.copyWith(apiStatus: ApiStatus.loading);
     try {
       // turn the issue list to issue
       final fetchedIssueMap =
@@ -776,9 +939,12 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
     List<String>? tags,
     DateTime? deadline,
     bool? isAutoClosed,
+    bool isBatch = false,
   }) async {
-    state = state.copyWith(
-        apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
+    if (!isBatch) {
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
+    }
     try {
       // add issue to firestore
       final issueRef = await FirebaseFirestore.instance
@@ -800,7 +966,6 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
       final issue = Issue(
           title: title,
           description: description,
-          status: '',
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
           deadline: deadline ?? DateTime.now(),
@@ -809,7 +974,10 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
           tags: tags ?? [],
           teamId: state.teamId,
           isClosed: false);
-      state = state.copyWith(apiStatus: ApiStatus.success, issueMap: {
+      if (!isBatch) {
+        state = state.copyWith(apiStatus: ApiStatus.success);
+      }
+      state = state.copyWith(issueMap: {
         ...state.issueMap,
         issueRef.id: issue,
       });

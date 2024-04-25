@@ -9,7 +9,6 @@ import 'package:smart_collab/services/auth_controller.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/cover_image.dart';
-import 'package:smart_collab/widgets/grey_description.dart';
 import 'package:smart_collab/widgets/notification_bell.dart';
 import 'package:smart_collab/widgets/profile_greeting_tile.dart';
 import 'package:smart_collab/widgets/team_info.dart';
@@ -271,40 +270,12 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                             if (_mainFeatureTabIndex ==
                                 MainFeatureTabIndex.about)
                               TeamInfo(team: teamData),
-                            if (_mainFeatureTabIndex ==
-                                MainFeatureTabIndex.home)
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  TextButton.icon(
-                                    label: Text(TranslationKeys.newIssue.tr()),
-                                    icon: const Icon(Icons.add),
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                        isScrollControlled: true,
-                                        enableDrag: true,
-                                        showDragHandle: true,
-                                        context: context,
-                                        builder: (context) =>
-                                            AddOrEditIssueSheet(
-                                          teamId: widget.team!.id!,
-                                          addOrEdit: AddorEdit.add,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  if (isOwnerOrAdmin)
-                                    DataImportExportButton(
-                                      teamId: widget.team!.id!,
-                                    ),
-                                ],
-                              ),
-
+                           
                             // issues
                             if (_mainFeatureTabIndex ==
                                 MainFeatureTabIndex.home)
                               Issues(
+                                isOwnerOrAdmin: isOwnerOrAdmin,
                                 currentTabIndex: _currentTabIndex,
                                 teamId: teamData.id!,
                                 isTabsVisibleOnChanged: (visible) {

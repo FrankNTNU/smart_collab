@@ -15,6 +15,7 @@ class IssueTile extends StatelessWidget {
   final Widget? trailing;
   final bool isDensed;
   final bool isFullScreenWhenTapped;
+  final Function()? onLongPressed;
   const IssueTile(
       {super.key,
       required this.issueData,
@@ -22,7 +23,8 @@ class IssueTile extends StatelessWidget {
       this.onSelected,
       this.trailing,
       this.isDensed = false,
-      this.isFullScreenWhenTapped = true});
+      this.isFullScreenWhenTapped = true,
+      this.onLongPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +41,7 @@ class IssueTile extends StatelessWidget {
             ),
           ),
           child: ListTile(
+            onLongPress: onLongPressed,
             contentPadding: isDensed ? const EdgeInsets.all(0) : null,
             leading: isDensed
                 ? null

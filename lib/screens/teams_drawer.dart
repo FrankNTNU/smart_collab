@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/screens/config_screen.dart';
-import 'package:smart_collab/screens/home_screen.dart';
 import 'package:smart_collab/utils/translation_keys.dart';
 
 import '../services/auth_controller.dart';
