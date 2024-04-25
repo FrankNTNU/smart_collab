@@ -259,7 +259,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                           controller: _scrollController,
                           children: [
                             const ProfileGreetingTile(), // show cover image
-                            if (teamData.imageUrl != null)
+                            if (teamData.imageUrl != null && _mainFeatureTabIndex != MainFeatureTabIndex.calendar && _mainFeatureTabIndex != MainFeatureTabIndex.home)
                               // network image
                               CoverImage(
                                 imageUrl: teamData.imageUrl!,

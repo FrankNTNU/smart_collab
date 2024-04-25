@@ -8,6 +8,8 @@ import 'package:smart_collab/widgets/issues.dart';
 import 'package:smart_collab/widgets/title_text.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../widgets/add_or_edit_issue_sheet.dart';
+import '../widgets/add_or_edit_team_sheet.dart';
 import '../widgets/issue_tile.dart';
 import 'issue_screen.dart';
 
@@ -83,6 +85,7 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
             outsideBuilder: (context, day, focusedDay) => IssueCalendarCell(
               dayIssues: const [],
               dateTime: day,
+              teamId: widget.teamId,
             ),
             headerTitleBuilder: (context, day) {
               // issue count this month
@@ -115,7 +118,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                   ),
                   // show the number of issues this month
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     decoration: BoxDecoration(
                       color: openIssueCount == 0
                           ? Colors.grey.shade300
@@ -134,7 +138,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                   ),
                   // show the number of closed issues this month
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     decoration: BoxDecoration(
                       color: closedIssueCount == 0
                           ? Colors.grey.shade300
@@ -158,7 +163,8 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                     issue.deadline!.month == day.month &&
                     issue.deadline!.year == day.year;
               }).toList();
-              return IssueCalendarCell(dayIssues: dayIssues, dateTime: day);
+              return IssueCalendarCell(
+                  dayIssues: dayIssues, dateTime: day, teamId: widget.teamId);
             },
             todayBuilder: (context, day, focusedDay) {
               final todayIssues = issues.where((issue) {
@@ -167,11 +173,14 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
                     issue.deadline!.month == day.month &&
                     issue.deadline!.year == day.year;
               }).toList();
-              return IssueCalendarCell(dayIssues: todayIssues, dateTime: day);
+              return IssueCalendarCell(
+                  dayIssues: todayIssues, dateTime: day, teamId: widget.teamId);
             },
           ),
         ),
-        const SizedBox(height: 64,),
+        const SizedBox(
+          height: 64,
+        ),
       ],
     );
   }
@@ -179,10 +188,17 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
 
 class IssueCalendarCell extends StatelessWidget {
   const IssueCalendarCell(
-      {super.key, required this.dayIssues, required this.dateTime});
+      {super.key,
+      required this.dayIssues,
+      required this.dateTime,
+      required this.teamId});
 
   final List<Issue> dayIssues;
   final DateTime dateTime;
+  final String teamId;
+
+  /// set to false until the textfield focus has been fixed (cant't be focused after a new page being pushed)
+  final isFullScreenEnabled = false;
 
   @override
   Widget build(BuildContext context) {
@@ -191,10 +207,33 @@ class IssueCalendarCell extends StatelessWidget {
         dateTime.day == DateTime.now().day;
     return InkWell(
       onTap: dayIssues.isEmpty
-          ? null
+          ? () {
+              // show bottom sheet
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => ListTile(
+                  leading: const Icon(Icons.add),
+                  title: Text(
+                      'Create an issue on ${dateTime.toString().substring(0, 10)}'),
+                  onTap: () {
+                    showModalBottomSheet(
+                      isScrollControlled: true,
+                      enableDrag: true,
+                      showDragHandle: true,
+                      context: context,
+                      builder: (context) => AddOrEditIssueSheet(
+                        teamId: teamId,
+                        defaultDeadline: dateTime,
+                        addOrEdit: AddorEdit.add,
+                      ),
+                    );
+                  },
+                ),
+              );
+            }
           : () {
               // if there is only one issue then open it directly
-              if (dayIssues.length == 1) {
+              if (dayIssues.length == 1 && isFullScreenEnabled) {
                 final issue = dayIssues.first;
                 // open bottom sheet
                 // navigate to issue screen

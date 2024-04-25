@@ -13,10 +13,15 @@ import '../utils/translation_keys.dart';
 
 class AddOrEditIssueSheet extends ConsumerStatefulWidget {
   const AddOrEditIssueSheet(
-      {super.key, required this.teamId, required this.addOrEdit, this.issue});
+      {super.key,
+      required this.teamId,
+      required this.addOrEdit,
+      this.issue,
+      this.defaultDeadline});
   final String teamId;
   final AddorEdit addOrEdit;
   final Issue? issue;
+  final DateTime? defaultDeadline;
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _AddIssueSheetState();
 }
@@ -54,9 +59,9 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
             widget.addOrEdit != AddorEdit.duplicate) {
       setState(() {
         _enteredDeadline = // 7 days from now
-            DateTime.now().add(
-          const Duration(days: 7),
-        );
+            widget.defaultDeadline ?? DateTime.now().add(
+                    const Duration(days: 7),
+                  );
       });
     }
     if (widget.addOrEdit == AddorEdit.duplicate && widget.issue != null) {
@@ -121,13 +126,13 @@ class _AddIssueSheetState extends ConsumerState<AddOrEditIssueSheet> {
             issueId: widget.issue!.id,
           );
     } else {
-      final issueId =
-          await ref.read(issueProvider(widget.teamId).notifier).addIssue(
-                title: _enteredTitle,
-                description: _enteredDescription,
-                deadline: _enteredDeadline,
-                isAutoClosed: _isAutoClosed
-              );
+      final issueId = await ref
+          .read(issueProvider(widget.teamId).notifier)
+          .addIssue(
+              title: _enteredTitle,
+              description: _enteredDescription,
+              deadline: _enteredDeadline,
+              isAutoClosed: _isAutoClosed);
       // add tags to isse
       await ref.read(issueProvider(widget.teamId).notifier).addTagsToIssue(
             issueId: issueId,

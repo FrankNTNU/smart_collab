@@ -26,7 +26,8 @@ class IssueTile extends StatelessWidget {
     this.isFullScreenWhenTapped = true,
     this.onLongPressed,
   });
-
+  /// set to false since currently there is a bug that textfield can't be focused when the screen is full screen and pushed
+  final isFullScreenEnabled = false;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -59,7 +60,7 @@ class IssueTile extends StatelessWidget {
                   }
                 : () {
                     if (kIsWeb) return;
-                    if (isFullScreenWhenTapped) {
+                    if (isFullScreenWhenTapped && isFullScreenEnabled) {
                       // navigate to issue screen
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -85,7 +86,8 @@ class IssueTile extends StatelessWidget {
                           padding: MediaQuery.of(context).viewInsets,
                           child: IssueScreen(
                             issue: issueData,
-                            isFullScreen: false,
+                            // isFullScreen: false,
+                            isFullScreen: isFullScreenEnabled,
                           ),
                         ),
                       );
