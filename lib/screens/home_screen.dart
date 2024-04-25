@@ -34,7 +34,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  final bool _isDarkModel = false;
   Team? _selectedTeam;
   Future<void> storeTeamIdToSharedPrefs(String teamId) async {
     final prefs = await SharedPreferences.getInstance();

@@ -9,7 +9,7 @@ class TimeUtils {
     final daysAgo = DateTime.now().difference(time).inDays;
     final locale = getLocale(context!);
     final createdAtMessage =
-        daysAgo > onlyFuzzyDaysBefore ? time.toString() : timeago.format(time, locale: locale);
+        daysAgo > onlyFuzzyDaysBefore ? time.toString().substring(0, 16) : timeago.format(time, locale: locale);
     return createdAtMessage;
   }
   // get locale from context

@@ -45,6 +45,9 @@ class Issues extends ConsumerStatefulWidget {
   // modal header
   final String? modalHeader;
   final bool isOwnerOrAdmin;
+  // on tab changed
+  final Function(int)? onTabChanged;
+  
   const Issues(
       {super.key,
       required this.teamId,
@@ -53,13 +56,16 @@ class Issues extends ConsumerStatefulWidget {
       this.isTabsVisibleOnChanged,
       this.currentTabIndex = 0,
       this.modalHeader,
-      this.isOwnerOrAdmin = false});
+      this.isOwnerOrAdmin = false,
+      this.onTabChanged});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _IssuesState();
 }
 
 class _IssuesState extends ConsumerState<Issues> {
+  final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
+
   bool _isSelectionMode = false;
   // searchTerm
   String _searchTerm = '';
@@ -73,6 +79,8 @@ class _IssuesState extends ConsumerState<Issues> {
   bool _isTabsVisible = false;
   // checked issue ids
   List<String> checkedIssueIds = [];
+  // focusnode
+  final FocusNode _searchFocusNode = FocusNode();
   @override
   // did update widget
   void didUpdateWidget(covariant Issues oldWidget) {
@@ -156,7 +164,12 @@ class _IssuesState extends ConsumerState<Issues> {
         .read(issueProvider(widget.teamId).notifier)
         .fetchIssues(widget.teamId, includedTags: _includedFilterTags);
   }
-
+  // dispose
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final isFetching = ref.watch(issueProvider(widget.teamId).select((value) =>
@@ -279,6 +292,9 @@ class _IssuesState extends ConsumerState<Issues> {
             onTabChange: (index) {
               setState(() {
                 _currentTabIndex = index;
+                if (widget.onTabChanged != null) {
+                  widget.onTabChanged!(index);
+                }
               });
             },
             tabs: [
@@ -300,7 +316,12 @@ class _IssuesState extends ConsumerState<Issues> {
         ),
         Padding(
           padding: const EdgeInsets.all(8.0),
-          child: TextField(
+          child: TextFormField(
+            // focusNode: _searchFocusNode,
+            onTap: () {
+              print('Search field tapped');
+              // _searchFocusNode.requestFocus();
+            },
             controller: _searchController,
             onTapOutside: (event) {
               // unfocus
@@ -313,6 +334,7 @@ class _IssuesState extends ConsumerState<Issues> {
             },
             decoration: InputDecoration(
               // outlined
+              border: const OutlineInputBorder(),
               hintText: TranslationKeys.searchSomething
                   .tr(args: [TranslationKeys.issues.tr()]),
               prefixIcon: const Icon(Icons.search),

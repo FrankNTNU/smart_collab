@@ -41,6 +41,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
   bool _isNotAtTop = false;
   // selected linked issues
   final List<Issue> _selectedLinkedIssues = [];
+  final _isShowFiles = false;
   @override
   void initState() {
     super.initState();
@@ -387,7 +388,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                     TranslationKeys.comments.tr(),
                   ),
                   Comments(issueId: issueData.id, teamId: widget.issue.teamId),
-                  const Divider(),
+                  if (_isShowFiles)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -417,6 +418,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           })
                     ],
                   ),
+                  if (_isShowFiles)
                   issueData.files.isEmpty == true
                       ? const Center(child: Text('No files attached'))
                       : Column(

@@ -12,6 +12,7 @@ import 'package:smart_collab/services/issue_controller.dart';
 import 'package:smart_collab/services/team_controller.dart';
 import 'package:smart_collab/widgets/confirm_dialog.dart';
 import 'package:smart_collab/widgets/grey_description.dart';
+import 'package:smart_collab/widgets/status_info_chip.dart';
 import 'package:smart_collab/widgets/title_text.dart';
 
 class ImportedData {
@@ -274,17 +275,12 @@ class _ImportScreeenState extends ConsumerState<ImportScreeen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const TitleText('Preview the data before importing'),
-                  Container(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 4, horizontal: 8),
-                      decoration: BoxDecoration(
-                        color: _importedData.isEmpty
-                            ? Colors.grey.shade200
-                            : Colors.green.shade100,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: Text(
-                          '${_importedData.length} issue(s) detected from file:\n$_selectedFileName')),
+                  StatusInfoChip(
+                      status:
+                          '${_importedData.length} issue(s) detected from file:\n$_selectedFileName',
+                      color: _importedData.isEmpty
+                          ? Colors.grey
+                          : Colors.green),
                   // show data
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,

@@ -41,7 +41,6 @@ class IssueTile extends StatelessWidget {
             ),
           ),
           child: ListTile(
-            
             onLongPress: onLongPressed,
             contentPadding: isDensed ? const EdgeInsets.all(0) : null,
             leading: isDensed
@@ -68,7 +67,10 @@ class IssueTile extends StatelessWidget {
                             appBar: AppBar(
                               title: Text(issueData.title),
                             ),
-                            body: IssueScreen(issue: issueData, isFullScreen: true,),
+                            body: IssueScreen(
+                              issue: issueData,
+                              isFullScreen: true,
+                            ),
                           ),
                         ),
                       );
@@ -89,7 +91,13 @@ class IssueTile extends StatelessWidget {
                       );
                     }
                   },
-            title: Text(issueData.title),
+            title: Text(issueData.title, // if closed tab then strike
+                style: TextStyle(
+                  decoration: tabIndex == IssueTabEnum.closed
+                      ? TextDecoration.lineThrough
+                      : TextDecoration.none,
+                )
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -100,25 +108,25 @@ class IssueTile extends StatelessWidget {
                     teamId: issueData.teamId,
                   ),
                 ),
-                LastUpdatedAtInfo(
-                  issueData: issueData,
-                  isConcise: true,
-                ),
+                if (tabIndex == IssueTabEnum.open ||
+                    tabIndex == IssueTabEnum.closed)
+                  LastUpdatedAtInfo(
+                    issueData: issueData,
+                    isConcise: true,
+                  ),
                 if (tabIndex == IssueTabEnum.overdue ||
                     tabIndex == IssueTabEnum.upcoming)
                   DeadlineInfo(
                     issueData: issueData,
                     isConcise: true,
                   ),
-                if (tabIndex == IssueTabEnum.closed)
-                  const IsOpenChip(
-                    isOpen: false,
-                  )
+                
               ],
             ),
-            trailing: trailing ?? (issueData.files.isNotEmpty
-                ? const Icon(Icons.attach_file)
-                : null),
+            trailing: trailing ??
+                (issueData.files.isNotEmpty
+                    ? const Icon(Icons.attach_file)
+                    : null),
           ),
         ),
       ],

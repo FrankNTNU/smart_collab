@@ -159,7 +159,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
         floatingActionButton: _isNotAtTop && // when the keybaord is not open
                 MediaQuery.of(context).viewInsets.bottom == 0 && teamData?.isArchieved == false
             ? FloatingActionButton(
-                heroTag: 'team_screen',
                 onPressed: () {
                   _scrollController.animateTo(
                     0,
@@ -277,6 +276,11 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                               Issues(
                                 isOwnerOrAdmin: isOwnerOrAdmin,
                                 currentTabIndex: _currentTabIndex,
+                                onTabChanged: (index) {
+                                  setState(() {
+                                    _currentTabIndex = index;
+                                  });
+                                },
                                 teamId: teamData.id!,
                                 isTabsVisibleOnChanged: (visible) {
                                   setState(() {

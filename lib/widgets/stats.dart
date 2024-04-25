@@ -8,7 +8,6 @@ import 'package:smart_collab/widgets/attachments.dart';
 import 'package:smart_collab/widgets/issue_tags.dart';
 import 'package:smart_collab/widgets/status_info_chip.dart';
 import 'package:smart_collab/widgets/title_text.dart';
-import 'package:table_calendar/table_calendar.dart';
 
 import '../utils/translation_keys.dart';
 
@@ -24,6 +23,7 @@ class _StatsInfoState extends ConsumerState<StatsInfo> {
   int _count = 0;
   int _solvedIssuedCount = 0;
   int displayCount = 10;
+  final _isShowFiles = false;
   @override
   void initState() {
     super.initState();
@@ -92,7 +92,9 @@ class _StatsInfoState extends ConsumerState<StatsInfo> {
           const SizedBox(
             height: 32,
           ),
+          if (_isShowFiles)
           const TitleText('Available storage'),
+          if (_isShowFiles)
           // show available storage
           Wrap(
             children: [
