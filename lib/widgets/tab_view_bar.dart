@@ -54,7 +54,7 @@ class _TabsState extends State<Tabs> {
         ),
       ),
       child: Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
@@ -109,7 +109,7 @@ class _TabsState extends State<Tabs> {
       width: double.infinity,
       // grey btm border
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.5),
         // border: Border(
         //   bottom: BorderSide(
         //     color: Colors.grey.shade400,

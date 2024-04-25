@@ -55,6 +55,7 @@ class _TeamsDrawerState extends ConsumerState<TeamsDrawer> {
       (value) => value.teams,
     ));
     return Drawer(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.9),
       width: 128,
       child: ListView(
         children: [

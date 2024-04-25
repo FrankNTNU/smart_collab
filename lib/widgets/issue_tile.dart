@@ -59,11 +59,11 @@ class IssueTile extends StatelessWidget {
                   }
                 : () {
                     if (kIsWeb) return;
-                    if (isFullScreenWhenTapped) {              
+                    if (isFullScreenWhenTapped) {
                       // navigate to issue screen
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => Scaffold(
+                          builder: (_) => Scaffold(
                             appBar: AppBar(
                               title: Text(issueData.title),
                             ),

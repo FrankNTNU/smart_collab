@@ -321,12 +321,11 @@ class _IssuesState extends ConsumerState<Issues> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: TextField(
-            
             key: _searchFormKey,  
             focusNode: _searchFocusNode,
             onTap: () {
               print('Search field tapped');
-              // _searchFocusNode.requestFocus();
+              _searchFocusNode.requestFocus();
             },
             controller: _searchController,
             onTapOutside: (event) {
@@ -340,7 +339,6 @@ class _IssuesState extends ConsumerState<Issues> {
             },
             decoration: InputDecoration(
                   contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
-          
               // outlined
               border: const OutlineInputBorder(),
               hintText: TranslationKeys.searchSomething

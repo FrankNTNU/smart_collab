@@ -111,6 +111,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
     return _EagerInitialization(
       teamId: teamData?.id!,
       child: Scaffold(
+        extendBody: true,
         drawer: TeamsDrawer(
           onTeamSelected: widget.onTeamSelected,
         ),
@@ -133,6 +134,8 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
         bottomNavigationBar: kIsWeb || teamData?.isArchieved == true
             ? null
             : BottomNavigationBar(
+                backgroundColor:
+                    Theme.of(context).colorScheme.surface.withOpacity(0.7),
                 currentIndex: _mainFeatureTabIndex,
                 onTap: (value) => setState(() {
                   _mainFeatureTabIndex = value;
@@ -302,7 +305,6 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                             if (_mainFeatureTabIndex ==
                                 MainFeatureTabIndex.about)
                               TeamInfo(team: teamData),
-
                             // issues
                             if (_mainFeatureTabIndex ==
                                 MainFeatureTabIndex.home)
