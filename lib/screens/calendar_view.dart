@@ -47,127 +47,132 @@ class _CalendarViewScreenState extends ConsumerState<CalendarViewScreen> {
     // two years from now
     final twoYearsFromNow = DateTime.now().add(const Duration(days: 365 * 2));
     final twoYearsAgo = DateTime.now().subtract(const Duration(days: 365 * 2));
-    return TableCalendar(
-      daysOfWeekHeight: 32,
-      locale: TimeUtils.getLocale(context),
-      onPageChanged: (focusedDay) {
-        setState(() {
-          _selectedMonth = focusedDay.month;
-          _selectedYear = focusedDay.year;
-          _focusedDay = focusedDay;
-        });
-        ref.read(issueProvider(widget.teamId).notifier).fetchIssuesByMonth(
-              year: _selectedYear,
-              month: _selectedMonth,
-            );
-      },
-      firstDay: twoYearsAgo,
-      lastDay: twoYearsFromNow,
-      focusedDay: _focusedDay,
-      calendarFormat: CalendarFormat.month,
-      // dont allow change format
-      availableCalendarFormats: const {
-        CalendarFormat.month: 'Month',
-      },
-      availableGestures: AvailableGestures.horizontalSwipe,
-      rowHeight: MediaQuery.of(context).size.height / 7.5,
-      calendarStyle: const CalendarStyle(
-        outsideDaysVisible: true,
-        tableBorder: TableBorder(
-          bottom: BorderSide(color: Colors.grey, width: 0.5),
-        ),
-      ),
-      calendarBuilders: CalendarBuilders(
-        outsideBuilder: (context, day, focusedDay) => IssueCalendarCell(
-          dayIssues: const [],
-          dateTime: day,
-        ),
-        headerTitleBuilder: (context, day) {
-          // issue count this month
-          final openIssueCount = issues
-              .where((issue) {
-                return issue.deadline != null &&
-                    issue.deadline!.month == day.month &&
-                    issue.deadline!.year == day.year &&
-                    !issue.isClosed;
-              })
-              .toList()
-              .length;
-          // closed issue count
-          final closedIssueCount = issues
-              .where((issue) {
-                return issue.deadline != null &&
-                    issue.deadline!.month == day.month &&
-                    issue.deadline!.year == day.year &&
-                    issue.isClosed;
-              })
-              .toList()
-              .length;
-          return Wrap(
-            children: [
-              TitleText(
-                '${day.year}/${day.month}',
-              ),
-              const SizedBox(
-                width: 4,
-              ),
-              // show the number of issues this month
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                decoration: BoxDecoration(
-                  color: openIssueCount == 0
-                      ? Colors.grey.shade300
-                      : Colors.amber.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '$openIssueCount ${TranslationKeys.open.tr()}',
-                  style: const TextStyle(
-                    color: Colors.black,
+    return Column(
+      children: [
+        TableCalendar(
+          daysOfWeekHeight: 32,
+          locale: TimeUtils.getLocale(context),
+          onPageChanged: (focusedDay) {
+            setState(() {
+              _selectedMonth = focusedDay.month;
+              _selectedYear = focusedDay.year;
+              _focusedDay = focusedDay;
+            });
+            ref.read(issueProvider(widget.teamId).notifier).fetchIssuesByMonth(
+                  year: _selectedYear,
+                  month: _selectedMonth,
+                );
+          },
+          firstDay: twoYearsAgo,
+          lastDay: twoYearsFromNow,
+          focusedDay: _focusedDay,
+          calendarFormat: CalendarFormat.month,
+          // dont allow change format
+          availableCalendarFormats: const {
+            CalendarFormat.month: 'Month',
+          },
+          availableGestures: AvailableGestures.horizontalSwipe,
+          rowHeight: MediaQuery.of(context).size.height / 7.5,
+          calendarStyle: const CalendarStyle(
+            outsideDaysVisible: true,
+            tableBorder: TableBorder(
+              bottom: BorderSide(color: Colors.grey, width: 0.5),
+            ),
+          ),
+          calendarBuilders: CalendarBuilders(
+            outsideBuilder: (context, day, focusedDay) => IssueCalendarCell(
+              dayIssues: const [],
+              dateTime: day,
+            ),
+            headerTitleBuilder: (context, day) {
+              // issue count this month
+              final openIssueCount = issues
+                  .where((issue) {
+                    return issue.deadline != null &&
+                        issue.deadline!.month == day.month &&
+                        issue.deadline!.year == day.year &&
+                        !issue.isClosed;
+                  })
+                  .toList()
+                  .length;
+              // closed issue count
+              final closedIssueCount = issues
+                  .where((issue) {
+                    return issue.deadline != null &&
+                        issue.deadline!.month == day.month &&
+                        issue.deadline!.year == day.year &&
+                        issue.isClosed;
+                  })
+                  .toList()
+                  .length;
+              return Wrap(
+                children: [
+                  TitleText(
+                    '${day.year}/${day.month}',
                   ),
-                ),
-              ),
-              const SizedBox(
-                width: 8,
-              ),
-              // show the number of closed issues this month
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                decoration: BoxDecoration(
-                  color: closedIssueCount == 0
-                      ? Colors.grey.shade300
-                      : Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '$closedIssueCount ${TranslationKeys.closed.tr()}',
-                  style: const TextStyle(
-                    color: Colors.black,
+                  const SizedBox(
+                    width: 4,
                   ),
-                ),
-              ),
-            ],
-          );
-        },
-        defaultBuilder: (context, day, focusedDay) {
-          final dayIssues = issues.where((issue) {
-            return issue.deadline != null &&
-                issue.deadline!.day == day.day &&
-                issue.deadline!.month == day.month &&
-                issue.deadline!.year == day.year;
-          }).toList();
-          return IssueCalendarCell(dayIssues: dayIssues, dateTime: day);
-        },
-        todayBuilder: (context, day, focusedDay) {
-          final todayIssues = issues.where((issue) {
-            return issue.deadline != null &&
-                issue.deadline!.day == day.day &&
-                issue.deadline!.month == day.month &&
-                issue.deadline!.year == day.year;
-          }).toList();
-          return IssueCalendarCell(dayIssues: todayIssues, dateTime: day);
-        },
-      ),
+                  // show the number of issues this month
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: openIssueCount == 0
+                          ? Colors.grey.shade300
+                          : Colors.amber.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$openIssueCount ${TranslationKeys.open.tr()}',
+                      style: const TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 8,
+                  ),
+                  // show the number of closed issues this month
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: closedIssueCount == 0
+                          ? Colors.grey.shade300
+                          : Colors.green.shade100,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$closedIssueCount ${TranslationKeys.closed.tr()}',
+                      style: const TextStyle(
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+            defaultBuilder: (context, day, focusedDay) {
+              final dayIssues = issues.where((issue) {
+                return issue.deadline != null &&
+                    issue.deadline!.day == day.day &&
+                    issue.deadline!.month == day.month &&
+                    issue.deadline!.year == day.year;
+              }).toList();
+              return IssueCalendarCell(dayIssues: dayIssues, dateTime: day);
+            },
+            todayBuilder: (context, day, focusedDay) {
+              final todayIssues = issues.where((issue) {
+                return issue.deadline != null &&
+                    issue.deadline!.day == day.day &&
+                    issue.deadline!.month == day.month &&
+                    issue.deadline!.year == day.year;
+              }).toList();
+              return IssueCalendarCell(dayIssues: todayIssues, dateTime: day);
+            },
+          ),
+        ),
+        const SizedBox(height: 64,),
+      ],
     );
   }
 }

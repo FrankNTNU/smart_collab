@@ -37,6 +37,8 @@ class Issue {
   // is auto closed
   bool isAutoClosed = false;
   final List<FileItem> files;
+  // comment count
+  final int commentCount;
   // ctor
   Issue({
     required this.title,
@@ -53,6 +55,7 @@ class Issue {
     this.linkedIssueIds = const [],
     this.isAutoClosed = false,
     this.files = const [],
+    this.commentCount = 0,
   });
   // copyWith
   Issue copyWith({
@@ -70,6 +73,7 @@ class Issue {
     List<String>? linkedIssueIds,
     bool? isAutoClosed,
     List<FileItem>? files,
+    int? commentCount,
   }) {
     return Issue(
       title: title ?? this.title,
@@ -86,6 +90,7 @@ class Issue {
       linkedIssueIds: linkedIssueIds ?? this.linkedIssueIds,
       isAutoClosed: isAutoClosed ?? this.isAutoClosed,
       files: files ?? this.files,
+      commentCount: commentCount ?? this.commentCount,
     );
   }
 
@@ -106,6 +111,7 @@ class Issue {
       isClosed: json['isClosed'] ?? false,
       linkedIssueIds: List<String>.from(json['linkedIssueIds'] ?? []),
       isAutoClosed: json['isAutoClosed'] ?? false,
+      commentCount: json['commentCount'] ?? 0,
       // files: [{fileName: "60266-212658-1...}, {fileName: "MainPaper-Incl...}, {fileName: "Screenshot 202...}]
       files: (json['files'] as List<dynamic>?)
               ?.map((file) => FileItem(
@@ -445,6 +451,13 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
       );
       return [];
     }
+  }
+  void updateLocalCommentCount(String issueId, int count) {
+    final updatedIssueMap = {
+      ...state.issueMap,
+      issueId: state.issueMap[issueId]!.copyWith(commentCount: state.issueMap[issueId]!.commentCount + count),
+    };
+    state = state.copyWith(issueMap: updatedIssueMap);
   }
 
   // fetch IssueStats

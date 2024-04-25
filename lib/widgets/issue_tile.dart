@@ -16,15 +16,16 @@ class IssueTile extends StatelessWidget {
   final bool isDensed;
   final bool isFullScreenWhenTapped;
   final Function()? onLongPressed;
-  const IssueTile(
-      {super.key,
-      required this.issueData,
-      this.tabIndex = IssueTabEnum.open,
-      this.onSelected,
-      this.trailing,
-      this.isDensed = false,
-      this.isFullScreenWhenTapped = true,
-      this.onLongPressed});
+  const IssueTile({
+    super.key,
+    required this.issueData,
+    this.tabIndex = IssueTabEnum.open,
+    this.onSelected,
+    this.trailing,
+    this.isDensed = false,
+    this.isFullScreenWhenTapped = true,
+    this.onLongPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -58,8 +59,7 @@ class IssueTile extends StatelessWidget {
                   }
                 : () {
                     if (kIsWeb) return;
-                    if (isFullScreenWhenTapped) {
-                      // fetch single issue
+                    if (isFullScreenWhenTapped) {              
                       // navigate to issue screen
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -96,8 +96,7 @@ class IssueTile extends StatelessWidget {
                   decoration: tabIndex == IssueTabEnum.closed
                       ? TextDecoration.lineThrough
                       : TextDecoration.none,
-                )
-            ),
+                )),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -120,12 +119,16 @@ class IssueTile extends StatelessWidget {
                     issueData: issueData,
                     isConcise: true,
                   ),
-                
               ],
             ),
             trailing: trailing ??
-                (issueData.files.isNotEmpty
-                    ? const Icon(Icons.attach_file)
+                (issueData.commentCount > 0
+                    ? Column(
+                        children: [
+                          const Icon(Icons.chat_bubble_outline),
+                          Text('${issueData.commentCount}'),
+                        ],
+                      )
                     : null),
           ),
         ),

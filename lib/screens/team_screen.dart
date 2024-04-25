@@ -56,6 +56,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       _currentTabIndex = 0;
     }
   }
+
   @override
   void initState() {
     super.initState();
@@ -69,7 +70,9 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
       }
       final isCloseToBottom = _scrollController.position.pixels ==
           _scrollController.position.maxScrollExtent;
-      if (isCloseToBottom && widget.team != null) {
+      if (isCloseToBottom &&
+          widget.team != null &&
+          _mainFeatureTabIndex == MainFeatureTabIndex.home) {
         print('User reached end of list');
         ref
             .read(issueProvider(widget.team!.id!).notifier)
@@ -136,19 +139,19 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 }),
                 items: [
                   BottomNavigationBarItem(
-                    icon: _mainFeatureTabIndex == 0
+                    icon: _mainFeatureTabIndex == MainFeatureTabIndex.home
                         ? const Icon(Icons.home)
                         : const Icon(Icons.home_outlined),
                     label: TranslationKeys.home.tr(),
                   ),
                   BottomNavigationBarItem(
-                    icon: _mainFeatureTabIndex == 1
+                    icon: _mainFeatureTabIndex == MainFeatureTabIndex.calendar
                         ? const Icon(Icons.event)
                         : const Icon(Icons.event_outlined),
                     label: TranslationKeys.calendar.tr(),
                   ),
                   BottomNavigationBarItem(
-                    icon: _mainFeatureTabIndex == 2
+                    icon: _mainFeatureTabIndex == MainFeatureTabIndex.about
                         ? const Icon(Icons.group)
                         : const Icon(Icons.group_outlined),
                     label: TranslationKeys.about.tr(),
@@ -156,25 +159,44 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                 ],
               ),
         // scroll tp top button
-        floatingActionButton: _isNotAtTop && // when the keybaord is not open
-                MediaQuery.of(context).viewInsets.bottom == 0 && teamData?.isArchieved == false
-            ? FloatingActionButton(
-                onPressed: () {
-                  _scrollController.animateTo(
-                    0,
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeInOut,
-                  );
-                },
-                child: const Icon(Icons.arrow_upward),
-              )
-            : null,
+        floatingActionButton: teamData?.isArchieved == true
+            ? null
+            : _isNotAtTop && // when the keybaord is not open
+                    MediaQuery.of(context).viewInsets.bottom == 0 &&
+                    _mainFeatureTabIndex != MainFeatureTabIndex.calendar
+                ? FloatingActionButton(
+                    onPressed: () {
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    child: const Icon(Icons.arrow_upward),
+                  )
+                : _mainFeatureTabIndex == MainFeatureTabIndex.calendar
+                    ? FloatingActionButton(
+                        onPressed: () {
+                          showModalBottomSheet(
+                            isScrollControlled: true,
+                            enableDrag: true,
+                            showDragHandle: true,
+                            context: context,
+                            builder: (context) => AddOrEditIssueSheet(
+                              teamId: teamData!.id!,
+                              addOrEdit: AddorEdit.add,
+                            ),
+                          );
+                        },
+                        child: const Icon(Icons.add),
+                      )
+                    : null,
         body: teamData == null
             ? const Center(
                 child: Text('Select a team from the left drawer'),
               )
             : teamData.isArchieved
-                ?  Column(
+                ? Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -197,21 +219,32 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                         ),
                       ),
                       // restore button
-                      TextButton.icon(onPressed: () {
-                        showDialog(context: context, builder:(context) => ConfirmDialog(
-                          confirmText: 'Restore',
-                          title: 'Restore Team',
-                          content: 'Are you sure you want to restore this team?',
-                          onConfirm: () {
-                            ref.read(teamsProvider.notifier).restoreTeam(teamData.id!);
+                      TextButton.icon(
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (context) => ConfirmDialog(
+                                confirmText: 'Restore',
+                                title: 'Restore Team',
+                                content:
+                                    'Are you sure you want to restore this team?',
+                                onConfirm: () {
+                                  ref
+                                      .read(teamsProvider.notifier)
+                                      .restoreTeam(teamData.id!);
+                                },
+                              ),
+                            );
                           },
-                        ),);
-                      }, icon: const Icon(Icons.restore), label: const Text('Restore')),
+                          icon: const Icon(Icons.restore),
+                          label: const Text('Restore')),
                     ],
                   )
                 : Stack(
                     children: [
                       RefreshIndicator(
+                        notificationPredicate: (notification) =>
+                            _mainFeatureTabIndex == MainFeatureTabIndex.home,
                         onRefresh: () async {
                           ref
                               .read(issueProvider(widget.team!.id!).notifier)
@@ -269,7 +302,7 @@ class _TeamScreenState extends ConsumerState<TeamScreen> {
                             if (_mainFeatureTabIndex ==
                                 MainFeatureTabIndex.about)
                               TeamInfo(team: teamData),
-                           
+
                             // issues
                             if (_mainFeatureTabIndex ==
                                 MainFeatureTabIndex.home)

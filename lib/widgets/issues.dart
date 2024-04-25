@@ -72,14 +72,14 @@ class _IssuesState extends ConsumerState<Issues> {
   // include tags
   final List<String> _includedFilterTags = [];
   // search text edit controller
-  final TextEditingController _searchController = TextEditingController();
+  late TextEditingController _searchController;
   // current tab index
   int _currentTabIndex = IssueTabEnum.open;
   // is tabs visiblr
   bool _isTabsVisible = false;
   // checked issue ids
   List<String> checkedIssueIds = [];
-  // focusnode
+  // focus node
   final FocusNode _searchFocusNode = FocusNode();
   @override
   // did update widget
@@ -96,6 +96,8 @@ class _IssuesState extends ConsumerState<Issues> {
   @override
   void initState() {
     super.initState();
+    print('InitState in issues');
+    _searchController = TextEditingController();
     // set current index
     _currentTabIndex = widget.currentTabIndex;
     Future.delayed(
@@ -168,6 +170,8 @@ class _IssuesState extends ConsumerState<Issues> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFormKey.currentState?.dispose();
+
     super.dispose();
   }
   @override
@@ -312,12 +316,14 @@ class _IssuesState extends ConsumerState<Issues> {
           ),
         ),
         const SizedBox(
-          height: 2,
+          height: 8,
         ),
         Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: TextFormField(
-            // focusNode: _searchFocusNode,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: TextField(
+            
+            key: _searchFormKey,  
+            focusNode: _searchFocusNode,
             onTap: () {
               print('Search field tapped');
               // _searchFocusNode.requestFocus();
@@ -325,7 +331,7 @@ class _IssuesState extends ConsumerState<Issues> {
             controller: _searchController,
             onTapOutside: (event) {
               // unfocus
-              FocusScope.of(context).unfocus();
+              _searchFocusNode.unfocus();
             },
             onChanged: (value) {
               setState(() {
@@ -333,6 +339,8 @@ class _IssuesState extends ConsumerState<Issues> {
               });
             },
             decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+          
               // outlined
               border: const OutlineInputBorder(),
               hintText: TranslationKeys.searchSomething

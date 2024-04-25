@@ -24,6 +24,8 @@ void main() async {
   ]);
   // for timeago i18n, set zh_TW
   timeago.setLocaleMessages('zh_TW', timeago.ZhMessages());
+  // add en_US
+  timeago.setLocaleMessages('en_US', timeago.EnMessages());
   runApp(ProviderScope(
     child: EasyLocalization(
       path: 'assets/translations',

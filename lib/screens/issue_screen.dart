@@ -234,8 +234,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                           issueData.title,
                         ),
                       ),
-
-                      //const CloseButton(),
+                      if (!widget.isFullScreen) const CloseButton(),
                     ],
                   ),
                   // last updated at information
@@ -389,55 +388,56 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                   ),
                   Comments(issueId: issueData.id, teamId: widget.issue.teamId),
                   if (_isShowFiles)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const TitleText('Files'),
-                      if (isAuthorOrColloborator)
-                      IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            showModalBottomSheet(
-                              isScrollControlled: true,
-                              enableDrag: true,
-                              showDragHandle: true,
-                              context: context,
-                              builder: (context) {
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.7,
-                                  child: Attachments(
-                                    teamId: widget.issue.teamId,
-                                    issueId: issueData.id,
-                                  ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const TitleText('Files'),
+                        if (isAuthorOrColloborator)
+                          IconButton(
+                              icon: const Icon(Icons.edit),
+                              onPressed: () {
+                                showModalBottomSheet(
+                                  isScrollControlled: true,
+                                  enableDrag: true,
+                                  showDragHandle: true,
+                                  context: context,
+                                  builder: (context) {
+                                    return Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16),
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.7,
+                                      child: Attachments(
+                                        teamId: widget.issue.teamId,
+                                        issueId: issueData.id,
+                                      ),
+                                    );
+                                  },
                                 );
-                              },
-                            );
-                          })
-                    ],
-                  ),
+                              })
+                      ],
+                    ),
                   if (_isShowFiles)
-                  issueData.files.isEmpty == true
-                      ? const Center(child: Text('No files attached'))
-                      : Column(
-                          children: [
-                            ...issueData.files.map(
-                              (file) => ListTile(
-                                onTap: () {},
-                                contentPadding: const EdgeInsets.all(0),
-                                leading: const Icon(Icons.attachment),
-                                title: Text(
-                                  file.fileName,
+                    issueData.files.isEmpty == true
+                        ? const Center(child: Text('No files attached'))
+                        : Column(
+                            children: [
+                              ...issueData.files.map(
+                                (file) => ListTile(
+                                  onTap: () {},
+                                  contentPadding: const EdgeInsets.all(0),
+                                  leading: const Icon(Icons.attachment),
+                                  title: Text(
+                                    file.fileName,
+                                  ),
+                                  subtitle: Text(
+                                    normalizeFileSize(file.size),
+                                  ),
                                 ),
-                                subtitle: Text(
-                                  normalizeFileSize(file.size),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
+                              )
+                            ],
+                          ),
 
                   const Divider(),
                   Row(
@@ -483,6 +483,7 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                             (issue) => IssueTile(
                                 isDensed: true,
                                 issueData: issue,
+                                isFullScreenWhenTapped: false,
                                 trailing: IconButton(
                                   icon: const Icon(Icons.clear),
                                   onPressed: () {

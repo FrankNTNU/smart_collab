@@ -27,6 +27,8 @@ class _CommentFieldState extends ConsumerState<CommentField> {
   String _enteredComment = '';
   // text controller
   final _textController = TextEditingController();
+  // focus node
+  final _focusNode = FocusNode();
   @override
   void initState() {
     super.initState();
@@ -93,7 +95,7 @@ class _CommentFieldState extends ConsumerState<CommentField> {
                 value.performedAction == PerformedAction.add));
 
     return Container(
-      color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
+      color: Theme.of(context).colorScheme.surface.withOpacity(0.8),
       // bottom padding
       padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
       child: Padding(
@@ -104,12 +106,15 @@ class _CommentFieldState extends ConsumerState<CommentField> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 2),
                 child: TextField(
+                  focusNode: _focusNode,
                   controller: _textController,
                   // on tap outside unfocus
                   onTapOutside: (_) {
-                    FocusScope.of(context).unfocus();
+                    _focusNode.unfocus();
                   },
                   decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+                      prefixIcon: const Icon(Icons.chat_bubble_outline),
                     hintText: TranslationKeys.addComment.tr(),
                     border: const OutlineInputBorder(),
                     errorText: errorMessage,

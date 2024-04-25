@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_collab/services/auth_controller.dart';
+import 'package:smart_collab/services/issue_controller.dart';
 
 import 'team_controller.dart';
 
@@ -109,26 +110,45 @@ class CommentsState {
     );
   }
 }
+
 typedef CommentProviderParam = ({String teamId, String issueId});
+
 class CommentController
     extends AutoDisposeFamilyNotifier<CommentsState, CommentProviderParam> {
   @override
   CommentsState build(CommentProviderParam arg) {
     final userId =
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
-    return CommentsState.initial().copyWith(userId: userId, teamId: arg.teamId, issuesId: arg.issueId);
+    return CommentsState.initial()
+        .copyWith(userId: userId, teamId: arg.teamId, issuesId: arg.issueId);
   }
+
   // clearErrorMessage
   void clearErrorMessage() {
     state = state.copyWith(errorMessage: '');
   }
+
   Future<void> deleteComment(String commentId, String issueId) async {
     // delete the comment from issues/{issueId}/comments/{commentId}
     // set loading
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.delete);
     try {
-      await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
+      // decrement comment count in issue
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(issueId)
+          .update({
+        'commentCount': FieldValue.increment(-1),
+      });
+      ref
+          .read(issueProvider(state.teamId).notifier)
+          .updateLocalCommentCount(state.issuesId, -1);
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('issues')
           .doc(issueId)
           .collection('comments')
@@ -156,7 +176,21 @@ class CommentController
     state = state.copyWith(
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.add);
     try {
-      final docRef = await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
+      // increment comment count in issue
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
+          .collection('issues')
+          .doc(state.issuesId)
+          .update({
+        'commentCount': FieldValue.increment(1),
+      });
+      ref
+          .read(issueProvider(state.teamId).notifier)
+          .updateLocalCommentCount(state.issuesId, 1);
+      final docRef = await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(state.teamId)
           .collection('issues')
           .doc(state.issuesId)
           .collection('comments')
@@ -167,7 +201,7 @@ class CommentController
         'createdAt': DateTime.now().toIso8601String(),
         'roles': {
           state.userId: 'owner',
-        }
+        },
       });
       // add the comment to the state
       // get the newly added comment
@@ -195,14 +229,18 @@ class CommentController
         apiStatus: ApiStatus.loading, performedAction: PerformedAction.fetch);
     try {
       final snapShot = state.lastDocRef != null
-          ? await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
+          ? await FirebaseFirestore.instance
+              .collection('teams')
+              .doc(state.teamId)
               .collection('issues')
               .doc(issueId)
               .collection('comments')
               .startAfterDocument(state.lastDocRef!)
               .limit(limit)
               .get()
-          : await FirebaseFirestore.instance.collection('teams').doc(state.teamId)
+          : await FirebaseFirestore.instance
+              .collection('teams')
+              .doc(state.teamId)
               .collection('issues')
               .doc(issueId)
               .collection('comments')

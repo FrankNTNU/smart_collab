@@ -49,7 +49,7 @@ class _TabsState extends State<Tabs> {
         border: Border(
           bottom: BorderSide(
             color: _currentTabIndex == index ? Colors.blue : Colors.white,
-            width: 2,
+            width: 4,
           ),
         ),
       ),
@@ -107,13 +107,15 @@ class _TabsState extends State<Tabs> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey,
-            width: 0.5,
-          ),
-        ),
+      // grey btm border
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        // border: Border(
+        //   bottom: BorderSide(
+        //     color: Colors.grey.shade400,
+        //     width: 0.5,
+        //   ),
+        // ),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
