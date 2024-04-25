@@ -383,10 +383,16 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                         ),
                       )),
                   const Divider(),
+                  TitleText(
+                    TranslationKeys.comments.tr(),
+                  ),
+                  Comments(issueId: issueData.id, teamId: widget.issue.teamId),
+                  const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const TitleText('Files'),
+                      if (isAuthorOrColloborator)
                       IconButton(
                           icon: const Icon(Icons.edit),
                           onPressed: () {
@@ -415,17 +421,22 @@ class _IssueScreenState extends ConsumerState<IssueScreen> {
                       ? const Center(child: Text('No files attached'))
                       : Column(
                           children: [
-                            ...issueData.files.map((file) => ListTile(
+                            ...issueData.files.map(
+                              (file) => ListTile(
+                                onTap: () {},
                                 contentPadding: const EdgeInsets.all(0),
                                 leading: const Icon(Icons.attachment),
-                                title: Text(file.fileName)))
+                                title: Text(
+                                  file.fileName,
+                                ),
+                                subtitle: Text(
+                                  normalizeFileSize(file.size),
+                                ),
+                              ),
+                            )
                           ],
                         ),
-                  const Divider(),
-                  TitleText(
-                    TranslationKeys.comments.tr(),
-                  ),
-                  Comments(issueId: issueData.id, teamId: widget.issue.teamId),
+
                   const Divider(),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

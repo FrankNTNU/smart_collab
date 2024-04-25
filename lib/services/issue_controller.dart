@@ -111,6 +111,7 @@ class Issue {
               ?.map((file) => FileItem(
                     fileName: file['fileName'],
                     url: file['url'] ?? '',
+                    size: file['size'] ?? 0
                   ))
               .toList() ??
           [],
@@ -239,6 +240,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
         ref.watch(authControllerProvider.select((value) => value.user?.uid));
     return IssuesState.initial().copyWith(userId: userId, teamId: arg);
   }
+
   // upload file
   Future<void> uploadFiles(List<File> files, String issueId) async {
     state = state.copyWith(apiStatus: ApiStatus.loading);
@@ -274,7 +276,9 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
           ],
         ),
       };
-      state = state.copyWith(apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+      ref.read(teamsProvider.notifier).updateStorageSize(state.teamId, files.fold(0, (prev, file) => prev + file.lengthSync()));
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
     } catch (e) {
       print('Error occured in the uploadFile method: $e');
       state = state.copyWith(
@@ -282,10 +286,10 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
         errorMessage: e.toString(),
       );
     }
-    
   }
+
   // remove file
-  Future<void> removeFile(String fileName, String issueId) async {
+  Future<void> removeFile(FileItem fileItem, String issueId) async {
     state = state.copyWith(apiStatus: ApiStatus.loading);
     try {
       // remove file from firestore
@@ -296,7 +300,11 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
           .doc(issueId)
           .update({
         'files': FieldValue.arrayRemove([
-          {'fileName': fileName}
+          {
+            'fileName': fileItem.fileName,
+            'url': fileItem.url,
+            'size': fileItem.size
+          }
         ]),
       });
       // remove file from the local state
@@ -304,9 +312,10 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
         ...state.issueMap,
         issueId: state.issueMap[issueId]!.copyWith(
           files: state.issueMap[issueId]!.files
-            ..removeWhere((file) => file.fileName == fileName),
+            ..removeWhere((file) => file.fileName == fileItem.fileName),
         ),
       };
+      ref.read(teamsProvider.notifier).updateStorageSize(state.teamId, -fileItem.size);
       state = state.copyWith(
         apiStatus: ApiStatus.success,
         issueMap: updatedIssueMap,
@@ -319,6 +328,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
       );
     }
   }
+
   // batch delete
   Future<void> batchDeleteIssues(List<String> issueIds) async {
     state = state.copyWith(
@@ -350,6 +360,7 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
       );
     }
   }
+
   // import issues
   Future<void> importIssues(List<ImportedData> importedData) async {
     print('Importing issues...');
@@ -449,7 +460,19 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
     final totalIssuesCount = snapshot.count ?? 0;
     return totalIssuesCount;
   }
-
+  Future<int> fetchClosedIssuesCount() async {
+    print('Fetching closed issues count...');
+    final snapshot = // fetch document count
+        await FirebaseFirestore.instance
+            .collection('teams')
+            .doc(state.teamId)
+            .collection('issues')
+            .where('isClosed', isEqualTo: true)
+            .count()
+            .get();
+    final closedIssuesCount = snapshot.count ?? 0;
+    return closedIssuesCount;
+  }
   Future<void> updateLinkedIssueIds(
       {required String issueId, required List<String> linkedIssueIds}) async {
     state = state.copyWith(

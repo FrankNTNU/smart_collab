@@ -41,6 +41,7 @@ class IssueTile extends StatelessWidget {
             ),
           ),
           child: ListTile(
+            
             onLongPress: onLongPressed,
             contentPadding: isDensed ? const EdgeInsets.all(0) : null,
             leading: isDensed
@@ -115,7 +116,9 @@ class IssueTile extends StatelessWidget {
                   )
               ],
             ),
-            trailing: trailing,
+            trailing: trailing ?? (issueData.files.isNotEmpty
+                ? const Icon(Icons.attach_file)
+                : null),
           ),
         ),
       ],

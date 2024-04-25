@@ -24,6 +24,7 @@ class Team {
   final Map<String, String> roles;
   final bool isArchieved;
   final DateTime? archievedDate;
+  final int storageSize;
   // ctor
   Team({
     this.id,
@@ -33,6 +34,7 @@ class Team {
     this.roles = const {},
     this.isArchieved = false,
     this.archievedDate,
+    this.storageSize = 0,
   });
   // copyWith
   Team copyWith({
@@ -43,6 +45,7 @@ class Team {
     Map<String, String>? roles,
     bool? isArchieved,
     DateTime? archievedDate,
+    int? storageSize,
   }) {
     return Team(
       id: id ?? this.id,
@@ -52,6 +55,7 @@ class Team {
       roles: roles ?? this.roles,
       isArchieved: isArchieved ?? this.isArchieved,
       archievedDate: archievedDate ?? this.archievedDate,
+      storageSize: storageSize ?? this.storageSize,
     );
   }
 
@@ -67,6 +71,7 @@ class Team {
       archievedDate: json['archievedDate'] != null
           ? (json['archievedDate'] as Timestamp).toDate()
           : null,
+      storageSize: json['storageSize'] ?? 0,
     );
   }
   // initial
@@ -134,6 +139,29 @@ class TeamsController extends Notifier<TeamsState> {
 
   void clearErrorMessage() {
     state = state.copyWith(errorMessage: null);
+  }
+
+  // update file storage size for the team
+  Future<void> updateStorageSize(String temId, int incrementValue) async {
+    try {
+      state = state.copyWith(
+          apiStatus: ApiStatus.loading,
+          performedAction: PerformedAction.update);
+      await FirebaseFirestore.instance
+          .collection('teams')
+          .doc(temId)
+          .update({'storageSize': FieldValue.increment(incrementValue)});
+      final updatedTeams = state.teams.map((team) {
+        if (team.id == temId) {
+          return team.copyWith(storageSize: team.storageSize + incrementValue);
+        }
+        return team;
+      }).toList();
+      state = state.copyWith(apiStatus: ApiStatus.success, teams: updatedTeams);
+    } catch (e) {
+      print('Error occured in the updateStorageSize method: $e');
+      state = state.copyWith(apiStatus: ApiStatus.error, errorMessage: '$e');
+    }
   }
 
   // get all members of a team
