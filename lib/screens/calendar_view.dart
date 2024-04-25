@@ -199,6 +199,19 @@ class IssueCalendarCell extends StatelessWidget {
 
   /// set to false until the textfield focus has been fixed (cant't be focused after a new page being pushed)
   final isFullScreenEnabled = false;
+  void _openAddIssueSheetOnDay(BuildContext context) {
+    showModalBottomSheet(
+      isScrollControlled: true,
+      enableDrag: true,
+      showDragHandle: true,
+      context: context,
+      builder: (context) => AddOrEditIssueSheet(
+        teamId: teamId,
+        defaultDeadline: dateTime,
+        addOrEdit: AddorEdit.add,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -212,23 +225,12 @@ class IssueCalendarCell extends StatelessWidget {
               showModalBottomSheet(
                 context: context,
                 builder: (context) => ListTile(
-                  leading: const Icon(Icons.add),
-                  title: Text(
-                      'Create an issue on ${dateTime.toString().substring(0, 10)}'),
-                  onTap: () {
-                    showModalBottomSheet(
-                      isScrollControlled: true,
-                      enableDrag: true,
-                      showDragHandle: true,
-                      context: context,
-                      builder: (context) => AddOrEditIssueSheet(
-                        teamId: teamId,
-                        defaultDeadline: dateTime,
-                        addOrEdit: AddorEdit.add,
-                      ),
-                    );
-                  },
-                ),
+                    leading: const Icon(Icons.add),
+                    title: Text(
+                        'Create an issue on ${dateTime.toString().substring(0, 10)}'),
+                    onTap: () {
+                      _openAddIssueSheetOnDay(context);
+                    }),
               );
             }
           : () {
@@ -288,6 +290,13 @@ class IssueCalendarCell extends StatelessWidget {
                             },
                           ),
                         ),
+                        ListTile(
+                            leading: const Icon(Icons.add),
+                            title: Text(
+                                'Create an issue on ${dateTime.toString().substring(0, 10)}'),
+                            onTap: () {
+                              _openAddIssueSheetOnDay(context);
+                            }),
                       ],
                     ),
                   ),
@@ -399,7 +408,7 @@ class CircleBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         // rounded border
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.circular(4),
         //shape: BoxShape.circle,
       ),
       child: Center(

@@ -47,7 +47,7 @@ class Issues extends ConsumerStatefulWidget {
   final bool isOwnerOrAdmin;
   // on tab changed
   final Function(int)? onTabChanged;
-  
+
   const Issues(
       {super.key,
       required this.teamId,
@@ -64,7 +64,8 @@ class Issues extends ConsumerStatefulWidget {
 }
 
 class _IssuesState extends ConsumerState<Issues> {
-  final GlobalKey<FormFieldState<String>> _searchFormKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _searchFormKey =
+      GlobalKey<FormFieldState<String>>();
 
   bool _isSelectionMode = false;
   // searchTerm
@@ -166,6 +167,7 @@ class _IssuesState extends ConsumerState<Issues> {
         .read(issueProvider(widget.teamId).notifier)
         .fetchIssues(widget.teamId, includedTags: _includedFilterTags);
   }
+
   // dispose
   @override
   void dispose() {
@@ -174,6 +176,7 @@ class _IssuesState extends ConsumerState<Issues> {
 
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final isFetching = ref.watch(issueProvider(widget.teamId).select((value) =>
@@ -321,7 +324,7 @@ class _IssuesState extends ConsumerState<Issues> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: TextField(
-            key: _searchFormKey,  
+            key: _searchFormKey,
             focusNode: _searchFocusNode,
             onTap: () {
               print('Search field tapped');
@@ -338,7 +341,7 @@ class _IssuesState extends ConsumerState<Issues> {
               });
             },
             decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
+              contentPadding: const EdgeInsets.symmetric(vertical: 8.0),
               // outlined
               border: const OutlineInputBorder(),
               hintText: TranslationKeys.searchSomething
@@ -394,6 +397,28 @@ class _IssuesState extends ConsumerState<Issues> {
                 label: const Text('Exit selection'),
                 icon: const Icon(Icons.close),
                 onPressed: () {
+                  setState(() {
+                    // clear checked issue ids
+                    checkedIssueIds.clear();
+                    // toggle selection mode
+                    _isSelectionMode = !_isSelectionMode;
+                  });
+                },
+              ),
+              TextButton.icon(
+                label: Text('Close ${checkedIssueIds.length} issues'),
+                icon: const Icon(Icons.check_circle),
+                onPressed: () async {
+                  await ref
+                        .read(issueProvider(widget.teamId).notifier)
+                        .setIsClosedBulk(checkedIssueIds, true);
+                  // show snackbar
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Closed ${checkedIssueIds.length} issues successfully'),
+                    ),
+                  );
                   setState(() {
                     // clear checked issue ids
                     checkedIssueIds.clear();

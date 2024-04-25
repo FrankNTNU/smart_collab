@@ -545,7 +545,39 @@ class IssueController extends FamilyNotifier<IssuesState, String> {
       return Issue.initial();
     }
   }
-
+  Future<void> setIsClosedBulk(List<String> issueIds, bool isClosed) async {
+    state = state.copyWith(
+        apiStatus: ApiStatus.loading, performedAction: PerformedAction.update);
+    try {
+      final batch = FirebaseFirestore.instance.batch();
+      for (var issueId in issueIds) {
+        batch.update(FirebaseFirestore.instance
+            .collection('teams')
+            .doc(state.teamId)
+            .collection('issues')
+            .doc(issueId), {
+          'isClosed': isClosed,
+        });
+      }
+      await batch.commit();
+      final updatedIssueMap = {
+        ...state.issueMap,
+      }..updateAll((key, value) {
+          if (issueIds.contains(key)) {
+            return value.copyWith(isClosed: isClosed);
+          }
+          return value;
+        });
+      state = state.copyWith(
+          apiStatus: ApiStatus.success, issueMap: updatedIssueMap);
+    } catch (e) {
+      print('Error occured in the setIsClosedBulk method: $e');
+      state = state.copyWith(
+        apiStatus: ApiStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
   // set is closed
   Future<void> setIsClosed(
       {required String issueId, required bool isClosed}) async {
