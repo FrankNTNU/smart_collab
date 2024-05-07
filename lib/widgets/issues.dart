@@ -409,22 +409,33 @@ class _IssuesState extends ConsumerState<Issues> {
                 label: Text('Close ${checkedIssueIds.length} issues'),
                 icon: const Icon(Icons.check_circle),
                 onPressed: () async {
-                  await ref
-                        .read(issueProvider(widget.teamId).notifier)
-                        .setIsClosedBulk(checkedIssueIds, true);
-                  // show snackbar
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                          'Closed ${checkedIssueIds.length} issues successfully'),
+                  showDialog(
+                    context: context,
+                    builder: (context) => ConfirmDialog(
+                      title: 'Close Issues',
+                      content:
+                          'Are you sure you want to close ${checkedIssueIds.length} issues?',
+                      onConfirm: () async {
+                        await ref
+                            .read(issueProvider(widget.teamId).notifier)
+                            .setIsClosedBulk(checkedIssueIds, true);
+                        // show snackbar
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'Closed ${checkedIssueIds.length} issues successfully'),
+                          ),
+                        );
+                        setState(() {
+                          // clear checked issue ids
+                          checkedIssueIds.clear();
+                          // toggle selection mode
+                          _isSelectionMode = !_isSelectionMode;
+                        });
+                      },
+                      confirmText: 'Close',
                     ),
                   );
-                  setState(() {
-                    // clear checked issue ids
-                    checkedIssueIds.clear();
-                    // toggle selection mode
-                    _isSelectionMode = !_isSelectionMode;
-                  });
                 },
               ),
               // delete button

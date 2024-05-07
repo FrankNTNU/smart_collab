@@ -167,10 +167,15 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen> {
                           // Group activities by time
                           final groupedActivities = groupBy(
                             activities,
-                            (Activity activity) => TimeUtils.getFuzzyTime(
-                              DateTime.parse(activity.timestamp),
-                              context: context,
-                            ),
+                            (Activity activity) {
+                              final fuzzyTime = TimeUtils.getFuzzyTime(
+                                DateTime.parse(activity.timestamp),
+                                context: context,
+                              );
+                              return fuzzyTime.length > 10
+                                  ? fuzzyTime.substring(0, 10)
+                                  : fuzzyTime;
+                            },
                           ).entries.toList();
                           return ListView.builder(
                             shrinkWrap: true,

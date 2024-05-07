@@ -27,7 +27,7 @@ class IssueTile extends StatelessWidget {
     this.onLongPressed,
   });
   /// set to false since currently there is a bug that textfield can't be focused when the screen is full screen and pushed
-  final isFullScreenEnabled = false;
+  final isFullScreenEnabled = true;
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -64,9 +64,10 @@ class IssueTile extends StatelessWidget {
                       // navigate to issue screen
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => Scaffold(
+                          builder: (context) => Scaffold(
+                            
                             appBar: AppBar(
-                              title: Text(issueData.title),
+                              title: Tooltip(message: issueData.title, child: Text(issueData.title)),
                             ),
                             body: IssueScreen(
                               issue: issueData,
